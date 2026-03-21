@@ -38,7 +38,7 @@ function DashboardPage() {
     searchedInput ? friendIds : undefined
   );
   const { data: twitchStreams = [] } = useTwitchLive();
-  const { data: playerStats = [] } = usePlayerStats(selectedFriendId);
+  const { data: playerStats = [], isLoading: statsLoading } = usePlayerStats(selectedFriendId);
 
   const playingFriendIds = new Set(liveMatches.flatMap((m) => m.friendIds));
   const enrichedFriends = (searchResult?.friends ?? []).map((f) => ({
@@ -144,7 +144,13 @@ function DashboardPage() {
               <LiveMatchCard key={match.matchId} match={match} />
             ))}
             {selectedFriendId ? (
-              <RecentMatches matches={recentMatches} />
+              statsLoading ? (
+                <div className="text-accent animate-pulse text-sm text-center py-12">
+                  Loading match history...
+                </div>
+              ) : (
+                <RecentMatches matches={recentMatches} />
+              )
             ) : (
               <div className="text-text-dim text-sm text-center py-12">
                 Select a friend to view their match history
