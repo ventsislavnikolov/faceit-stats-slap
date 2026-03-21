@@ -12,9 +12,9 @@ export default defineConfig({
     tsconfigPaths: true,
   },
   plugins: [
-    tailwindcss(),
     tanstackStart({ srcDirectory: "src" }),
     viteReact(),
+    tailwindcss(),
   ],
   test: {
     include: ["tests/**/*.test.ts", "tests/**/*.test.tsx"],

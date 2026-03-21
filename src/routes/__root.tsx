@@ -6,9 +6,8 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useState } from "react";
 import "~/styles/app.css";
-
-const queryClient = new QueryClient();
 
 export const Route = createRootRoute({
   head: () => ({
@@ -28,6 +27,7 @@ export const Route = createRootRoute({
 });
 
 function RootLayout() {
+  const [queryClient] = useState(() => new QueryClient());
   return (
     <html lang="en" className="dark">
       <head>
@@ -36,8 +36,8 @@ function RootLayout() {
       <body className="bg-bg text-text font-mono min-h-screen">
         <QueryClientProvider client={queryClient}>
           <Outlet />
+          <Scripts />
         </QueryClientProvider>
-        <Scripts />
       </body>
     </html>
   );
