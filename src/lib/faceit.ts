@@ -65,9 +65,20 @@ export function parseMatchStats(raw: any): MatchPlayerStats {
   };
 }
 
-export async function fetchPlayer(playerId: string): Promise<FaceitPlayer> {
-  const data = await faceitFetch(`/players/${playerId}`);
-  return parsePlayerProfile(data);
+export async function fetchPlayer(
+  playerId: string
+): Promise<FaceitPlayer & { friendsIds: string[] }> {
+  const data = await faceitFetch(`/players/${playerId}`) as any;
+  return { ...parsePlayerProfile(data), friendsIds: data.friends_ids || [] };
+}
+
+export async function fetchPlayerByNickname(
+  nickname: string
+): Promise<FaceitPlayer & { friendsIds: string[] }> {
+  const data = await faceitFetch(
+    `/players?nickname=${encodeURIComponent(nickname)}&game=cs2`
+  ) as any;
+  return { ...parsePlayerProfile(data), friendsIds: data.friends_ids || [] };
 }
 
 export async function fetchPlayerLifetimeStats(playerId: string) {

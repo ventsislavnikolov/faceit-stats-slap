@@ -9,13 +9,17 @@ import {
 import { createServerSupabase } from "~/lib/supabase.server";
 import type { LiveMatch } from "~/lib/types";
 
-export const getLiveMatches = createServerFn({ method: "GET" }).handler(
-  async (): Promise<LiveMatch[]> => {
+export const getLiveMatches = createServerFn({ method: "GET" })
+  .inputValidator((playerIds?: string[]) => playerIds)
+  .handler(async ({ data: playerIds }): Promise<LiveMatch[]> => {
+    const ids = playerIds && playerIds.length > 0
+      ? playerIds
+      : (TRACKED_FRIENDS as readonly string[]);
     const supabase = createServerSupabase();
     const liveMatches: LiveMatch[] = [];
 
     const historyResults = await Promise.allSettled(
-      TRACKED_FRIENDS.map(async (friendId) => {
+      ids.map(async (friendId) => {
         const history = await fetchPlayerHistory(friendId, 1);
         if (!history.length) return null;
         return { matchId: history[0].match_id, friendId };
@@ -47,9 +51,7 @@ export const getLiveMatches = createServerFn({ method: "GET" }).handler(
       const foundFriendIds: string[] = [];
       for (const faction of ["faction1", "faction2"] as const) {
         const roster = match.teams?.[faction]?.roster || [];
-        const found = roster.filter((p: any) =>
-          (TRACKED_FRIENDS as readonly string[]).includes(p.player_id)
-        );
+        const found = roster.filter((p: any) => ids.includes(p.player_id));
         if (found.length > 0) {
           friendFaction = faction;
           foundFriendIds.push(...found.map((p: any) => p.player_id));

@@ -7,3 +7,4 @@ dist/
 .vinxi/
 .superpowers/
 src/routeTree.gen.ts
+.vercel

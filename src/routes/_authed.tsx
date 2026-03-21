@@ -1,41 +1,10 @@
-import { createFileRoute, Outlet, Link, redirect, useRouter } from "@tanstack/react-router";
-import { createIsomorphicFn } from "@tanstack/react-start";
-import { getSupabaseClient } from "~/lib/supabase.client";
-
-const verifyAuth = createIsomorphicFn()
-  .server(() => {
-    // Session lives in the browser — auth enforced client-side only
-  })
-  .client(async () => {
-    const supabase = getSupabaseClient();
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (!session) {
-      throw redirect({ to: "/" });
-    }
-  });
-
-const doSignOut = createIsomorphicFn()
-  .server(() => {})
-  .client(async () => {
-    const supabase = getSupabaseClient();
-    await supabase.auth.signOut();
-  });
+import { createFileRoute, Outlet, Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authed")({
-  beforeLoad: () => verifyAuth(),
-  component: AuthedLayout,
+  component: AppLayout,
 });
 
-function AuthedLayout() {
-  const router = useRouter();
-
-  async function handleSignOut() {
-    await doSignOut();
-    router.navigate({ to: "/" });
-  }
-
+function AppLayout() {
   return (
     <div className="flex flex-col h-screen">
       <nav className="flex justify-between items-center px-4 py-2.5 bg-bg-card border-b border-border">
@@ -60,9 +29,6 @@ function AuthedLayout() {
             </Link>
           </div>
         </div>
-        <button onClick={handleSignOut} className="text-text-muted text-xs hover:text-error">
-          Sign Out
-        </button>
       </nav>
       <Outlet />
     </div>

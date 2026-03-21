@@ -1,8 +1,67 @@
 import { createServerFn } from "@tanstack/react-start";
 import { TRACKED_FRIENDS, getTwitchChannel } from "~/lib/constants";
-import { fetchPlayer, fetchPlayerLifetimeStats } from "~/lib/faceit";
+import {
+  fetchPlayer,
+  fetchPlayerByNickname,
+  fetchPlayerLifetimeStats,
+} from "~/lib/faceit";
 import { createServerSupabase } from "~/lib/supabase.server";
 import type { FriendWithStats } from "~/lib/types";
+
+const FRIEND_LIMIT = 50;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export const searchAndLoadFriends = createServerFn({ method: "GET" })
+  .inputValidator((input: string) => input)
+  .handler(
+    async ({
+      data: input,
+    }): Promise<{
+      player: { faceitId: string; nickname: string };
+      friends: FriendWithStats[];
+      totalFriends: number;
+      limited: boolean;
+    }> => {
+      const raw = UUID_RE.test(input.trim())
+        ? await fetchPlayer(input.trim())
+        : await fetchPlayerByNickname(input.trim());
+
+      const { friendsIds, ...player } = raw;
+      const totalFriends = friendsIds.length;
+      const limited = totalFriends > FRIEND_LIMIT;
+      const idsToFetch = friendsIds.slice(0, FRIEND_LIMIT);
+
+      const friends: FriendWithStats[] = [];
+      for (let i = 0; i < idsToFetch.length; i += 5) {
+        const batch = idsToFetch.slice(i, i + 5);
+        const results = await Promise.allSettled(
+          batch.map(async (id) => {
+            const [p, stats] = await Promise.all([
+              fetchPlayer(id),
+              fetchPlayerLifetimeStats(id),
+            ]);
+            return {
+              ...p,
+              ...stats,
+              twitchChannel: getTwitchChannel(id),
+              isPlaying: false,
+              currentMatchId: null,
+            } satisfies FriendWithStats;
+          })
+        );
+        for (const r of results) {
+          if (r.status === "fulfilled") friends.push(r.value);
+        }
+      }
+
+      return {
+        player: { faceitId: player.faceitId, nickname: player.nickname },
+        friends,
+        totalFriends,
+        limited,
+      };
+    }
+  );
 
 export const getFriends = createServerFn({ method: "GET" }).handler(
   async (): Promise<FriendWithStats[]> => {
