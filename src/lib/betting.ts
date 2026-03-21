@@ -1,3 +1,10 @@
+import { BettingPoolStatus } from "~/lib/types";
+
+/**
+ * Calculates pari-mutuel payout for a winning bet.
+ * Uses Math.floor — small remainders (<1 coin per winner) stay in the pool.
+ * Acceptable for a small friend-group app.
+ */
 export function calculatePayout(
   betAmount: number,
   winningSideTotal: number,
@@ -17,6 +24,6 @@ export function calculateReturnPct(
   return Math.floor(((payout - betAmount) / betAmount) * 100);
 }
 
-export function isBettingOpen(status: string, closesAt: string): boolean {
+export function isBettingOpen(status: BettingPoolStatus, closesAt: string): boolean {
   return status === "OPEN" && new Date(closesAt) > new Date();
 }
