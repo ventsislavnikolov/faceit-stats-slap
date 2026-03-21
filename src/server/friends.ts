@@ -24,9 +24,10 @@ export const searchAndLoadFriends = createServerFn({ method: "GET" })
       totalFriends: number;
       limited: boolean;
     }> => {
-      const raw = UUID_RE.test(input.trim())
-        ? await fetchPlayer(input.trim())
-        : await fetchPlayerByNickname(input.trim());
+      const trimmed = input.trim();
+      const raw = UUID_RE.test(trimmed)
+        ? await fetchPlayer(trimmed)
+        : await fetchPlayerByNickname(trimmed.toLowerCase());
 
       const { friendsIds, ...player } = raw;
       const totalFriends = friendsIds.length;
