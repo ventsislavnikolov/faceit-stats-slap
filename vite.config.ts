@@ -12,7 +12,7 @@ export default defineConfig({
     tsconfigPaths: true,
   },
   plugins: [
-    tanstackStart({ srcDirectory: "src", routeFileIgnorePattern: "api/.*" }),
+    tanstackStart({ srcDirectory: "src", routeFileIgnorePattern: "^api$" }),
     viteReact(),
     tailwindcss(),
   ],
