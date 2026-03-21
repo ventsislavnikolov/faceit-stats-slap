@@ -23,7 +23,7 @@ export const TRACKED_FRIENDS = [
 export const MY_FACEIT_ID = "15844c99-d26e-419e-bd14-30908f502c03";
 export const MY_NICKNAME = "soavarice";
 
-export const TWITCH_MAP: Record<string, string> = {
+export const TWITCH_MAP: Record<string, string | undefined> = {
   "ad8034c1-6324-4080-b28e-dbf04239670a": "bachiyski",  // TibaBG
   "65c93ab1-d2b2-416c-a5d1-d45452c9517d": "kasheto88",  // F1aw1esss
   "15844c99-d26e-419e-bd14-30908f502c03": "soavarice",   // soavarice

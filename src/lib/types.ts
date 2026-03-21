@@ -1,3 +1,5 @@
+export type MatchStatus = "ONGOING" | "FINISHED" | "CANCELLED";
+
 export interface FaceitPlayer {
   faceitId: string;
   nickname: string;
@@ -21,7 +23,7 @@ export interface FriendWithStats extends FaceitPlayer {
 
 export interface LiveMatch {
   matchId: string;
-  status: string;
+  status: MatchStatus;
   map: string;
   score: { faction1: number; faction2: number };
   startedAt: number;
@@ -67,7 +69,7 @@ export interface MatchWithStats {
   matchId: string;
   map: string;
   score: string;
-  status: string;
+  status: MatchStatus;
   startedAt: number;
   finishedAt: number | null;
   players: MatchPlayerStats[];
