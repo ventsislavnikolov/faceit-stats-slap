@@ -99,7 +99,7 @@ function DashboardPage() {
             {searchResult.friends.length} loaded
             {searchResult.limited && (
               <span className="text-error ml-1">
-                (capped at 50 — player has {searchResult.totalFriends} friends,
+                (capped at 20 — player has {searchResult.totalFriends} friends,
                 more would exceed FACEIT rate limits)
               </span>
             )}
@@ -123,7 +123,7 @@ function DashboardPage() {
       ) : searchLoading ? (
         <div className="flex items-center justify-center flex-1">
           <div className="text-accent animate-pulse text-sm">
-            Loading friends (up to 50)...
+            Loading friends (up to 20)...
           </div>
         </div>
       ) : enrichedFriends.length === 0 && !searchError ? (
