@@ -1,16 +1,15 @@
-import { createAPIFileRoute } from "@tanstack/react-start/api";
+import { createServerFn } from "@tanstack/react-start";
 import { TRACKED_FRIENDS, getTwitchChannel } from "~/lib/constants";
 import { fetchPlayer, fetchPlayerLifetimeStats } from "~/lib/faceit";
 import { createServerSupabase } from "~/lib/supabase.server";
 import type { FriendWithStats } from "~/lib/types";
 
-export const APIRoute = createAPIFileRoute("/api/friends")({
-  GET: async () => {
+export const getFriends = createServerFn({ method: "GET" }).handler(
+  async (): Promise<FriendWithStats[]> => {
     const supabase = createServerSupabase();
-    const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
+    const CACHE_TTL_MS = 30 * 60 * 1000;
     const now = Date.now();
 
-    // Check Supabase cache first
     const { data: cached } = await supabase
       .from("tracked_friends")
       .select("*")
@@ -21,7 +20,11 @@ export const APIRoute = createAPIFileRoute("/api/friends")({
 
     for (const id of TRACKED_FRIENDS) {
       const row = cached?.find((r: any) => r.faceit_id === id);
-      if (row && row.updated_at && now - new Date(row.updated_at).getTime() < CACHE_TTL_MS) {
+      if (
+        row &&
+        row.updated_at &&
+        now - new Date(row.updated_at).getTime() < CACHE_TTL_MS
+      ) {
         freshFriends.push({
           faceitId: row.faceit_id,
           nickname: row.nickname,
@@ -44,7 +47,6 @@ export const APIRoute = createAPIFileRoute("/api/friends")({
       }
     }
 
-    // Fetch stale friends from FACEIT in batches of 5
     const staleFriends: FriendWithStats[] = [];
     const staleArray = [...staleIds];
     for (let i = 0; i < staleArray.length; i += 5) {
@@ -89,6 +91,6 @@ export const APIRoute = createAPIFileRoute("/api/friends")({
       }
     }
 
-    return Response.json([...freshFriends, ...staleFriends]);
-  },
-});
+    return [...freshFriends, ...staleFriends];
+  }
+);
