@@ -49,7 +49,7 @@ export function FriendsSidebar({
       {offline.length > 0 && (
         <>
           <div className="text-[10px] text-text-dim uppercase tracking-wider mt-4 mb-2">
-            Offline ({offline.length})
+            Not Playing ({offline.length})
           </div>
           <div className="flex flex-col gap-1.5">
             {offline.map((friend) => (
