@@ -116,6 +116,53 @@ export const getLiveMatches = createServerFn({ method: "GET" })
       );
     }
 
+    // ── Betting pool lifecycle ─────────────────────────────────
+
+    // 1. Create betting pools for new ONGOING matches within the 5-min window
+    for (const liveMatch of liveMatches) {
+      if (liveMatch.startedAt === 0) continue;
+      const matchAgeSeconds = Math.floor(Date.now() / 1000) - liveMatch.startedAt;
+      if (matchAgeSeconds <= 5 * 60) {
+        await supabase.from("betting_pools").insert({
+          faceit_match_id: liveMatch.matchId,
+          team1_name: liveMatch.teams.faction1.name,
+          team2_name: liveMatch.teams.faction2.name,
+          opens_at: new Date(liveMatch.startedAt * 1000).toISOString(),
+          closes_at: new Date(liveMatch.startedAt * 1000 + 5 * 60 * 1000).toISOString(),
+        }).onConflict("faceit_match_id").ignore();
+      }
+    }
+
+    // 2. Stale pool sweep: resolve/cancel pools whose match left the live list
+    const liveIds = liveMatches.map((m) => m.matchId);
+    const { data: stalePools } = await supabase
+      .from("betting_pools")
+      .select("faceit_match_id")
+      .in("status", ["OPEN", "CLOSED"]);
+
+    for (const pool of stalePools ?? []) {
+      if (liveIds.includes(pool.faceit_match_id)) continue;
+      try {
+        const match = await fetchMatch(pool.faceit_match_id);
+        if (match.status === "FINISHED") {
+          const score = match.results?.score;
+          if (score) {
+            const winner = score.faction1 > score.faction2 ? "team1" : "team2";
+            await supabase.rpc("resolve_pool", {
+              p_faceit_match_id: pool.faceit_match_id,
+              p_winning_team: winner,
+            });
+          }
+        } else if (match.status === "CANCELLED") {
+          await supabase.rpc("cancel_pool", {
+            p_faceit_match_id: pool.faceit_match_id,
+          });
+        }
+      } catch {
+        // Ignore per-match errors, continue sweep
+      }
+    }
+
     return liveMatches;
   }
 );
