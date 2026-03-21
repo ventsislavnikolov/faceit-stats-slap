@@ -1,10 +1,20 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createIsomorphicFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { useFriends } from "~/hooks/useFriends";
 import { usePlayerStats } from "~/hooks/usePlayerStats";
 import { RecentMatches } from "~/components/RecentMatches";
 
+const requireAuth = createIsomorphicFn()
+  .server(() => {})
+  .client(async () => {
+    const { getSupabaseClient } = await import("~/lib/supabase.client");
+    const { data: { session } } = await getSupabaseClient().auth.getSession();
+    if (!session) throw redirect({ to: "/sign-in" as any });
+  });
+
 export const Route = createFileRoute("/_authed/history")({
+  beforeLoad: () => requireAuth(),
   component: HistoryPage,
 });
 

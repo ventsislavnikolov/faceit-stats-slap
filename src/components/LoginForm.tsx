@@ -16,7 +16,7 @@ const doSignUp = createIsomorphicFn()
     return getSupabaseClient().auth.signUp({ email, password });
   });
 
-export function LoginForm() {
+export function LoginForm({ redirectTo = "/" }: { redirectTo?: string }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -51,7 +51,7 @@ export function LoginForm() {
       return;
     }
 
-    router.navigate({ to: "/dashboard" });
+    router.navigate({ to: redirectTo as any });
   }
 
   return (
