@@ -10,7 +10,7 @@ function AppLayout() {
       <nav className="flex justify-between items-center px-4 py-2.5 bg-bg-card border-b border-border">
         <div className="flex items-center gap-4">
           <span className="text-accent font-bold text-base">
-            FACEIT<span className="text-text">LIVE</span>
+            FaceitFriends<span className="text-text">Live</span>
           </span>
           <div className="flex gap-3 text-xs">
             <Link
