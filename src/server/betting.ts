@@ -49,7 +49,7 @@ export const createBettingPool = createServerFn({ method: "POST" })
       closes_at: closesAt,
     });
     // Conflict (already exists) is silently ignored
-    if (error && !error.message.includes("duplicate")) {
+    if (error && error.code !== "23505") {
       console.error("createBettingPool error:", error.message);
     }
     return { ok: true };

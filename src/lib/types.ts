@@ -1,4 +1,4 @@
-export type MatchStatus = "ONGOING" | "FINISHED" | "CANCELLED";
+export type MatchStatus = "ONGOING" | "READY" | "VOTING" | "CONFIGURING" | "FINISHED" | "CANCELLED";
 
 export interface FaceitPlayer {
   faceitId: string;
