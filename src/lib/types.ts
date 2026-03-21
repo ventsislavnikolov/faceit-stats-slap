@@ -83,3 +83,42 @@ export interface TwitchStream {
   title: string;
   thumbnailUrl: string;
 }
+
+export type BetSide = "team1" | "team2";
+export type BettingPoolStatus = "OPEN" | "CLOSED" | "RESOLVED" | "REFUNDED";
+
+export interface BettingPool {
+  id: string;
+  faceitMatchId: string;
+  status: BettingPoolStatus;
+  team1Name: string;
+  team2Name: string;
+  team1Pool: number;
+  team2Pool: number;
+  winningTeam: BetSide | null;
+  opensAt: string;
+  closesAt: string;
+  resolvedAt: string | null;
+}
+
+export interface Bet {
+  id: string;
+  poolId: string;
+  userId: string;
+  side: BetSide;
+  amount: number;
+  payout: number | null;
+  createdAt: string;
+}
+
+export interface BetWithPool extends Bet {
+  pool: BettingPool;
+}
+
+export interface LeaderboardEntry {
+  userId: string;
+  nickname: string;
+  coins: number;
+  betsPlaced: number;
+  betsWon: number;
+}
