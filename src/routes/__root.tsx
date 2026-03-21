@@ -24,6 +24,11 @@ export const Route = createRootRoute({
     ],
   }),
   component: RootLayout,
+  notFoundComponent: () => (
+    <div className="flex items-center justify-center min-h-screen text-text-muted text-sm">
+      404 — Page not found
+    </div>
+  ),
 });
 
 function RootLayout() {
