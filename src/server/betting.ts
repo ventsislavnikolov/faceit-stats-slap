@@ -125,6 +125,20 @@ export const cancelPool = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+// ── getCoinBalance ────────────────────────────────────────────
+
+export const getCoinBalance = createServerFn({ method: "GET" })
+  .inputValidator((userId: string) => userId)
+  .handler(async ({ data: userId }): Promise<number> => {
+    const supabase = createServerSupabase();
+    const { data } = await supabase
+      .from("profiles")
+      .select("coins")
+      .eq("id", userId)
+      .single();
+    return (data as any)?.coins ?? 0;
+  });
+
 // ── claimDailyAllowance ───────────────────────────────────────
 // Note: resolveStalePools logic lives inline in getLiveMatches (src/server/matches.ts)
 // to avoid an extra server function call on each poll. No standalone export needed.

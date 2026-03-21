@@ -3,14 +3,6 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { createIsomorphicFn } from "@tanstack/react-start";
 import { useCoinBalance } from "~/hooks/useCoinBalance";
-
-const getClientSession = createIsomorphicFn()
-  .server(() => null)
-  .client(async () => {
-    const { getSupabaseClient } = await import("~/lib/supabase.client");
-    const { data: { session } } = await getSupabaseClient().auth.getSession();
-    return session;
-  });
 import { useLiveMatches } from "~/hooks/useLiveMatches";
 import { useTwitchLive } from "~/hooks/useTwitchLive";
 import { usePlayerStats } from "~/hooks/usePlayerStats";
@@ -19,6 +11,14 @@ import { TwitchEmbed } from "~/components/TwitchEmbed";
 import { LiveMatchCard } from "~/components/LiveMatchCard";
 import { RecentMatches } from "~/components/RecentMatches";
 import { searchAndLoadFriends } from "~/server/friends";
+
+const getClientSession = createIsomorphicFn()
+  .server(() => null)
+  .client(async () => {
+    const { getSupabaseClient } = await import("~/lib/supabase.client");
+    const { data: { session } } = await getSupabaseClient().auth.getSession();
+    return session;
+  });
 
 export const Route = createFileRoute("/_authed/$nickname")({
   component: PlayerDashboard,
