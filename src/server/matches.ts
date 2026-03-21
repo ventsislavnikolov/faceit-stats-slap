@@ -1,5 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { TRACKED_FRIENDS } from "~/lib/constants";
+
+const BATCH_DELAY_MS = 150;
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 import {
   fetchPlayerHistory,
   fetchMatch,
@@ -18,13 +21,20 @@ export const getLiveMatches = createServerFn({ method: "GET" })
     const supabase = createServerSupabase();
     const liveMatches: LiveMatch[] = [];
 
-    const historyResults = await Promise.allSettled(
-      ids.map(async (friendId) => {
-        const history = await fetchPlayerHistory(friendId, 1);
-        if (!history.length) return null;
-        return { matchId: history[0].match_id, friendId };
-      })
-    );
+    // Batch history calls to stay within FACEIT rate limits
+    const historyResults: PromiseSettledResult<{ matchId: string; friendId: string } | null>[] = [];
+    for (let i = 0; i < ids.length; i += 5) {
+      if (i > 0) await sleep(BATCH_DELAY_MS);
+      const batch = ids.slice(i, i + 5);
+      const batchResults = await Promise.allSettled(
+        batch.map(async (friendId) => {
+          const history = await fetchPlayerHistory(friendId, 1);
+          if (!history.length) return null;
+          return { matchId: history[0].match_id, friendId };
+        })
+      );
+      historyResults.push(...batchResults);
+    }
 
     const uniqueMatches = new Map<string, string[]>();
     for (const result of historyResults) {
@@ -198,32 +208,39 @@ export const getMatchDetails = createServerFn({ method: "GET" })
 export const getPlayerStats = createServerFn({ method: "GET" })
   .inputValidator((playerId: string) => playerId)
   .handler(async ({ data: playerId }) => {
-    const history = await fetchPlayerHistory(playerId, 30);
+    const history = await fetchPlayerHistory(playerId, 15); // capped at 15 to limit API calls
 
-    const matches = await Promise.allSettled(
-      history.map(async (h: any) => {
-        const stats = await fetchMatchStats(h.match_id);
-        const round = stats.rounds?.[0];
-        if (!round) return null;
+    const allResults: PromiseSettledResult<any>[] = [];
+    for (let i = 0; i < history.length; i += 5) {
+      if (i > 0) await sleep(BATCH_DELAY_MS);
+      const batch = history.slice(i, i + 5);
+      const batchResults = await Promise.allSettled(
+        batch.map(async (h: any) => {
+          const stats = await fetchMatchStats(h.match_id);
+          const round = stats.rounds?.[0];
+          if (!round) return null;
 
-        for (const team of round.teams || []) {
-          const player = (team.players || []).find(
-            (p: any) => p.player_id === playerId
-          );
-          if (player) {
-            return {
-              matchId: h.match_id,
-              map: round.round_stats?.Map || "unknown",
-              score: round.round_stats?.Score || "",
-              startedAt: h.started_at,
-              finishedAt: h.finished_at,
-              ...parseMatchStats(player),
-            };
+          for (const team of round.teams || []) {
+            const player = (team.players || []).find(
+              (p: any) => p.player_id === playerId
+            );
+            if (player) {
+              return {
+                matchId: h.match_id,
+                map: round.round_stats?.Map || "unknown",
+                score: round.round_stats?.Score || "",
+                startedAt: h.started_at,
+                finishedAt: h.finished_at,
+                ...parseMatchStats(player),
+              };
+            }
           }
-        }
-        return null;
-      })
-    );
+          return null;
+        })
+      );
+      allResults.push(...batchResults);
+    }
+    const matches = allResults;
 
     return matches
       .filter((r) => r.status === "fulfilled" && r.value)

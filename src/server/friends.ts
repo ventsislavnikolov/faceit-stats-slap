@@ -8,7 +8,9 @@ import {
 import { createServerSupabase } from "~/lib/supabase.server";
 import type { FriendWithStats } from "~/lib/types";
 
-const FRIEND_LIMIT = 50;
+const FRIEND_LIMIT = 20;
+const BATCH_DELAY_MS = 150;
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export const searchAndLoadFriends = createServerFn({ method: "GET" })
@@ -33,6 +35,7 @@ export const searchAndLoadFriends = createServerFn({ method: "GET" })
 
       const friends: FriendWithStats[] = [];
       for (let i = 0; i < idsToFetch.length; i += 5) {
+        if (i > 0) await sleep(BATCH_DELAY_MS);
         const batch = idsToFetch.slice(i, i + 5);
         const results = await Promise.allSettled(
           batch.map(async (id) => {
@@ -109,6 +112,7 @@ export const getFriends = createServerFn({ method: "GET" }).handler(
     const staleFriends: FriendWithStats[] = [];
     const staleArray = [...staleIds];
     for (let i = 0; i < staleArray.length; i += 5) {
+      if (i > 0) await sleep(BATCH_DELAY_MS);
       const batch = staleArray.slice(i, i + 5);
       const results = await Promise.allSettled(
         batch.map(async (id) => {
