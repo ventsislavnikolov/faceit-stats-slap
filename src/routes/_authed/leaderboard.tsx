@@ -1,7 +1,15 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { createIsomorphicFn } from "@tanstack/react-start";
 import { useLeaderboard } from "~/hooks/useLeaderboard";
 import { useEffect, useState } from "react";
+
+const requireAuth = createIsomorphicFn()
+  .server(() => {})
+  .client(async () => {
+    const { getSupabaseClient } = await import("~/lib/supabase.client");
+    const { data: { session } } = await getSupabaseClient().auth.getSession();
+    if (!session) throw redirect({ to: "/sign-in" as any });
+  });
 
 const getCurrentUserId = createIsomorphicFn()
   .server(() => null)
@@ -12,6 +20,7 @@ const getCurrentUserId = createIsomorphicFn()
   });
 
 export const Route = createFileRoute("/_authed/leaderboard")({
+  beforeLoad: () => requireAuth(),
   component: LeaderboardPage,
 });
 
