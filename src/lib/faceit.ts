@@ -3,8 +3,8 @@ import type { FaceitPlayer, MatchPlayerStats } from "./types";
 const BASE_URL = "https://open.faceit.com/data/v4";
 
 function getApiKey(): string {
-  const key = process.env.FACEIT_API_KEY;
-  if (!key) throw new Error("Missing FACEIT_API_KEY");
+  const key = process.env.FACEIT_SERVER_SIDE_API_KEY;
+  if (!key) throw new Error("Missing FACEIT_SERVER_SIDE_API_KEY");
   return key;
 }
 
