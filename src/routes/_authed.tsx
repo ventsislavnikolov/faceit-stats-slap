@@ -1,8 +1,12 @@
 import { createFileRoute, Outlet, Link, redirect, useRouter } from "@tanstack/react-router";
+import { createIsomorphicFn } from "@tanstack/react-start";
 import { getSupabaseClient } from "~/lib/supabase.client";
 
-export const Route = createFileRoute("/_authed")({
-  beforeLoad: async () => {
+const verifyAuth = createIsomorphicFn()
+  .server(() => {
+    // Session lives in the browser — auth enforced client-side only
+  })
+  .client(async () => {
     const supabase = getSupabaseClient();
     const {
       data: { session },
@@ -10,7 +14,17 @@ export const Route = createFileRoute("/_authed")({
     if (!session) {
       throw redirect({ to: "/" });
     }
-  },
+  });
+
+const doSignOut = createIsomorphicFn()
+  .server(() => {})
+  .client(async () => {
+    const supabase = getSupabaseClient();
+    await supabase.auth.signOut();
+  });
+
+export const Route = createFileRoute("/_authed")({
+  beforeLoad: () => verifyAuth(),
   component: AuthedLayout,
 });
 
@@ -18,8 +32,7 @@ function AuthedLayout() {
   const router = useRouter();
 
   async function handleSignOut() {
-    const supabase = getSupabaseClient();
-    await supabase.auth.signOut();
+    await doSignOut();
     router.navigate({ to: "/" });
   }
 

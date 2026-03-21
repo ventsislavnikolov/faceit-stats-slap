@@ -1,6 +1,20 @@
 import { useState } from "react";
-import { getSupabaseClient } from "~/lib/supabase.client";
 import { useRouter } from "@tanstack/react-router";
+import { createIsomorphicFn } from "@tanstack/react-start";
+
+const doSignIn = createIsomorphicFn()
+  .server(async (_email: string, _password: string) => ({ error: null as any }))
+  .client(async (email: string, password: string) => {
+    const { getSupabaseClient } = await import("~/lib/supabase.client");
+    return getSupabaseClient().auth.signInWithPassword({ email, password });
+  });
+
+const doSignUp = createIsomorphicFn()
+  .server(async (_email: string, _password: string) => ({ error: null as any }))
+  .client(async (email: string, password: string) => {
+    const { getSupabaseClient } = await import("~/lib/supabase.client");
+    return getSupabaseClient().auth.signUp({ email, password });
+  });
 
 export function LoginForm() {
   const [email, setEmail] = useState("");
@@ -15,10 +29,9 @@ export function LoginForm() {
     setError(null);
     setLoading(true);
 
-    const supabase = getSupabaseClient();
     const { error: authError } = isSignUp
-      ? await supabase.auth.signUp({ email, password })
-      : await supabase.auth.signInWithPassword({ email, password });
+      ? await doSignUp(email, password)
+      : await doSignIn(email, password);
 
     setLoading(false);
     if (authError) {
