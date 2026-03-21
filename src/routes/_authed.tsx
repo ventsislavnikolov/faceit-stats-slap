@@ -14,7 +14,7 @@ function AppLayout() {
           </span>
           <div className="flex gap-3 text-xs">
             <Link
-              to="/dashboard"
+              to="/"
               activeProps={{ className: "text-accent border-b border-accent pb-0.5" }}
               inactiveProps={{ className: "text-text-muted hover:text-accent" }}
             >

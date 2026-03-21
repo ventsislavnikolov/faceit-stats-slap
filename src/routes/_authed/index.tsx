@@ -10,7 +10,7 @@ import { LiveMatchCard } from "~/components/LiveMatchCard";
 import { RecentMatches } from "~/components/RecentMatches";
 import { searchAndLoadFriends } from "~/server/friends";
 
-export const Route = createFileRoute("/_authed/dashboard")({
+export const Route = createFileRoute("/_authed/")({
   component: DashboardPage,
 });
 
