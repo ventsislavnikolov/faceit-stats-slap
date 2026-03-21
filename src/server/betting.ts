@@ -177,6 +177,41 @@ export const getLeaderboard = createServerFn({ method: "GET" }).handler(
   }
 );
 
+// ── getUserBetForMatch ────────────────────────────────────────
+
+export const getUserBetForMatch = createServerFn({ method: "GET" })
+  .inputValidator((input: { faceitMatchId: string; userId: string }) => input)
+  .handler(async ({ data }): Promise<Bet | null> => {
+    const supabase = createServerSupabase();
+
+    const { data: poolRow } = await supabase
+      .from("betting_pools")
+      .select("id")
+      .eq("faceit_match_id", data.faceitMatchId)
+      .single();
+
+    if (!poolRow) return null;
+
+    const { data: betRow } = await supabase
+      .from("bets")
+      .select("*")
+      .eq("pool_id", poolRow.id)
+      .eq("user_id", data.userId)
+      .single();
+
+    if (!betRow) return null;
+
+    return {
+      id: betRow.id,
+      poolId: betRow.pool_id,
+      userId: betRow.user_id,
+      side: betRow.side,
+      amount: betRow.amount,
+      payout: betRow.payout,
+      createdAt: betRow.created_at,
+    };
+  });
+
 // ── getUserBetHistory ─────────────────────────────────────────
 
 export const getUserBetHistory = createServerFn({ method: "GET" })

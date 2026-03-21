@@ -1,6 +1,7 @@
 import { createFileRoute, Outlet, Link, useRouter } from "@tanstack/react-router";
 import { createIsomorphicFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
+import { CoinBalance } from "~/components/CoinBalance";
 
 const getSession = createIsomorphicFn()
   .server(() => null)
@@ -24,9 +25,10 @@ export const Route = createFileRoute("/_authed")({
 function AppLayout() {
   const router = useRouter();
   const [isSignedIn, setIsSignedIn] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    getSession().then((s) => setIsSignedIn(!!s));
+    getSession().then((s) => { setIsSignedIn(!!s); setUserId(s?.user.id ?? null); });
   }, []);
 
   async function handleSignOut() {
@@ -54,12 +56,12 @@ function AppLayout() {
         </div>
 
         {isSignedIn ? (
-          <button
-            onClick={handleSignOut}
-            className="text-text-muted text-xs hover:text-error"
-          >
-            Sign Out
-          </button>
+          <div className="flex items-center gap-3">
+            {userId && <CoinBalance userId={userId} />}
+            <button onClick={handleSignOut} className="text-text-muted text-xs hover:text-error">
+              Sign Out
+            </button>
+          </div>
         ) : (
           <Link
             to="/sign-in"

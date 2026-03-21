@@ -1,6 +1,16 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { createIsomorphicFn } from "@tanstack/react-start";
+import { useCoinBalance } from "~/hooks/useCoinBalance";
+
+const getClientSession = createIsomorphicFn()
+  .server(() => null)
+  .client(async () => {
+    const { getSupabaseClient } = await import("~/lib/supabase.client");
+    const { data: { session } } = await getSupabaseClient().auth.getSession();
+    return session;
+  });
 import { useLiveMatches } from "~/hooks/useLiveMatches";
 import { useTwitchLive } from "~/hooks/useTwitchLive";
 import { usePlayerStats } from "~/hooks/usePlayerStats";
@@ -19,6 +29,13 @@ function PlayerDashboard() {
   const navigate = useNavigate();
   const [input, setInput] = useState(nickname);
   const [selectedFriendId, setSelectedFriendId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    getClientSession().then((s) => setUserId(s?.user.id ?? null));
+  }, []);
+
+  const { data: userCoins = 0 } = useCoinBalance(userId);
 
   const {
     data: searchResult,
@@ -134,7 +151,7 @@ function PlayerDashboard() {
           <main className="flex-1 p-4 overflow-y-auto">
             {liveStream && <TwitchEmbed stream={liveStream} />}
             {liveMatches.map((match) => (
-              <LiveMatchCard key={match.matchId} match={match} />
+              <LiveMatchCard key={match.matchId} match={match} userId={userId} userCoins={userCoins} />
             ))}
             {selectedFriendId ? (
               statsLoading ? (

@@ -1,11 +1,16 @@
 import type { LiveMatch } from "~/lib/types";
 import { MapBadge } from "./MapBadge";
+import { useBettingPool } from "~/hooks/useBettingPool";
+import { BettingPanel } from "~/components/BettingPanel";
 
 interface LiveMatchCardProps {
   match: LiveMatch;
+  userId?: string | null;
+  userCoins?: number;
 }
 
-export function LiveMatchCard({ match }: LiveMatchCardProps) {
+export function LiveMatchCard({ match, userId, userCoins }: LiveMatchCardProps) {
+  const { data: betData } = useBettingPool(match.matchId, userId ?? null);
   const f1 = match.teams.faction1;
   const f2 = match.teams.faction2;
   const isFriendFaction1 = match.friendFaction === "faction1";
@@ -54,6 +59,15 @@ export function LiveMatchCard({ match }: LiveMatchCardProps) {
           );
         })}
       </div>
+      {betData?.pool && (
+        <BettingPanel
+          pool={betData.pool}
+          userBet={betData.userBet}
+          userId={userId ?? null}
+          userCoins={userCoins ?? 0}
+          matchId={match.matchId}
+        />
+      )}
     </div>
   );
 }
