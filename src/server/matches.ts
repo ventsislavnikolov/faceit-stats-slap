@@ -17,6 +17,7 @@ import {
 } from "~/lib/faceit";
 import { createServerSupabase } from "~/lib/supabase.server";
 import type { LiveMatch } from "~/lib/types";
+import { getWebhookLiveMatchMap } from "~/server/faceit-webhooks";
 
 async function syncPlayerHistory(faceitId: string, n: number): Promise<void> {
   const supabase = createServerSupabase();
@@ -115,12 +116,17 @@ export const getLiveMatches = createServerFn({ method: "GET" })
     const ids = playerIds;
     const supabase = createServerSupabase();
     const liveMatches: LiveMatch[] = [];
+    const uniqueMatches = await getWebhookLiveMatchMap(ids);
+    const playerIdsCoveredByWebhook = new Set(
+      [...uniqueMatches.values()].flatMap((friendIds) => friendIds)
+    );
+    const fallbackIds = ids.filter((id) => !playerIdsCoveredByWebhook.has(id));
 
     // Batch history calls to stay within FACEIT rate limits
     const historyResults: PromiseSettledResult<{ matchId: string; friendId: string } | null>[] = [];
-    for (let i = 0; i < ids.length; i += LIVE_HISTORY_BATCH_SIZE) {
+    for (let i = 0; i < fallbackIds.length; i += LIVE_HISTORY_BATCH_SIZE) {
       if (i > 0) await sleep(LIVE_HISTORY_DELAY_MS);
-      const batch = ids.slice(i, i + LIVE_HISTORY_BATCH_SIZE);
+      const batch = fallbackIds.slice(i, i + LIVE_HISTORY_BATCH_SIZE);
       const batchResults = await Promise.allSettled(
         batch.map(async (friendId) => {
           const history = await fetchPlayerHistory(friendId, 5);
@@ -132,7 +138,6 @@ export const getLiveMatches = createServerFn({ method: "GET" })
       historyResults.push(...batchResults);
     }
 
-    const uniqueMatches = new Map<string, string[]>();
     for (const result of historyResults) {
       if (result.status !== "fulfilled" || !result.value) continue;
       const { matchId, friendId } = result.value;
