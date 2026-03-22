@@ -440,14 +440,13 @@ export const getStatsLeaderboard = createServerFn({ method: "GET" })
 
     const normalizedRows: SharedStatsLeaderboardRow[] = (rows || []).map((row: any) => {
       const meta = friendMap.get(row.faceit_player_id);
-      const isTarget = row.faceit_player_id === targetPlayerId;
 
       return {
         matchId: row.match_id,
         playedAt: row.played_at,
         faceitId: row.faceit_player_id,
         nickname: row.nickname || meta?.nickname || row.faceit_player_id,
-        elo: isTarget ? 0 : meta?.elo ?? 0,
+        elo: meta?.elo ?? 0,
         kdRatio: Number(row.kd_ratio) || 0,
         adr: Number(row.adr) || 0,
         hsPercent: Number(row.hs_percent) || 0,
@@ -463,13 +462,31 @@ export const getStatsLeaderboard = createServerFn({ method: "GET" })
       };
     });
 
-    return buildSharedStatsLeaderboard({
+    let result = buildSharedStatsLeaderboard({
       rows: normalizedRows,
       targetPlayerId,
       friendIds: playerIds,
       n,
       days,
     });
+
+    const targetEntry = result.entries.find((entry) => entry.faceitId === targetPlayerId);
+    if (targetEntry) {
+      try {
+        const { fetchPlayer } = await import("~/lib/faceit");
+        const target = await fetchPlayer(targetPlayerId);
+        result = {
+          ...result,
+          entries: result.entries.map((entry) =>
+            entry.faceitId === targetPlayerId ? { ...entry, elo: target.elo } : entry
+          ),
+        };
+      } catch {
+        // Preserve the leaderboard if the live ELO lookup fails.
+      }
+    }
+
+    return result;
   });
 
 export const syncAllPlayerHistory = createServerFn({ method: "POST" })

@@ -1,16 +1,24 @@
 import { describe, expect, it, vi } from "vitest";
 import { runWithStartContext } from "../../node_modules/.pnpm/@tanstack+start-storage-context@1.166.15/node_modules/@tanstack/start-storage-context/dist/esm/index.js";
+import { MY_FACEIT_ID } from "~/lib/constants";
 import {
   buildSharedStatsLeaderboard,
   type SharedStatsLeaderboardRow,
 } from "~/lib/stats-leaderboard";
 import { getStatsLeaderboard } from "~/server/matches";
 
-const mockSupabase = vi.hoisted(() => {
-  const trackedFriendsRows = [
-    { faceit_id: "friend-a", nickname: "Friend A", elo: 2010 },
-  ];
+vi.mock("~/lib/stats-leaderboard", async () => {
+  const actual = await vi.importActual<typeof import("~/lib/stats-leaderboard")>(
+    "~/lib/stats-leaderboard"
+  );
+  return {
+    ...actual,
+    buildSharedStatsLeaderboard: vi.fn(actual.buildSharedStatsLeaderboard),
+  };
+});
 
+const mockSupabase = vi.hoisted(() => {
+  const trackedFriendsRows = [{ faceit_id: "friend-a", nickname: "Friend A", elo: 2010 }];
   const sharedRowsByPlayer = new Map<string, any[]>([
     [
       "target",
@@ -61,23 +69,22 @@ const mockSupabase = vi.hoisted(() => {
     ["15844c99-d26e-419e-bd14-30908f502c03", []],
   ]);
 
-  const matchPlayerStatsQuery = () => {
-    let faceitIds: string[] = [];
-    return {
-      select: () => ({
-        in: (_column: string, value: string[]) => {
-          faceitIds = value;
-          return {
-            gte: () => ({
-              order: async () => ({
-                data: faceitIds.flatMap((faceitId) => sharedRowsByPlayer.get(faceitId) ?? []),
-              }),
-            }),
-          };
-        },
+  let lastMatchPlayerStatIds: string[] = [];
+
+  const matchPlayerStatsQuery = () => ({
+    select: () => ({
+      in: (_column: string, value: string[]) => ({
+        gte: () => ({
+          order: async () => {
+            lastMatchPlayerStatIds = value;
+            return {
+              data: value.flatMap((faceitId) => sharedRowsByPlayer.get(faceitId) ?? []),
+            };
+          },
+        }),
       }),
-    };
-  };
+    }),
+  });
 
   const supabase = {
     from: vi.fn((table: string) => {
@@ -97,7 +104,10 @@ const mockSupabase = vi.hoisted(() => {
     }),
   };
 
-  return { supabase };
+  return {
+    supabase,
+    getLastMatchPlayerStatIds: () => lastMatchPlayerStatIds,
+  };
 });
 
 vi.mock("~/lib/supabase.server", () => ({
@@ -105,11 +115,11 @@ vi.mock("~/lib/supabase.server", () => ({
 }));
 
 vi.mock("~/lib/faceit", () => ({
-  fetchPlayer: vi.fn(async () => ({
-    faceitId: "15844c99-d26e-419e-bd14-30908f502c03",
-    nickname: "soavarice",
+  fetchPlayer: vi.fn(async (playerId: string) => ({
+    faceitId: playerId,
+    nickname: playerId === "target" ? "Target" : "soavarice",
     avatar: "",
-    elo: 1690,
+    elo: playerId === "target" ? 3333 : 1690,
     skillLevel: 8,
     country: "BG",
   })),
@@ -233,20 +243,20 @@ describe("buildSharedStatsLeaderboard", () => {
     expect(result.targetMatchCount).toBe(2);
     expect(result.sharedFriendCount).toBe(1);
     expect(result.entries.map((entry) => entry.faceitId)).toEqual(["friend-a"]);
-      expect(result.entries[0]).toMatchObject({
-        gamesPlayed: 2,
-        avgKd: 3,
-        avgAdr: 100,
-        winRate: 50,
-        avgHsPercent: 45,
-        avgKrRatio: 1,
-        avgFirstKills: 2,
-        avgClutchKills: 0.5,
-        avgUtilityDamage: 16,
-        avgEnemiesFlashed: 4,
-        avgEntryRate: 0.67,
-        avgSniperKills: 0.5,
-      });
+    expect(result.entries[0]).toMatchObject({
+      gamesPlayed: 2,
+      avgKd: 3,
+      avgAdr: 100,
+      winRate: 50,
+      avgHsPercent: 45,
+      avgKrRatio: 1,
+      avgFirstKills: 2,
+      avgClutchKills: 0.5,
+      avgUtilityDamage: 16,
+      avgEnemiesFlashed: 4,
+      avgEntryRate: 0.67,
+      avgSniperKills: 0.5,
+    });
   });
 
   it("computes entry rate as a normalized fraction", () => {
@@ -458,5 +468,56 @@ describe("buildSharedStatsLeaderboard", () => {
       targetMatchCount: 1,
       sharedFriendCount: 1,
     });
+  });
+
+  it("does not force-add MY_FACEIT_ID when querying a different target", async () => {
+    vi.mocked(buildSharedStatsLeaderboard).mockReturnValueOnce({
+      entries: [
+        {
+          faceitId: "target",
+          nickname: "Target",
+          elo: 0,
+          gamesPlayed: 1,
+          avgKd: 1,
+          avgAdr: 60,
+          winRate: 100,
+          avgHsPercent: 30,
+          avgKrRatio: 0.4,
+          avgFirstKills: 0,
+          avgClutchKills: 0,
+          avgUtilityDamage: 4,
+          avgEnemiesFlashed: 1,
+          avgEntryRate: 0,
+          avgSniperKills: 0,
+        },
+      ],
+      targetMatchCount: 1,
+      sharedFriendCount: 1,
+    });
+
+    const result = await runWithStartContext(
+      {
+        contextAfterGlobalMiddlewares: {},
+        request: new Request("http://localhost"),
+      } as any,
+      () =>
+        getStatsLeaderboard({
+          data: {
+            targetPlayerId: "target",
+            playerIds: ["friend-a"],
+            n: 20,
+            days: 30,
+          },
+        } as any)
+    );
+
+    expect(mockSupabase.getLastMatchPlayerStatIds()).toEqual(["target", "friend-a"]);
+    expect(mockSupabase.getLastMatchPlayerStatIds()).not.toContain(MY_FACEIT_ID);
+    expect(result.entries).toEqual([
+      expect.objectContaining({
+        faceitId: "target",
+        elo: 3333,
+      }),
+    ]);
   });
 });
