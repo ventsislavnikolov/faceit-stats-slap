@@ -1,7 +1,11 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { createIsomorphicFn } from "@tanstack/react-start";
 import { useLeaderboard } from "~/hooks/useLeaderboard";
+import { useStatsLeaderboard } from "~/hooks/useStatsLeaderboard";
+import { useSyncPlayerHistory } from "~/hooks/useSyncPlayerHistory";
+import { MY_FACEIT_ID } from "~/lib/constants";
 import { useEffect, useState } from "react";
+import type { StatsLeaderboardEntry } from "~/lib/types";
 
 const requireAuth = createIsomorphicFn()
   .server(() => {})
@@ -24,7 +28,156 @@ export const Route = createFileRoute("/_authed/leaderboard")({
   component: LeaderboardPage,
 });
 
-function LeaderboardPage() {
+type Tab = "stats" | "bets";
+type SortKey = "avgKd" | "avgAdr" | "winRate" | "avgHsPercent" | "avgKrRatio" | "gamesPlayed";
+type SortDir = "asc" | "desc";
+
+const STATS_COLS: { key: SortKey; label: string; decimals: number; suffix?: string }[] = [
+  { key: "avgKd",        label: "K/D",  decimals: 2 },
+  { key: "avgAdr",       label: "ADR",  decimals: 1 },
+  { key: "winRate",      label: "WIN%", decimals: 0, suffix: "%" },
+  { key: "avgHsPercent", label: "HS%",  decimals: 0, suffix: "%" },
+  { key: "avgKrRatio",   label: "K/R",  decimals: 2 },
+];
+
+function fmt(val: number, decimals: number, suffix = "") {
+  return val === 0 ? "—" : `${val.toFixed(decimals)}${suffix}`;
+}
+
+function sortEntries(
+  entries: StatsLeaderboardEntry[],
+  key: SortKey,
+  dir: SortDir
+): StatsLeaderboardEntry[] {
+  return [...entries].sort((a, b) =>
+    dir === "desc" ? b[key] - a[key] : a[key] - b[key]
+  );
+}
+
+function StatsTab() {
+  const [n, setN] = useState<20 | 50 | 100>(20);
+  const [sortKey, setSortKey] = useState<SortKey>("avgKd");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
+
+  const { data: rawEntries = [], isLoading } = useStatsLeaderboard(n);
+  const sync = useSyncPlayerHistory();
+
+  const entries = sortEntries(rawEntries, sortKey, sortDir);
+
+  function handleSort(key: SortKey) {
+    if (key === sortKey) {
+      setSortDir((d) => (d === "desc" ? "asc" : "desc"));
+    } else {
+      setSortKey(key);
+      setSortDir("desc");
+    }
+  }
+
+  const rankColor = (i: number) =>
+    i === 0
+      ? "text-yellow-400"
+      : i === 1
+        ? "text-gray-400"
+        : i === 2
+          ? "text-amber-600"
+          : "text-text-dim";
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1">
+          <span className="text-text-dim text-xs mr-1">Last</span>
+          {([20, 50, 100] as const).map((v) => (
+            <button
+              key={v}
+              onClick={() => setN(v)}
+              className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+                n === v ? "bg-accent text-black" : "bg-bg-elevated text-text-muted hover:text-text"
+              }`}
+            >
+              {v}
+            </button>
+          ))}
+          <span className="text-text-dim text-xs ml-1">games</span>
+        </div>
+        <button
+          onClick={() => sync.mutate(n)}
+          disabled={sync.isPending}
+          className="text-xs px-3 py-1 rounded bg-bg-elevated text-text-muted hover:text-text disabled:opacity-50 transition-colors"
+        >
+          {sync.isPending ? "Syncing..." : "↻ Refresh"}
+        </button>
+      </div>
+
+      {isLoading ? (
+        <div className="text-accent animate-pulse text-center py-8">Loading...</div>
+      ) : (
+        <div className="flex flex-col gap-1">
+          <div
+            className="grid gap-2 px-3 pb-1 text-[10px] text-text-dim uppercase tracking-wider"
+            style={{ gridTemplateColumns: "2rem 1fr 3rem repeat(5, 4rem)" }}
+          >
+            <span>#</span>
+            <span>Player</span>
+            <span className="text-right">GP</span>
+            {STATS_COLS.map((col) => (
+              <button
+                key={col.key}
+                onClick={() => handleSort(col.key)}
+                className={`text-right hover:text-text transition-colors ${
+                  sortKey === col.key ? "text-accent" : ""
+                }`}
+              >
+                {col.label}
+                {sortKey === col.key ? (sortDir === "desc" ? " ↓" : " ↑") : ""}
+              </button>
+            ))}
+          </div>
+
+          {entries.map((entry, i) => {
+            const isMe = entry.faceitId === MY_FACEIT_ID;
+            return (
+              <div
+                key={entry.faceitId}
+                className={`grid gap-2 items-center px-3 py-2 rounded text-sm ${
+                  isMe
+                    ? "bg-accent/10 border-l-2 border-accent"
+                    : "bg-bg-elevated"
+                }`}
+                style={{ gridTemplateColumns: "2rem 1fr 3rem repeat(5, 4rem)" }}
+              >
+                <span className={`text-xs font-bold ${rankColor(i)}`}>{i + 1}</span>
+                <div className="flex items-baseline gap-1.5 min-w-0">
+                  <span className={`font-bold truncate ${isMe ? "text-accent" : "text-text"}`}>
+                    {isMe ? "You" : entry.nickname}
+                  </span>
+                  {entry.elo > 0 && (
+                    <span className="text-text-dim text-[10px] shrink-0">{entry.elo}</span>
+                  )}
+                </div>
+                <span className="text-right text-text-muted text-xs">
+                  {entry.gamesPlayed || "—"}
+                </span>
+                {STATS_COLS.map((col) => (
+                  <span
+                    key={col.key}
+                    className={`text-right text-xs ${
+                      sortKey === col.key ? "text-accent font-semibold" : "text-text-muted"
+                    }`}
+                  >
+                    {fmt(entry[col.key], col.decimals, col.suffix)}
+                  </span>
+                ))}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function BetsTab() {
   const { data: entries = [], isLoading } = useLeaderboard();
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
@@ -33,14 +186,11 @@ function LeaderboardPage() {
   }, []);
 
   return (
-    <div className="flex-1 p-6 max-w-2xl mx-auto w-full overflow-y-auto">
-      <h2 className="text-lg font-bold mb-6">Leaderboard</h2>
-
+    <>
       {isLoading ? (
         <div className="text-accent animate-pulse text-center py-8">Loading...</div>
       ) : (
         <div className="flex flex-col gap-1">
-          {/* Header */}
           <div className="grid grid-cols-[2rem_1fr_6rem_4rem_4rem_4rem] gap-2 text-[10px] text-text-dim uppercase tracking-wider px-3 pb-1">
             <span>#</span>
             <span>Player</span>
@@ -50,20 +200,21 @@ function LeaderboardPage() {
             <span className="text-right">Win%</span>
           </div>
           {entries.map((entry, i) => {
-            const winRate = entry.betsPlaced > 0
-              ? Math.round((entry.betsWon / entry.betsPlaced) * 100)
-              : 0;
+            const winRate =
+              entry.betsPlaced > 0
+                ? Math.round((entry.betsWon / entry.betsPlaced) * 100)
+                : 0;
             const isMe = entry.userId === currentUserId;
             return (
               <div
                 key={entry.userId}
                 className={`grid grid-cols-[2rem_1fr_6rem_4rem_4rem_4rem] gap-2 items-center px-3 py-2 rounded text-sm ${
-                  isMe
-                    ? "bg-accent/10 border border-accent/30"
-                    : "bg-bg-elevated"
+                  isMe ? "bg-accent/10 border border-accent/30" : "bg-bg-elevated"
                 }`}
               >
-                <span className={`text-xs ${i < 3 ? "text-accent font-bold" : "text-text-dim"}`}>
+                <span
+                  className={`text-xs ${i < 3 ? "text-accent font-bold" : "text-text-dim"}`}
+                >
                   {i + 1}
                 </span>
                 <span className={`truncate font-bold ${isMe ? "text-accent" : "text-text"}`}>
@@ -74,7 +225,9 @@ function LeaderboardPage() {
                 </span>
                 <span className="text-right text-text-muted">{entry.betsPlaced}</span>
                 <span className="text-right text-text-muted">{entry.betsWon}</span>
-                <span className={`text-right ${winRate >= 50 ? "text-accent" : "text-text-muted"}`}>
+                <span
+                  className={`text-right ${winRate >= 50 ? "text-accent" : "text-text-muted"}`}
+                >
                   {entry.betsPlaced > 0 ? `${winRate}%` : "—"}
                 </span>
               </div>
@@ -87,6 +240,34 @@ function LeaderboardPage() {
           )}
         </div>
       )}
+    </>
+  );
+}
+
+function LeaderboardPage() {
+  const [tab, setTab] = useState<Tab>("stats");
+
+  return (
+    <div className="flex-1 p-6 max-w-2xl mx-auto w-full overflow-y-auto">
+      <h2 className="text-lg font-bold mb-4">Leaderboard</h2>
+
+      <div className="flex border-b border-border mb-6">
+        {(["stats", "bets"] as Tab[]).map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={`px-4 py-2 text-sm font-medium capitalize transition-colors border-b-2 -mb-px ${
+              tab === t
+                ? "border-accent text-accent"
+                : "border-transparent text-text-muted hover:text-text"
+            }`}
+          >
+            {t === "stats" ? "Stats" : "Bets"}
+          </button>
+        ))}
+      </div>
+
+      {tab === "stats" ? <StatsTab /> : <BetsTab />}
     </div>
   );
 }
