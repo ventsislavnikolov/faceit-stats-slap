@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { TRACKED_FRIENDS } from "~/lib/constants";
+import { TRACKED_FRIENDS, MY_FACEIT_ID } from "~/lib/constants";
 
 const BATCH_DELAY_MS = 150;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -11,6 +11,82 @@ import {
 } from "~/lib/faceit";
 import { createServerSupabase } from "~/lib/supabase.server";
 import type { LiveMatch } from "~/lib/types";
+
+async function syncPlayerHistory(faceitId: string, n: number): Promise<void> {
+  const supabase = createServerSupabase();
+  const history = await fetchPlayerHistory(faceitId, n);
+
+  for (let i = 0; i < history.length; i += 5) {
+    if (i > 0) await sleep(BATCH_DELAY_MS);
+    const batch = history.slice(i, i + 5);
+    await Promise.allSettled(
+      batch.map(async (h: any) => {
+        const statsData = await fetchMatchStats(h.match_id).catch(() => null);
+        const round = statsData?.rounds?.[0];
+        if (!round) return;
+
+        const map = round.round_stats?.Map || "unknown";
+        const score = round.round_stats?.Score || "";
+
+        await supabase.from("matches").upsert(
+          {
+            faceit_match_id: h.match_id,
+            status: "FINISHED",
+            map,
+            score,
+            started_at: h.started_at
+              ? new Date(h.started_at * 1000).toISOString()
+              : null,
+            finished_at: h.finished_at
+              ? new Date(h.finished_at * 1000).toISOString()
+              : null,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "faceit_match_id" }
+        );
+
+        const { data: matchRow } = await supabase
+          .from("matches")
+          .select("id")
+          .eq("faceit_match_id", h.match_id)
+          .single();
+
+        if (!matchRow) return;
+
+        for (const team of round.teams || []) {
+          for (const player of team.players || []) {
+            const p = parseMatchStats(player);
+            await supabase.from("match_player_stats").upsert(
+              {
+                match_id: matchRow.id,
+                faceit_player_id: p.playerId,
+                nickname: p.nickname,
+                kills: p.kills,
+                deaths: p.deaths,
+                assists: p.assists,
+                headshots: p.headshots,
+                mvps: p.mvps,
+                kd_ratio: p.kdRatio,
+                adr: p.adr,
+                hs_percent: p.hsPercent,
+                kr_ratio: p.krRatio,
+                triple_kills: p.tripleKills,
+                quadro_kills: p.quadroKills,
+                penta_kills: p.pentaKills,
+                win: p.result,
+                map,
+                played_at: h.finished_at
+                  ? new Date(h.finished_at * 1000).toISOString()
+                  : null,
+              },
+              { onConflict: "match_id,faceit_player_id" }
+            );
+          }
+        }
+      })
+    );
+  }
+}
 
 export const getLiveMatches = createServerFn({ method: "GET" })
   .inputValidator((playerIds?: string[]) => playerIds)
@@ -245,6 +321,7 @@ export const getMatchDetails = createServerFn({ method: "GET" })
               kd_ratio: p.kdRatio,
               adr: p.adr,
               hs_percent: p.hsPercent,
+              kr_ratio: p.krRatio,
               triple_kills: p.tripleKills,
               quadro_kills: p.quadroKills,
               penta_kills: p.pentaKills,
@@ -261,6 +338,94 @@ export const getMatchDetails = createServerFn({ method: "GET" })
     }
 
     return result;
+  });
+
+export const getStatsLeaderboard = createServerFn({ method: "GET" })
+  .inputValidator((n: number) => n as 20 | 50 | 100)
+  .handler(async ({ data: n }): Promise<import("~/lib/types").StatsLeaderboardEntry[]> => {
+    const supabase = createServerSupabase();
+    const allPlayers = [MY_FACEIT_ID, ...TRACKED_FRIENDS];
+
+    const { data: friendRows } = await supabase
+      .from("tracked_friends")
+      .select("faceit_id, nickname, elo")
+      .in("faceit_id", [...TRACKED_FRIENDS]);
+    const friendMap = new Map(
+      (friendRows || []).map((f: any) => [f.faceit_id, { nickname: f.nickname, elo: f.elo ?? 0 }])
+    );
+
+    let selfElo = 0;
+    try {
+      const { fetchPlayer } = await import("~/lib/faceit");
+      const self = await fetchPlayer(MY_FACEIT_ID);
+      selfElo = self.elo;
+    } catch {
+      // selfElo stays 0
+    }
+
+    const entries: import("~/lib/types").StatsLeaderboardEntry[] = [];
+
+    for (const faceitId of allPlayers) {
+      const { data: rows } = await supabase
+        .from("match_player_stats")
+        .select("kd_ratio, adr, kr_ratio, hs_percent, win, nickname")
+        .eq("faceit_player_id", faceitId)
+        .order("played_at", { ascending: false })
+        .limit(n);
+
+      if (!rows || rows.length === 0) {
+        const meta = faceitId === MY_FACEIT_ID
+          ? { nickname: "soavarice", elo: selfElo }
+          : friendMap.get(faceitId) ?? { nickname: faceitId.slice(0, 8), elo: 0 };
+        entries.push({
+          faceitId,
+          nickname: meta.nickname,
+          elo: meta.elo,
+          gamesPlayed: 0,
+          avgKd: 0,
+          avgAdr: 0,
+          winRate: 0,
+          avgHsPercent: 0,
+          avgKrRatio: 0,
+        });
+        continue;
+      }
+
+      const gamesPlayed = rows.length;
+      const avg = (key: keyof typeof rows[0]) =>
+        rows.reduce((s: number, r: any) => s + (Number(r[key]) || 0), 0) / gamesPlayed;
+
+      const nickname =
+        rows[0].nickname ||
+        (faceitId === MY_FACEIT_ID
+          ? "soavarice"
+          : (friendMap.get(faceitId)?.nickname ?? faceitId.slice(0, 8)));
+      const elo =
+        faceitId === MY_FACEIT_ID ? selfElo : (friendMap.get(faceitId)?.elo ?? 0);
+
+      entries.push({
+        faceitId,
+        nickname,
+        elo,
+        gamesPlayed,
+        avgKd: Math.round(avg("kd_ratio") * 100) / 100,
+        avgAdr: Math.round(avg("adr") * 10) / 10,
+        winRate: Math.round((rows.filter((r: any) => r.win).length / gamesPlayed) * 100),
+        avgHsPercent: Math.round(avg("hs_percent")),
+        avgKrRatio: Math.round(avg("kr_ratio") * 100) / 100,
+      });
+    }
+
+    entries.sort((a, b) => b.avgKd - a.avgKd);
+    return entries;
+  });
+
+export const syncAllPlayerHistory = createServerFn({ method: "POST" })
+  .inputValidator((n: number) => n as 20 | 50 | 100)
+  .handler(async ({ data: n }): Promise<void> => {
+    for (const faceitId of [MY_FACEIT_ID, ...TRACKED_FRIENDS]) {
+      await syncPlayerHistory(faceitId, n);
+    }
   });
 
 export const getPlayerStats = createServerFn({ method: "GET" })
