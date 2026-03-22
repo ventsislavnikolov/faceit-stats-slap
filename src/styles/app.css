@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+@layer base {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #1a1a1a transparent;
+  }
+}
+
 @theme {
   --color-bg: #050505;
   --color-bg-card: #0a0a0a;
