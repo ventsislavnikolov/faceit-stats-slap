@@ -1,12 +1,18 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import {
   buildMatchScoreString,
+  faceitFetch,
   pickRelevantHistoryMatch,
   parseMatchStats,
   parseMatchTeamScore,
   parseLifetimeStats,
   parsePlayerProfile,
 } from "~/lib/faceit";
+
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.useRealTimers();
+});
 
 describe("parsePlayerProfile", () => {
   it("extracts player fields from API response", () => {
@@ -146,5 +152,33 @@ describe("pickRelevantHistoryMatch", () => {
     ]);
 
     expect(result?.match_id).toBe("finished-1");
+  });
+});
+
+describe("faceitFetch", () => {
+  it("retries rate-limited requests before succeeding", async () => {
+    vi.useFakeTimers();
+    process.env.FACEIT_SERVER_SIDE_API_KEY = "test-key";
+
+    const fetchMock = vi
+      .spyOn(global, "fetch")
+      .mockResolvedValueOnce(
+        new Response("rate limited", {
+          status: 429,
+          statusText: "Too Many Requests",
+        })
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ ok: true }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        })
+      );
+
+    const promise = faceitFetch("/players/test-player");
+    await vi.runAllTimersAsync();
+
+    await expect(promise).resolves.toEqual({ ok: true });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 });

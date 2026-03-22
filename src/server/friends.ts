@@ -8,7 +8,8 @@ import {
 import type { FriendWithStats } from "~/lib/types";
 
 const FRIEND_LIMIT = 20;
-const BATCH_DELAY_MS = 150;
+const FACEIT_BATCH_SIZE = 3;
+const BATCH_DELAY_MS = 300;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -44,9 +45,9 @@ export const searchAndLoadFriends = createServerFn({ method: "GET" })
       const idsToFetch = friendsIds.slice(0, FRIEND_LIMIT);
 
       const friends: FriendWithStats[] = [];
-      for (let i = 0; i < idsToFetch.length; i += 5) {
+      for (let i = 0; i < idsToFetch.length; i += FACEIT_BATCH_SIZE) {
         if (i > 0) await sleep(BATCH_DELAY_MS);
-        const batch = idsToFetch.slice(i, i + 5);
+        const batch = idsToFetch.slice(i, i + FACEIT_BATCH_SIZE);
         const results = await Promise.allSettled(
           batch.map(async (id) => {
             const [p, stats] = await Promise.all([
@@ -75,4 +76,3 @@ export const searchAndLoadFriends = createServerFn({ method: "GET" })
       };
     }
   );
-

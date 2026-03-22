@@ -1,7 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { MY_FACEIT_ID } from "~/lib/constants";
 
-const BATCH_DELAY_MS = 150;
+const HISTORY_SYNC_BATCH_SIZE = 3;
+const LIVE_HISTORY_BATCH_SIZE = 1;
+const BATCH_DELAY_MS = 300;
+const LIVE_HISTORY_DELAY_MS = 200;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 import {
   buildMatchScoreString,
@@ -19,9 +22,9 @@ async function syncPlayerHistory(faceitId: string, n: number): Promise<void> {
   const supabase = createServerSupabase();
   const history = await fetchPlayerHistory(faceitId, n);
 
-  for (let i = 0; i < history.length; i += 5) {
+  for (let i = 0; i < history.length; i += HISTORY_SYNC_BATCH_SIZE) {
     if (i > 0) await sleep(BATCH_DELAY_MS);
-    const batch = history.slice(i, i + 5);
+    const batch = history.slice(i, i + HISTORY_SYNC_BATCH_SIZE);
     await Promise.allSettled(
       batch.map(async (h: any) => {
         const statsData = await fetchMatchStats(h.match_id).catch(() => null);
@@ -115,9 +118,9 @@ export const getLiveMatches = createServerFn({ method: "GET" })
 
     // Batch history calls to stay within FACEIT rate limits
     const historyResults: PromiseSettledResult<{ matchId: string; friendId: string } | null>[] = [];
-    for (let i = 0; i < ids.length; i += 5) {
-      if (i > 0) await sleep(BATCH_DELAY_MS);
-      const batch = ids.slice(i, i + 5);
+    for (let i = 0; i < ids.length; i += LIVE_HISTORY_BATCH_SIZE) {
+      if (i > 0) await sleep(LIVE_HISTORY_DELAY_MS);
+      const batch = ids.slice(i, i + LIVE_HISTORY_BATCH_SIZE);
       const batchResults = await Promise.allSettled(
         batch.map(async (friendId) => {
           const history = await fetchPlayerHistory(friendId, 5);

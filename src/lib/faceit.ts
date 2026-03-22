@@ -1,6 +1,8 @@
 import type { FaceitPlayer, MatchPlayerStats } from "./types";
 
 const BASE_URL = "https://open.faceit.com/data/v4";
+const RETRYABLE_FACEIT_STATUSES = new Set([429, 500, 502, 503, 504]);
+const FACEIT_RETRY_DELAYS_MS = [400, 900];
 
 function getApiKey(): string {
   const key = process.env.FACEIT_SERVER_SIDE_API_KEY;
@@ -8,17 +10,34 @@ function getApiKey(): string {
   return key;
 }
 
-async function faceitFetch(path: string): Promise<unknown> {
-  const res = await fetch(`${BASE_URL}${path}`, {
-    headers: {
-      Authorization: `Bearer ${getApiKey()}`,
-      Accept: "application/json",
-    },
-  });
-  if (!res.ok) {
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+export async function faceitFetch(path: string): Promise<unknown> {
+  for (let attempt = 0; attempt <= FACEIT_RETRY_DELAYS_MS.length; attempt += 1) {
+    const res = await fetch(`${BASE_URL}${path}`, {
+      headers: {
+        Authorization: `Bearer ${getApiKey()}`,
+        Accept: "application/json",
+      },
+    });
+
+    if (res.ok) {
+      return res.json();
+    }
+
+    const shouldRetry =
+      RETRYABLE_FACEIT_STATUSES.has(res.status) &&
+      attempt < FACEIT_RETRY_DELAYS_MS.length;
+
+    if (shouldRetry) {
+      await sleep(FACEIT_RETRY_DELAYS_MS[attempt]!);
+      continue;
+    }
+
     throw new Error(`FACEIT API error: ${res.status} ${res.statusText} for ${path}`);
   }
-  return res.json();
+
+  throw new Error(`FACEIT API error: exhausted retries for ${path}`);
 }
 
 export function parsePlayerProfile(raw: any): FaceitPlayer {
