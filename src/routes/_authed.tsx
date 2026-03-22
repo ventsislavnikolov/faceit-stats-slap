@@ -2,13 +2,14 @@ import { createFileRoute, Outlet, Link, useRouter } from "@tanstack/react-router
 import { createIsomorphicFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { CoinBalance } from "~/components/CoinBalance";
+import { initializeAuthSession } from "~/lib/auth";
 
-const getSession = createIsomorphicFn()
-  .server(() => null)
-  .client(async () => {
+const subscribeToAuthSession = createIsomorphicFn()
+  .server(() => ({ unsubscribe: () => {} }))
+  .client(async (onSession: (session: { user: { id: string } } | null) => void) => {
     const { getSupabaseClient } = await import("~/lib/supabase.client");
-    const { data: { session } } = await getSupabaseClient().auth.getSession();
-    return session;
+    const cleanup = await initializeAuthSession(getSupabaseClient(), onSession);
+    return { unsubscribe: cleanup };
   });
 
 const doSignOut = createIsomorphicFn()
@@ -28,7 +29,16 @@ function AppLayout() {
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    getSession().then((s) => { setIsSignedIn(!!s); setUserId(s?.user.id ?? null); });
+    let subscription: { unsubscribe: () => void } | undefined;
+
+    subscribeToAuthSession((session) => {
+      setIsSignedIn(!!session);
+      setUserId(session?.user.id ?? null);
+    }).then((sub) => {
+      subscription = sub;
+    });
+
+    return () => subscription?.unsubscribe();
   }, []);
 
   async function handleSignOut() {

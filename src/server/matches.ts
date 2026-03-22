@@ -276,25 +276,45 @@ export const getMatchDetails = createServerFn({ method: "GET" })
     ]);
 
     const players: any[] = [];
+    const teamPlayers: { faction1: string[]; faction2: string[] } = { faction1: [], faction2: [] };
     if (statsData?.rounds?.[0]?.teams) {
-      for (const team of statsData.rounds[0].teams) {
-        for (const player of team.players || []) {
-          players.push(parseMatchStats(player));
+      const teams = statsData.rounds[0].teams;
+      for (let ti = 0; ti < teams.length; ti++) {
+        const faction = ti === 0 ? "faction1" : "faction2";
+        for (const player of teams[ti].players || []) {
+          const parsed = parseMatchStats(player);
+          players.push(parsed);
+          teamPlayers[faction].push(parsed.playerId);
         }
       }
     }
+
+    const roundStats = statsData?.rounds?.[0]?.round_stats || {};
+    const teamStats = statsData?.rounds?.[0]?.teams || [];
+    const faction1Name = teamStats[0]?.team_stats?.Team || match.teams?.faction1?.name || "Team 1";
+    const faction2Name = teamStats[1]?.team_stats?.Team || match.teams?.faction2?.name || "Team 2";
+    const faction1Score = parseInt(teamStats[0]?.team_stats?.["Final Score"]) || 0;
+    const faction2Score = parseInt(teamStats[1]?.team_stats?.["Final Score"]) || 0;
 
     const result = {
       matchId: match.match_id,
       map:
         match.voting?.map?.pick?.[0] ||
-        statsData?.rounds?.[0]?.round_stats?.Map ||
+        roundStats.Map ||
         "unknown",
-      score: statsData?.rounds?.[0]?.round_stats?.Score || "",
+      score: roundStats.Score || "",
       status: match.status,
       startedAt: match.started_at || 0,
       finishedAt: match.finished_at || null,
       players,
+      demoUrl: (match.demo_url as string[] | undefined)?.[0] ?? null,
+      teams: {
+        faction1: { name: faction1Name, score: faction1Score, playerIds: teamPlayers.faction1 },
+        faction2: { name: faction2Name, score: faction2Score, playerIds: teamPlayers.faction2 },
+      },
+      rounds: parseInt(roundStats.Rounds) || 0,
+      region: roundStats.Region || match.region || "",
+      competitionName: match.competition_name || "",
     };
 
     if (match.status === "FINISHED") {

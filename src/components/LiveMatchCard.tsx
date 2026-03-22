@@ -1,9 +1,11 @@
+import { Link } from "@tanstack/react-router";
 import type { LiveMatch } from "~/lib/types";
 import { MapBadge } from "./MapBadge";
 import { useBettingPool } from "~/hooks/useBettingPool";
 import { BettingPanel } from "~/components/BettingPanel";
 import { useMatchStats } from "~/hooks/useMatchStats";
 import { PostMatchScoreboard } from "./PostMatchScoreboard";
+import { getLiveMatchTeamLabels } from "~/lib/live-match";
 
 interface LiveMatchCardProps {
   match: LiveMatch;
@@ -18,6 +20,7 @@ export function LiveMatchCard({ match, userId, userCoins }: LiveMatchCardProps) 
 
   const f1 = match.teams.faction1;
   const f2 = match.teams.faction2;
+  const labels = getLiveMatchTeamLabels(match);
   const isFriendFaction1 = match.friendFaction === "faction1";
   const showPartyBadge = match.friendIds.length >= 3;
 
@@ -65,7 +68,7 @@ export function LiveMatchCard({ match, userId, userCoins }: LiveMatchCardProps) 
       {isFinished ? (
         <div className="flex justify-center items-center gap-4 mb-1">
           <span className={`text-sm ${isFriendFaction1 ? "text-accent" : "text-error/70"}`}>
-            {f1.name}
+            {labels.faction1}
           </span>
           <span className={`text-2xl font-bold ${isFriendFaction1 ? "text-accent" : "text-error/70"}`}>
             {match.score.faction1}
@@ -75,7 +78,7 @@ export function LiveMatchCard({ match, userId, userCoins }: LiveMatchCardProps) 
             {match.score.faction2}
           </span>
           <span className={`text-sm ${!isFriendFaction1 ? "text-accent" : "text-error/70"}`}>
-            {f2.name}
+            {labels.faction2}
           </span>
         </div>
       ) : (
@@ -83,7 +86,7 @@ export function LiveMatchCard({ match, userId, userCoins }: LiveMatchCardProps) 
           <div className="flex justify-center items-center gap-6 mb-3">
             <div className="text-center">
               <div className={`text-sm mb-1 ${isFriendFaction1 ? "text-accent" : "text-error/70"}`}>
-                {f1.name}
+                {labels.faction1}
               </div>
               <div className={`text-3xl font-bold ${isFriendFaction1 ? "text-accent" : "text-error/70"}`}>
                 {match.score.faction1}
@@ -92,7 +95,7 @@ export function LiveMatchCard({ match, userId, userCoins }: LiveMatchCardProps) 
             <div className="text-text-dim text-lg">vs</div>
             <div className="text-center">
               <div className={`text-sm mb-1 ${!isFriendFaction1 ? "text-accent" : "text-error/70"}`}>
-                {f2.name}
+                {labels.faction2}
               </div>
               <div className={`text-3xl font-bold ${!isFriendFaction1 ? "text-accent" : "text-error/70"}`}>
                 {match.score.faction2}
@@ -132,6 +135,16 @@ export function LiveMatchCard({ match, userId, userCoins }: LiveMatchCardProps) 
           userCoins={userCoins ?? 0}
           matchId={match.matchId}
         />
+      )}
+
+      {isFinished && (
+        <Link
+          to="/match/$matchId"
+          params={{ matchId: match.matchId }}
+          className="block text-center text-xs text-text-muted hover:text-accent mt-2 transition-colors"
+        >
+          View Details
+        </Link>
       )}
     </div>
   );

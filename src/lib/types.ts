@@ -91,6 +91,24 @@ export interface MatchWithStats {
   players: MatchPlayerStats[];
 }
 
+export interface MatchDetail {
+  matchId: string;
+  map: string;
+  score: string;
+  status: MatchStatus;
+  startedAt: number;
+  finishedAt: number | null;
+  players: MatchPlayerStats[];
+  demoUrl: string | null;
+  teams: {
+    faction1: { name: string; score: number; playerIds: string[] };
+    faction2: { name: string; score: number; playerIds: string[] };
+  };
+  rounds: number;
+  region: string;
+  competitionName: string;
+}
+
 export interface TwitchStream {
   channel: string;
   faceitId: string;

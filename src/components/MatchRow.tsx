@@ -1,7 +1,9 @@
+import { Link } from "@tanstack/react-router";
 import { MapBadge } from "./MapBadge";
 
 interface MatchRowProps {
   nickname: string;
+  matchId?: string;
   map: string;
   score: string;
   kdRatio: number;
@@ -11,12 +13,12 @@ interface MatchRowProps {
   eloDelta?: number | null;
 }
 
-export function MatchRow({ nickname, map, score, kdRatio, adr, hsPercent, win, eloDelta }: MatchRowProps) {
-  return (
+export function MatchRow({ nickname, matchId, map, score, kdRatio, adr, hsPercent, win, eloDelta }: MatchRowProps) {
+  const content = (
     <div
       className={`flex items-center bg-bg-card rounded px-2.5 py-2 text-xs border-l-[3px] ${
         win ? "border-accent" : "border-error"
-      }`}
+      } ${matchId ? "hover:bg-bg-elevated cursor-pointer transition-colors" : ""}`}
     >
       <span className={`font-bold w-5 ${win ? "text-accent" : "text-error"}`}>
         {win ? "W" : "L"}
@@ -37,4 +39,14 @@ export function MatchRow({ nickname, map, score, kdRatio, adr, hsPercent, win, e
       )}
     </div>
   );
+
+  if (matchId) {
+    return (
+      <Link to="/match/$matchId" params={{ matchId }}>
+        {content}
+      </Link>
+    );
+  }
+
+  return content;
 }

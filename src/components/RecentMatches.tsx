@@ -30,7 +30,7 @@ export function RecentMatches({ matches }: RecentMatchesProps) {
       </div>
       <div className="flex flex-col gap-1">
         {matches.map((m) => (
-          <MatchRow key={m.matchId + m.nickname} {...m} win={m.result} />
+          <MatchRow key={m.matchId + m.nickname} {...m} matchId={m.matchId} win={m.result} />
         ))}
       </div>
     </div>

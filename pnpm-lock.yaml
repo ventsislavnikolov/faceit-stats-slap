@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@laihoe/demoparser2':
+        specifier: ^0.41.1
+        version: 0.41.1
       '@supabase/supabase-js':
         specifier: ^2.99.3
         version: 2.99.3
@@ -20,6 +23,9 @@ importers:
       '@tanstack/react-start':
         specifier: ^1.167.2
         version: 1.167.2(crossws@0.4.4(srvx@0.11.12))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(vite@8.0.1(@types/node@25.5.0)(esbuild@0.27.4)(jiti@2.6.1)(tsx@4.21.0))
+      fzstd:
+        specifier: ^0.1.1
+        version: 0.1.1
       react:
         specifier: ^19.2.4
         version: 19.2.4
@@ -327,6 +333,74 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha1-2xXWeByTHzolGj2sOVAcmKYIL9A=}
+
+  '@laihoe/demoparser2-android-arm-eabi@0.41.1':
+    resolution: {integrity: sha1-j3dMwVaC+pNs1A0YU/ooaPpqfcE=}
+    engines: {node: '>= 10'}
+    cpu: [arm]
+    os: [android]
+
+  '@laihoe/demoparser2-android-arm64@0.41.1':
+    resolution: {integrity: sha1-txQVzTStxbW5rXAEp0qpvUFhkGU=}
+    engines: {node: '>= 10'}
+    cpu: [arm64]
+    os: [android]
+
+  '@laihoe/demoparser2-darwin-arm64@0.41.1':
+    resolution: {integrity: sha1-g/wcVR0xuGNBTpCOew+Kr20QqvY=}
+    engines: {node: '>= 10'}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@laihoe/demoparser2-linux-arm-gnueabihf@0.41.1':
+    resolution: {integrity: sha1-uQD71nz9AndycMV5IRp9RdnwaO8=}
+    engines: {node: '>= 10'}
+    cpu: [arm]
+    os: [linux]
+
+  '@laihoe/demoparser2-linux-arm64-gnu@0.41.1':
+    resolution: {integrity: sha1-IU15mqRbNrqInM9GeRKXmexneBE=}
+    engines: {node: '>= 10'}
+    cpu: [arm64]
+    os: [linux]
+    libc: [glibc]
+
+  '@laihoe/demoparser2-linux-arm64-musl@0.41.1':
+    resolution: {integrity: sha1-UT0WZoH+LZR5xUmvDdugKjHDzVk=}
+    engines: {node: '>= 10'}
+    cpu: [arm64]
+    os: [linux]
+    libc: [musl]
+
+  '@laihoe/demoparser2-linux-x64-gnu@0.41.1':
+    resolution: {integrity: sha1-btCz1n6iQr8LgkyimG54iK+IAW8=}
+    engines: {node: '>= 10'}
+    cpu: [x64]
+    os: [linux]
+    libc: [glibc]
+
+  '@laihoe/demoparser2-linux-x64-musl@0.41.1':
+    resolution: {integrity: sha1-TNJOU8AmJjEni53DpOd3dXlYsGU=}
+    engines: {node: '>= 10'}
+    cpu: [x64]
+    os: [linux]
+    libc: [musl]
+
+  '@laihoe/demoparser2-win32-arm64-msvc@0.41.1':
+    resolution: {integrity: sha1-f4WS5OXm4aVQlIBnBJSLQQFGtYE=}
+    engines: {node: '>= 10'}
+    cpu: [arm64]
+    os: [win32]
+
+  '@laihoe/demoparser2-win32-x64-msvc@0.41.1':
+    resolution: {integrity: sha1-F8wxADb/9jfvt756fquc4QtkAXk=}
+    engines: {node: '>= 10'}
+    cpu: [x64]
+    os: [win32]
+
+  '@laihoe/demoparser2@0.41.1':
+    resolution: {integrity: sha1-7jtjRO8gy/4+SwdMF5r6hn//v8E=}
+    engines: {node: '>= 10'}
 
   '@napi-rs/wasm-runtime@1.1.1':
     resolution: {integrity: sha1-w3BatUnRdrjcUXJyPWFWw9xCavI=}
@@ -983,6 +1057,9 @@ packages:
     resolution: {integrity: sha1-ysZAd4XQNnWipeGlMFxpezR9kNY=}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
     os: [darwin]
+
+  fzstd@0.1.1:
+    resolution: {integrity: sha1-o9op8v/0UHDKkAc/hm2X4MVqSlI=}
 
   gensync@1.0.0-beta.2:
     resolution: {integrity: sha1-MqbudsPX9S1GsrGuXZP+qFgKJeA=}
@@ -1827,6 +1904,49 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
+  '@laihoe/demoparser2-android-arm-eabi@0.41.1':
+    optional: true
+
+  '@laihoe/demoparser2-android-arm64@0.41.1':
+    optional: true
+
+  '@laihoe/demoparser2-darwin-arm64@0.41.1':
+    optional: true
+
+  '@laihoe/demoparser2-linux-arm-gnueabihf@0.41.1':
+    optional: true
+
+  '@laihoe/demoparser2-linux-arm64-gnu@0.41.1':
+    optional: true
+
+  '@laihoe/demoparser2-linux-arm64-musl@0.41.1':
+    optional: true
+
+  '@laihoe/demoparser2-linux-x64-gnu@0.41.1':
+    optional: true
+
+  '@laihoe/demoparser2-linux-x64-musl@0.41.1':
+    optional: true
+
+  '@laihoe/demoparser2-win32-arm64-msvc@0.41.1':
+    optional: true
+
+  '@laihoe/demoparser2-win32-x64-msvc@0.41.1':
+    optional: true
+
+  '@laihoe/demoparser2@0.41.1':
+    optionalDependencies:
+      '@laihoe/demoparser2-android-arm-eabi': 0.41.1
+      '@laihoe/demoparser2-android-arm64': 0.41.1
+      '@laihoe/demoparser2-darwin-arm64': 0.41.1
+      '@laihoe/demoparser2-linux-arm-gnueabihf': 0.41.1
+      '@laihoe/demoparser2-linux-arm64-gnu': 0.41.1
+      '@laihoe/demoparser2-linux-arm64-musl': 0.41.1
+      '@laihoe/demoparser2-linux-x64-gnu': 0.41.1
+      '@laihoe/demoparser2-linux-x64-musl': 0.41.1
+      '@laihoe/demoparser2-win32-arm64-msvc': 0.41.1
+      '@laihoe/demoparser2-win32-x64-msvc': 0.41.1
+
   '@napi-rs/wasm-runtime@1.1.1':
     dependencies:
       '@emnapi/core': 1.9.1
@@ -2491,6 +2611,8 @@ snapshots:
 
   fsevents@2.3.3:
     optional: true
+
+  fzstd@0.1.1: {}
 
   gensync@1.0.0-beta.2: {}
 
