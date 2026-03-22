@@ -81,6 +81,28 @@ export function parseMatchStats(raw: any): MatchPlayerStats {
   };
 }
 
+export function parseMatchTeamScore(raw: any): number {
+  return (
+    parseInt(raw?.["Final Score"]) ||
+    parseInt(raw?.["Current Score"]) ||
+    parseInt(raw?.Score) ||
+    0
+  );
+}
+
+export function buildMatchScoreString(roundStats: any, teams: any[]): string {
+  if (roundStats?.Score) return roundStats.Score;
+
+  const faction1 = parseMatchTeamScore(teams[0]?.team_stats);
+  const faction2 = parseMatchTeamScore(teams[1]?.team_stats);
+
+  if (faction1 > 0 || faction2 > 0) {
+    return `${faction1} / ${faction2}`;
+  }
+
+  return "";
+}
+
 export async function fetchPlayer(
   playerId: string
 ): Promise<FaceitPlayer & { friendsIds: string[] }> {

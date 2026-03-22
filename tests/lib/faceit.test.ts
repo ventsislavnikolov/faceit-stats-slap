@@ -1,5 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { parsePlayerProfile, parseLifetimeStats, parseMatchStats } from "~/lib/faceit";
+import {
+  buildMatchScoreString,
+  parseMatchStats,
+  parseMatchTeamScore,
+  parseLifetimeStats,
+  parsePlayerProfile,
+} from "~/lib/faceit";
 
 describe("parsePlayerProfile", () => {
   it("extracts player fields from API response", () => {
@@ -85,5 +91,39 @@ describe("parseMatchStats", () => {
     expect(result.kdRatio).toBe(2.25);
     expect(result.adr).toBe(112.3);
     expect(result.result).toBe(true);
+  });
+});
+
+describe("parseMatchTeamScore", () => {
+  it("falls back to current score fields used by live FACEIT stats payloads", () => {
+    expect(parseMatchTeamScore({ "Current Score": "9" })).toBe(9);
+    expect(parseMatchTeamScore({ Score: "7" })).toBe(7);
+    expect(parseMatchTeamScore({ "Final Score": "13" })).toBe(13);
+  });
+});
+
+describe("buildMatchScoreString", () => {
+  it("builds a score string from team stats when round stats score is missing", () => {
+    const result = buildMatchScoreString(
+      {},
+      [
+        { team_stats: { "Current Score": "9" } },
+        { team_stats: { "Current Score": "6" } },
+      ]
+    );
+
+    expect(result).toBe("9 / 6");
+  });
+
+  it("prefers the score already present in round stats", () => {
+    const result = buildMatchScoreString(
+      { Score: "13 / 10" },
+      [
+        { team_stats: { "Final Score": "13" } },
+        { team_stats: { "Final Score": "10" } },
+      ]
+    );
+
+    expect(result).toBe("13 / 10");
   });
 });

@@ -1,16 +1,17 @@
 import { describe, it, expect } from "vitest";
-import {
-  TRACKED_FRIENDS,
+import * as constants from "~/lib/constants";
+
+const {
   MY_FACEIT_ID,
   TWITCH_MAP,
   MAP_COLORS,
   getMapColor,
   getTwitchChannel,
-} from "~/lib/constants";
+} = constants;
 
 describe("constants", () => {
-  it("has 19 tracked friends", () => {
-    expect(TRACKED_FRIENDS).toHaveLength(19);
+  it("does not export the removed TRACKED_FRIENDS constant", () => {
+    expect(constants).not.toHaveProperty("TRACKED_FRIENDS");
   });
 
   it("MY_FACEIT_ID is soavarice", () => {

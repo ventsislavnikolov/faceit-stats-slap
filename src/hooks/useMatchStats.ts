@@ -1,11 +1,19 @@
 import { useQuery } from "@tanstack/react-query";
 import { getMatchDetails } from "~/server/matches";
 
-export function useMatchStats(matchId: string, enabled: boolean) {
+interface UseMatchStatsOptions {
+  enabled: boolean;
+  live: boolean;
+}
+
+export function useMatchStats(matchId: string, options: UseMatchStatsOptions) {
+  const { enabled, live } = options;
+
   return useQuery({
     queryKey: ["match-stats", matchId],
     queryFn: () => getMatchDetails({ data: matchId }),
     enabled,
-    staleTime: Infinity,
+    staleTime: live ? 0 : Infinity,
+    refetchInterval: live ? 10_000 : false,
   });
 }

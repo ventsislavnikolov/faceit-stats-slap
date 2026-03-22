@@ -5,7 +5,8 @@ import { useBettingPool } from "~/hooks/useBettingPool";
 import { BettingPanel } from "~/components/BettingPanel";
 import { useMatchStats } from "~/hooks/useMatchStats";
 import { PostMatchScoreboard } from "./PostMatchScoreboard";
-import { getLiveMatchTeamLabels } from "~/lib/live-match";
+import { LiveScoreboard } from "./LiveScoreboard";
+import { getLiveMatchDisplayScore, getLiveMatchTeamLabels } from "~/lib/live-match";
 
 interface LiveMatchCardProps {
   match: LiveMatch;
@@ -16,11 +17,16 @@ interface LiveMatchCardProps {
 export function LiveMatchCard({ match, userId, userCoins }: LiveMatchCardProps) {
   const { data: betData } = useBettingPool(match.matchId, userId ?? null);
   const isFinished = match.status === "FINISHED";
-  const { data: matchStats } = useMatchStats(match.matchId, isFinished);
+  const isLive = match.status === "ONGOING";
+  const { data: matchStats } = useMatchStats(match.matchId, {
+    enabled: isFinished || isLive,
+    live: isLive,
+  });
 
   const f1 = match.teams.faction1;
   const f2 = match.teams.faction2;
   const labels = getLiveMatchTeamLabels(match);
+  const displayScore = getLiveMatchDisplayScore(match, matchStats);
   const isFriendFaction1 = match.friendFaction === "faction1";
   const showPartyBadge = match.friendIds.length >= 3;
 
@@ -71,11 +77,11 @@ export function LiveMatchCard({ match, userId, userCoins }: LiveMatchCardProps) 
             {labels.faction1}
           </span>
           <span className={`text-2xl font-bold ${isFriendFaction1 ? "text-accent" : "text-error/70"}`}>
-            {match.score.faction1}
+            {displayScore.faction1}
           </span>
           <span className="text-text-dim text-sm">-</span>
           <span className={`text-2xl font-bold ${!isFriendFaction1 ? "text-accent" : "text-error/70"}`}>
-            {match.score.faction2}
+            {displayScore.faction2}
           </span>
           <span className={`text-sm ${!isFriendFaction1 ? "text-accent" : "text-error/70"}`}>
             {labels.faction2}
@@ -89,7 +95,7 @@ export function LiveMatchCard({ match, userId, userCoins }: LiveMatchCardProps) 
                 {labels.faction1}
               </div>
               <div className={`text-3xl font-bold ${isFriendFaction1 ? "text-accent" : "text-error/70"}`}>
-                {match.score.faction1}
+                {displayScore.faction1}
               </div>
             </div>
             <div className="text-text-dim text-lg">vs</div>
@@ -98,7 +104,7 @@ export function LiveMatchCard({ match, userId, userCoins }: LiveMatchCardProps) 
                 {labels.faction2}
               </div>
               <div className={`text-3xl font-bold ${!isFriendFaction1 ? "text-accent" : "text-error/70"}`}>
-                {match.score.faction2}
+                {displayScore.faction2}
               </div>
             </div>
           </div>
@@ -115,6 +121,13 @@ export function LiveMatchCard({ match, userId, userCoins }: LiveMatchCardProps) 
             })}
           </div>
         </>
+      )}
+
+      {!isFinished && matchStats && matchStats.players.length > 0 && (
+        <LiveScoreboard
+          friendIds={match.friendIds}
+          players={matchStats.players}
+        />
       )}
 
       {/* Post-match scoreboard */}

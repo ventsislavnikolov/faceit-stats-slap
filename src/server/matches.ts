@@ -4,9 +4,11 @@ import { MY_FACEIT_ID } from "~/lib/constants";
 const BATCH_DELAY_MS = 150;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 import {
+  buildMatchScoreString,
   fetchPlayerHistory,
   fetchMatch,
   fetchMatchStats,
+  parseMatchTeamScore,
   parseMatchStats,
 } from "~/lib/faceit";
 import { createServerSupabase } from "~/lib/supabase.server";
@@ -293,8 +295,8 @@ export const getMatchDetails = createServerFn({ method: "GET" })
     const teamStats = statsData?.rounds?.[0]?.teams || [];
     const faction1Name = teamStats[0]?.team_stats?.Team || match.teams?.faction1?.name || "Team 1";
     const faction2Name = teamStats[1]?.team_stats?.Team || match.teams?.faction2?.name || "Team 2";
-    const faction1Score = parseInt(teamStats[0]?.team_stats?.["Final Score"]) || 0;
-    const faction2Score = parseInt(teamStats[1]?.team_stats?.["Final Score"]) || 0;
+    const faction1Score = parseMatchTeamScore(teamStats[0]?.team_stats);
+    const faction2Score = parseMatchTeamScore(teamStats[1]?.team_stats);
 
     const result = {
       matchId: match.match_id,
@@ -302,7 +304,7 @@ export const getMatchDetails = createServerFn({ method: "GET" })
         match.voting?.map?.pick?.[0] ||
         roundStats.Map ||
         "unknown",
-      score: roundStats.Score || "",
+      score: buildMatchScoreString(roundStats, teamStats),
       status: match.status,
       startedAt: match.started_at || 0,
       finishedAt: match.finished_at || null,
