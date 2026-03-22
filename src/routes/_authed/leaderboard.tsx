@@ -11,6 +11,7 @@ import {
 } from "~/lib/stats-leaderboard-copy";
 import {
   buildStatsLeaderboardSyncKey,
+  buildStatsLeaderboardSyncPlayerIds,
   shouldAutoSyncStatsLeaderboard,
 } from "~/lib/stats-leaderboard-sync";
 import { searchAndLoadFriends } from "~/server/friends";
@@ -109,7 +110,14 @@ function StatsTab({
     n,
     days,
   });
-  const sync = useSyncPlayerHistory({ targetPlayerId, playerIds });
+  const autoSync = useSyncPlayerHistory({
+    targetPlayerId,
+    playerIds: buildStatsLeaderboardSyncPlayerIds({ mode: "auto", playerIds }),
+  });
+  const manualSync = useSyncPlayerHistory({
+    targetPlayerId,
+    playerIds: buildStatsLeaderboardSyncPlayerIds({ mode: "manual", playerIds }),
+  });
 
   const activeCols = STATS_COLS[statGroup];
   const entries = sortEntries(leaderboard?.entries ?? [], sortKey, sortDir);
@@ -131,7 +139,7 @@ function StatsTab({
       playerIds,
       n,
       days,
-      isPending: sync.isPending,
+      isPending: autoSync.isPending,
       attemptedKeys: attemptedSyncKeysRef.current,
     })) {
       return;
@@ -139,8 +147,8 @@ function StatsTab({
 
     const key = buildStatsLeaderboardSyncKey({ targetPlayerId, playerIds, n, days });
     attemptedSyncKeysRef.current.add(key);
-    sync.mutate({ n, days });
-  }, [days, n, playerIds, sync, targetPlayerId]);
+    autoSync.mutate({ n, days });
+  }, [autoSync, days, n, playerIds, targetPlayerId]);
 
   function handleSort(key: SortKey) {
     if (key === sortKey) {
@@ -194,13 +202,19 @@ function StatsTab({
           <span className="text-text-dim text-xs ml-1">days</span>
         </div>
         <button
-          onClick={() => sync.mutate({ n, days })}
-          disabled={sync.isPending || !targetPlayerId}
+          onClick={() => manualSync.mutate({ n, days })}
+          disabled={manualSync.isPending || !targetPlayerId}
           className="text-xs px-3 py-1 rounded bg-bg-elevated text-text-muted hover:text-text disabled:opacity-50 transition-colors"
         >
-          {sync.isPending ? "Syncing..." : "↻ Refresh"}
+          {manualSync.isPending ? "Syncing..." : "↻ Refresh"}
         </button>
       </div>
+
+      {autoSync.isPending && !manualSync.isPending && (
+        <div className="text-[10px] text-text-dim px-1">
+          Syncing older history in the background...
+        </div>
+      )}
 
       <div className="flex items-center gap-1">
         {STAT_GROUPS.map((g) => (

@@ -1,5 +1,13 @@
 export type StatsLeaderboardWindowDays = 30 | 90 | 180 | 365 | 730;
 export type StatsLeaderboardMatchCount = 20 | 50 | 100;
+export type StatsLeaderboardSyncMode = "auto" | "manual";
+
+export function buildStatsLeaderboardSyncPlayerIds(params: {
+  mode: StatsLeaderboardSyncMode;
+  playerIds: string[];
+}): string[] {
+  return params.mode === "auto" ? [] : params.playerIds;
+}
 
 export function buildStatsLeaderboardSyncKey(params: {
   targetPlayerId: string;

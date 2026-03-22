@@ -20,6 +20,7 @@ import {
   buildPersonalFormLeaderboard,
   type SharedStatsLeaderboardRow,
 } from "~/lib/stats-leaderboard";
+import { filterUnsyncedHistoryItems } from "~/lib/history-sync";
 import { createServerSupabase } from "~/lib/supabase.server";
 import type { LiveMatch, StatsLeaderboardResult } from "~/lib/types";
 import { getWebhookLiveMatchMap } from "~/server/faceit-webhooks";
@@ -62,10 +63,21 @@ async function syncPlayerHistory(faceitId: string, n: number, days: 30 | 90 | 18
   const supabase = createServerSupabase();
   const pageSize = Math.max(HISTORY_SYNC_PAGE_SIZE, n);
   const history = await fetchPlayerHistoryWindow(faceitId, days, pageSize);
+  const historyMatchIds = [...new Set(history.map((item) => item.match_id).filter(Boolean))];
+  const { data: existingMatches } = historyMatchIds.length === 0
+    ? { data: [] }
+    : await supabase
+        .from("matches")
+        .select("faceit_match_id")
+        .in("faceit_match_id", historyMatchIds);
+  const missingHistory = filterUnsyncedHistoryItems(
+    history,
+    (existingMatches || []).map((match: any) => match.faceit_match_id)
+  );
 
-  for (let i = 0; i < history.length; i += HISTORY_SYNC_BATCH_SIZE) {
+  for (let i = 0; i < missingHistory.length; i += HISTORY_SYNC_BATCH_SIZE) {
     if (i > 0) await sleep(BATCH_DELAY_MS);
-    const batch = history.slice(i, i + HISTORY_SYNC_BATCH_SIZE);
+    const batch = missingHistory.slice(i, i + HISTORY_SYNC_BATCH_SIZE);
     await Promise.allSettled(
       batch.map(async (h: any) => {
         const statsData = await fetchMatchStats(h.match_id).catch(() => null);

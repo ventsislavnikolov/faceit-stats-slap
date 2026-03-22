@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildStatsLeaderboardSyncKey,
+  buildStatsLeaderboardSyncPlayerIds,
   shouldAutoSyncStatsLeaderboard,
 } from "~/lib/stats-leaderboard-sync";
 
@@ -75,5 +76,23 @@ describe("stats leaderboard auto-sync policy", () => {
         attemptedKeys: new Set(),
       })
     ).toBe(false);
+  });
+
+  it("auto-sync only backfills the searched player history", () => {
+    expect(
+      buildStatsLeaderboardSyncPlayerIds({
+        mode: "auto",
+        playerIds: ["friend-a", "friend-b"],
+      })
+    ).toEqual([]);
+  });
+
+  it("manual sync keeps the full friend scope", () => {
+    expect(
+      buildStatsLeaderboardSyncPlayerIds({
+        mode: "manual",
+        playerIds: ["friend-a", "friend-b"],
+      })
+    ).toEqual(["friend-a", "friend-b"]);
   });
 });
