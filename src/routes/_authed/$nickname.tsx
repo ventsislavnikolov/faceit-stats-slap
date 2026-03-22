@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { createIsomorphicFn } from "@tanstack/react-start";
@@ -104,17 +104,34 @@ function PlayerDashboard() {
         </form>
 
         {searchResult && (
-          <div className="mt-1.5 text-xs text-text-muted">
-            Showing friends of{" "}
-            <span className="text-accent">{searchResult.player.nickname}</span>
-            {" · "}
-            {searchResult.friends.length} loaded
-            {searchResult.limited && (
-              <span className="text-error ml-1">
-                (capped at 20 — player has {searchResult.totalFriends} friends,
-                more would exceed FACEIT rate limits)
-              </span>
-            )}
+          <div className="mt-1.5 flex items-center gap-3 text-xs text-text-muted">
+            <span>
+              Showing friends of{" "}
+              <span className="text-accent">{searchResult.player.nickname}</span>
+              {" · "}
+              {searchResult.friends.length} loaded
+              {searchResult.limited && (
+                <span className="text-error ml-1">
+                  (capped at 20 — player has {searchResult.totalFriends} friends,
+                  more would exceed FACEIT rate limits)
+                </span>
+              )}
+            </span>
+            <span className="text-border">|</span>
+            <Link
+              to="/leaderboard"
+              search={{ player: nickname }}
+              className="text-accent hover:underline"
+            >
+              Leaderboard
+            </Link>
+            <Link
+              to="/history"
+              search={{ player: searchResult.player.nickname }}
+              className="text-accent hover:underline"
+            >
+              History
+            </Link>
           </div>
         )}
 

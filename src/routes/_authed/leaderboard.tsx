@@ -27,6 +27,9 @@ const getCurrentUserId = createIsomorphicFn()
 
 export const Route = createFileRoute("/_authed/leaderboard")({
   beforeLoad: () => requireAuth(),
+  validateSearch: (search: Record<string, unknown>) => ({
+    player: (search.player as string) || undefined,
+  }),
   component: LeaderboardPage,
 });
 
@@ -291,9 +294,10 @@ function BetsTab() {
 }
 
 function LeaderboardPage() {
+  const { player: urlPlayer } = Route.useSearch();
   const [tab, setTab] = useState<Tab>("stats");
-  const [input, setInput] = useState("");
-  const [search, setSearch] = useState<string | null>(null);
+  const [input, setInput] = useState(urlPlayer ?? "");
+  const [search, setSearch] = useState<string | null>(urlPlayer ?? null);
 
   const {
     data: searchResult,

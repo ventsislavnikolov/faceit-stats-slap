@@ -25,14 +25,18 @@ const getClientUserId = createIsomorphicFn()
 
 export const Route = createFileRoute("/_authed/history")({
   beforeLoad: () => requireAuth(),
+  validateSearch: (search: Record<string, unknown>) => ({
+    player: (search.player as string) || undefined,
+  }),
   component: HistoryPage,
 });
 
 type Tab = "matches" | "bets";
 
 function HistoryPage() {
-  const [input, setInput] = useState("");
-  const [search, setSearch] = useState<string | null>(null);
+  const { player: urlPlayer } = Route.useSearch();
+  const [input, setInput] = useState(urlPlayer ?? "");
+  const [search, setSearch] = useState<string | null>(urlPlayer ?? null);
   const [tab, setTab] = useState<Tab>("matches");
   const [userId, setUserId] = useState<string | null>(null);
 
