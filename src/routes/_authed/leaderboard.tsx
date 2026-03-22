@@ -9,8 +9,12 @@ import {
   getStatsLeaderboardEmptyStateCopy,
   getStatsLeaderboardSummaryCopy,
 } from "~/lib/stats-leaderboard-copy";
+import {
+  buildStatsLeaderboardSyncKey,
+  shouldAutoSyncStatsLeaderboard,
+} from "~/lib/stats-leaderboard-sync";
 import { searchAndLoadFriends } from "~/server/friends";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { StatsLeaderboardEntry } from "~/lib/types";
 
 const requireAuth = createIsomorphicFn()
@@ -97,6 +101,7 @@ function StatsTab({
   const [sortKey, setSortKey] = useState<SortKey>("avgKd");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [statGroup, setStatGroup] = useState<StatGroup>("combat");
+  const attemptedSyncKeysRef = useRef<Set<string>>(new Set());
 
   const { data: leaderboard, isLoading } = useStatsLeaderboard({
     targetPlayerId,
@@ -119,6 +124,23 @@ function StatsTab({
         days,
       })
     : null;
+
+  useEffect(() => {
+    if (!shouldAutoSyncStatsLeaderboard({
+      targetPlayerId,
+      playerIds,
+      n,
+      days,
+      isPending: sync.isPending,
+      attemptedKeys: attemptedSyncKeysRef.current,
+    })) {
+      return;
+    }
+
+    const key = buildStatsLeaderboardSyncKey({ targetPlayerId, playerIds, n, days });
+    attemptedSyncKeysRef.current.add(key);
+    sync.mutate({ n, days });
+  }, [days, n, playerIds, sync, targetPlayerId]);
 
   function handleSort(key: SortKey) {
     if (key === sortKey) {
