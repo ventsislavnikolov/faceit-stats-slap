@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { TRACKED_FRIENDS, MY_FACEIT_ID } from "~/lib/constants";
+import { MY_FACEIT_ID } from "~/lib/constants";
 
 const BATCH_DELAY_MS = 150;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -89,11 +89,9 @@ async function syncPlayerHistory(faceitId: string, n: number): Promise<void> {
 }
 
 export const getLiveMatches = createServerFn({ method: "GET" })
-  .inputValidator((playerIds?: string[]) => playerIds)
+  .inputValidator((playerIds: string[]) => playerIds)
   .handler(async ({ data: playerIds }): Promise<LiveMatch[]> => {
-    const ids = playerIds && playerIds.length > 0
-      ? playerIds
-      : (TRACKED_FRIENDS as readonly string[]);
+    const ids = playerIds;
     const supabase = createServerSupabase();
     const liveMatches: LiveMatch[] = [];
 
@@ -341,15 +339,15 @@ export const getMatchDetails = createServerFn({ method: "GET" })
   });
 
 export const getStatsLeaderboard = createServerFn({ method: "GET" })
-  .inputValidator((n: number) => n as 20 | 50 | 100)
-  .handler(async ({ data: n }): Promise<import("~/lib/types").StatsLeaderboardEntry[]> => {
+  .inputValidator((input: { playerIds: string[]; n: number }) => input)
+  .handler(async ({ data: { playerIds, n } }): Promise<import("~/lib/types").StatsLeaderboardEntry[]> => {
     const supabase = createServerSupabase();
-    const allPlayers = [MY_FACEIT_ID, ...TRACKED_FRIENDS];
+    const allPlayers = [MY_FACEIT_ID, ...playerIds];
 
     const { data: friendRows } = await supabase
       .from("tracked_friends")
       .select("faceit_id, nickname, elo")
-      .in("faceit_id", [...TRACKED_FRIENDS]);
+      .in("faceit_id", playerIds);
     const friendMap = new Map(
       (friendRows || []).map((f: any) => [f.faceit_id, { nickname: f.nickname, elo: f.elo ?? 0 }])
     );
@@ -421,9 +419,9 @@ export const getStatsLeaderboard = createServerFn({ method: "GET" })
   });
 
 export const syncAllPlayerHistory = createServerFn({ method: "POST" })
-  .inputValidator((n: number) => n as 20 | 50 | 100)
-  .handler(async ({ data: n }): Promise<void> => {
-    for (const faceitId of [MY_FACEIT_ID, ...TRACKED_FRIENDS]) {
+  .inputValidator((input: { playerIds: string[]; n: number }) => input)
+  .handler(async ({ data: { playerIds, n } }): Promise<void> => {
+    for (const faceitId of [MY_FACEIT_ID, ...playerIds]) {
       await syncPlayerHistory(faceitId, n);
     }
   });

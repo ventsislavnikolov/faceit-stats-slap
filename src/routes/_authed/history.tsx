@@ -1,10 +1,11 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { createIsomorphicFn } from "@tanstack/react-start";
 import { useState, useEffect } from "react";
-import { useFriends } from "~/hooks/useFriends";
+import { useQuery } from "@tanstack/react-query";
 import { usePlayerStats } from "~/hooks/usePlayerStats";
 import { useUserBets } from "~/hooks/useUserBets";
 import { RecentMatches } from "~/components/RecentMatches";
+import { resolvePlayer } from "~/server/friends";
 
 const requireAuth = createIsomorphicFn()
   .server(() => {})
@@ -30,16 +31,35 @@ export const Route = createFileRoute("/_authed/history")({
 type Tab = "matches" | "bets";
 
 function HistoryPage() {
-  const { data: friends = [] } = useFriends();
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [input, setInput] = useState("");
+  const [search, setSearch] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>("matches");
   const [userId, setUserId] = useState<string | null>(null);
-  const { data: stats = [], isLoading } = usePlayerStats(selectedId);
+
+  const {
+    data: player,
+    isLoading: resolving,
+    isError: resolveError,
+  } = useQuery({
+    queryKey: ["resolve-player", search],
+    queryFn: () => resolvePlayer({ data: search! }),
+    enabled: !!search,
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
+
+  const { data: stats = [], isLoading } = usePlayerStats(player?.faceitId ?? null);
   const { data: userBets = [], isLoading: betsLoading } = useUserBets(userId);
 
   useEffect(() => {
     getClientUserId().then(setUserId);
   }, []);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = input.trim();
+    if (trimmed) setSearch(trimmed);
+  };
 
   const matches = stats.map((m: any) => ({
     nickname: m.nickname,
@@ -74,28 +94,36 @@ function HistoryPage() {
 
       {tab === "matches" && (
         <>
-          <div className="flex gap-2 flex-wrap mb-6">
-            {friends.map((f) => (
-              <button
-                key={f.faceitId}
-                onClick={() => setSelectedId(f.faceitId)}
-                className={`text-xs px-3 py-1.5 rounded ${
-                  selectedId === f.faceitId
-                    ? "bg-accent text-bg font-bold"
-                    : "bg-bg-elevated text-text-muted hover:text-accent"
-                }`}
-              >
-                {f.nickname}
-              </button>
-            ))}
-          </div>
-          {isLoading ? (
+          <form onSubmit={handleSearch} className="flex gap-2 mb-6">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="FACEIT nickname or UUID"
+              className="flex-1 bg-bg-elevated text-text text-xs px-3 py-2 rounded border border-border focus:border-accent focus:outline-none"
+            />
+            <button
+              type="submit"
+              className="text-xs px-4 py-2 rounded bg-accent text-bg font-bold hover:opacity-90 transition-opacity"
+            >
+              Search
+            </button>
+          </form>
+          {player && (
+            <div className="text-xs text-text-muted mb-4">
+              Showing history for <span className="text-accent font-bold">{player.nickname}</span>
+            </div>
+          )}
+          {resolveError && (
+            <div className="text-error text-xs text-center py-8">Player not found</div>
+          )}
+          {(resolving || isLoading) ? (
             <div className="text-accent animate-pulse text-center py-8">Loading...</div>
-          ) : selectedId ? (
+          ) : player ? (
             <RecentMatches matches={matches} />
           ) : (
             <div className="text-text-dim text-center py-12">
-              Select a friend to view history
+              Enter a nickname or UUID to view match history
             </div>
           )}
         </>

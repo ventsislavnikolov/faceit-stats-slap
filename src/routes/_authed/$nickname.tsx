@@ -49,7 +49,7 @@ function PlayerDashboard() {
   });
 
   const friendIds = searchResult?.friends.map((f) => f.faceitId) ?? [];
-  const { data: liveMatches = [] } = useLiveMatches(friendIds.length > 0 ? friendIds : undefined);
+  const { data: liveMatches = [] } = useLiveMatches(friendIds);
   const { data: twitchStreams = [] } = useTwitchLive();
   const { data: playerStats = [], isLoading: statsLoading } = usePlayerStats(selectedFriendId);
 

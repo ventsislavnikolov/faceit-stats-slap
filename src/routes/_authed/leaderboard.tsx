@@ -1,9 +1,11 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { createIsomorphicFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
 import { useLeaderboard } from "~/hooks/useLeaderboard";
 import { useStatsLeaderboard } from "~/hooks/useStatsLeaderboard";
 import { useSyncPlayerHistory } from "~/hooks/useSyncPlayerHistory";
 import { MY_FACEIT_ID } from "~/lib/constants";
+import { searchAndLoadFriends } from "~/server/friends";
 import { useEffect, useState } from "react";
 import type { StatsLeaderboardEntry } from "~/lib/types";
 
@@ -54,13 +56,13 @@ function sortEntries(
   );
 }
 
-function StatsTab() {
+function StatsTab({ playerIds }: { playerIds: string[] }) {
   const [n, setN] = useState<20 | 50 | 100>(20);
   const [sortKey, setSortKey] = useState<SortKey>("avgKd");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
 
-  const { data: rawEntries = [], isLoading } = useStatsLeaderboard(n);
-  const sync = useSyncPlayerHistory();
+  const { data: rawEntries = [], isLoading } = useStatsLeaderboard(playerIds, n);
+  const sync = useSyncPlayerHistory(playerIds);
 
   const entries = sortEntries(rawEntries, sortKey, sortDir);
 
@@ -109,7 +111,11 @@ function StatsTab() {
         </button>
       </div>
 
-      {isLoading ? (
+      {playerIds.length === 0 ? (
+        <div className="text-text-dim text-center py-12">
+          Search a player above to see their friends leaderboard
+        </div>
+      ) : isLoading ? (
         <div className="text-accent animate-pulse text-center py-8">Loading...</div>
       ) : (
         <div className="flex flex-col gap-1">
@@ -246,10 +252,59 @@ function BetsTab() {
 
 function LeaderboardPage() {
   const [tab, setTab] = useState<Tab>("stats");
+  const [input, setInput] = useState("");
+  const [search, setSearch] = useState<string | null>(null);
+
+  const {
+    data: searchResult,
+    isLoading: searchLoading,
+    isError: searchError,
+  } = useQuery({
+    queryKey: ["friends-search", search?.toLowerCase()],
+    queryFn: () => searchAndLoadFriends({ data: search! }),
+    enabled: !!search,
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
+
+  const friendIds = searchResult?.friends.map((f) => f.faceitId) ?? [];
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = input.trim();
+    if (trimmed) setSearch(trimmed);
+  };
 
   return (
     <div className="flex-1 p-6 max-w-2xl mx-auto w-full overflow-y-auto">
       <h2 className="text-lg font-bold mb-4">Leaderboard</h2>
+
+      <form onSubmit={handleSearch} className="flex gap-2 mb-4">
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="FACEIT nickname or UUID"
+          className="flex-1 bg-bg-elevated text-text text-xs px-3 py-2 rounded border border-border focus:border-accent focus:outline-none"
+        />
+        <button
+          type="submit"
+          disabled={searchLoading}
+          className="text-xs px-4 py-2 rounded bg-accent text-bg font-bold hover:opacity-90 disabled:opacity-50 transition-opacity"
+        >
+          {searchLoading ? "..." : "Search"}
+        </button>
+      </form>
+
+      {searchResult && (
+        <div className="text-xs text-text-muted mb-4">
+          Showing friends of <span className="text-accent font-bold">{searchResult.player.nickname}</span>
+          {" · "}{searchResult.friends.length} players
+        </div>
+      )}
+      {searchError && (
+        <div className="text-error text-xs mb-4">Player not found</div>
+      )}
 
       <div className="flex border-b border-border mb-6">
         {(["stats", "bets"] as Tab[]).map((t) => (
@@ -267,7 +322,7 @@ function LeaderboardPage() {
         ))}
       </div>
 
-      {tab === "stats" ? <StatsTab /> : <BetsTab />}
+      {tab === "stats" ? <StatsTab playerIds={friendIds} /> : <BetsTab />}
     </div>
   );
 }
