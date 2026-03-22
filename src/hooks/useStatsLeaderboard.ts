@@ -1,12 +1,22 @@
 import { useQuery } from "@tanstack/react-query";
 import { getStatsLeaderboard } from "~/server/matches";
-import type { StatsLeaderboardEntry } from "~/lib/types";
+import type { StatsLeaderboardResult } from "~/lib/types";
 
-export function useStatsLeaderboard(playerIds: string[], n: 20 | 50 | 100) {
-  return useQuery<StatsLeaderboardEntry[]>({
-    queryKey: ["stats-leaderboard", playerIds, n],
-    queryFn: () => getStatsLeaderboard({ data: { playerIds, n } }),
-    enabled: playerIds.length > 0,
+export function useStatsLeaderboard(params: {
+  targetPlayerId: string;
+  playerIds: string[];
+  n: 20 | 50 | 100;
+  days: 7 | 30 | 90;
+}) {
+  const { targetPlayerId, playerIds, n, days } = params;
+
+  return useQuery<StatsLeaderboardResult>({
+    queryKey: ["stats-leaderboard", targetPlayerId, playerIds, n, days],
+    queryFn: () =>
+      getStatsLeaderboard({
+        data: { targetPlayerId, playerIds, n, days },
+      }),
+    enabled: !!targetPlayerId,
     staleTime: 5 * 60 * 1000,
   });
 }

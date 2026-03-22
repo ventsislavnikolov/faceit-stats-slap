@@ -5,6 +5,10 @@ import { useLeaderboard } from "~/hooks/useLeaderboard";
 import { useStatsLeaderboard } from "~/hooks/useStatsLeaderboard";
 import { useSyncPlayerHistory } from "~/hooks/useSyncPlayerHistory";
 import { MY_FACEIT_ID } from "~/lib/constants";
+import {
+  getStatsLeaderboardEmptyStateCopy,
+  getStatsLeaderboardSummaryCopy,
+} from "~/lib/stats-leaderboard-copy";
 import { searchAndLoadFriends } from "~/server/friends";
 import { useEffect, useState } from "react";
 import type { StatsLeaderboardEntry } from "~/lib/types";
@@ -79,17 +83,42 @@ function sortEntries(
   );
 }
 
-function StatsTab({ playerIds }: { playerIds: string[] }) {
+function StatsTab({
+  targetPlayerId,
+  targetNickname,
+  playerIds,
+}: {
+  targetPlayerId: string;
+  targetNickname: string;
+  playerIds: string[];
+}) {
   const [n, setN] = useState<20 | 50 | 100>(20);
+  const [days, setDays] = useState<7 | 30 | 90>(30);
   const [sortKey, setSortKey] = useState<SortKey>("avgKd");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [statGroup, setStatGroup] = useState<StatGroup>("combat");
 
-  const { data: rawEntries = [], isLoading } = useStatsLeaderboard(playerIds, n);
-  const sync = useSyncPlayerHistory(playerIds);
+  const { data: leaderboard, isLoading } = useStatsLeaderboard({
+    targetPlayerId,
+    playerIds,
+    n,
+    days,
+  });
+  const sync = useSyncPlayerHistory({ targetPlayerId, playerIds });
 
   const activeCols = STATS_COLS[statGroup];
-  const entries = sortEntries(rawEntries, sortKey, sortDir);
+  const entries = sortEntries(leaderboard?.entries ?? [], sortKey, sortDir);
+  const summaryCopy = leaderboard
+    ? getStatsLeaderboardSummaryCopy(targetNickname, leaderboard.sharedFriendCount, days)
+    : null;
+  const emptyStateCopy = leaderboard
+    ? getStatsLeaderboardEmptyStateCopy({
+        targetNickname,
+        targetMatchCount: leaderboard.targetMatchCount,
+        sharedFriendCount: leaderboard.sharedFriendCount,
+        days,
+      })
+    : null;
 
   function handleSort(key: SortKey) {
     if (key === sortKey) {
@@ -111,7 +140,7 @@ function StatsTab({ playerIds }: { playerIds: string[] }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-1">
           <span className="text-text-dim text-xs mr-1">Last</span>
           {([20, 50, 100] as const).map((v) => (
@@ -127,9 +156,24 @@ function StatsTab({ playerIds }: { playerIds: string[] }) {
           ))}
           <span className="text-text-dim text-xs ml-1">games</span>
         </div>
+        <div className="flex items-center gap-1">
+          <span className="text-text-dim text-xs mr-1">In the last</span>
+          {([7, 30, 90] as const).map((v) => (
+            <button
+              key={v}
+              onClick={() => setDays(v)}
+              className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+                days === v ? "bg-accent text-black" : "bg-bg-elevated text-text-muted hover:text-text"
+              }`}
+            >
+              {v}
+            </button>
+          ))}
+          <span className="text-text-dim text-xs ml-1">days</span>
+        </div>
         <button
           onClick={() => sync.mutate(n)}
-          disabled={sync.isPending}
+          disabled={sync.isPending || !targetPlayerId}
           className="text-xs px-3 py-1 rounded bg-bg-elevated text-text-muted hover:text-text disabled:opacity-50 transition-colors"
         >
           {sync.isPending ? "Syncing..." : "↻ Refresh"}
@@ -154,72 +198,87 @@ function StatsTab({ playerIds }: { playerIds: string[] }) {
         ))}
       </div>
 
-      {playerIds.length === 0 ? (
+      {!targetPlayerId ? (
         <div className="text-text-dim text-center py-12">
-          Search a player above to see their friends leaderboard
+          Search a player above to see their recent squad leaderboard
         </div>
       ) : isLoading ? (
         <div className="text-accent animate-pulse text-center py-8">Loading...</div>
       ) : (
         <div className="flex flex-col gap-1">
-          <div
-            className="grid gap-2 px-3 pb-1 text-[10px] text-text-dim uppercase tracking-wider"
-            style={{ gridTemplateColumns: `2rem 1fr 3rem repeat(${activeCols.length}, 4rem)` }}
-          >
-            <span>#</span>
-            <span>Player</span>
-            <span className="text-right">GP</span>
-            {activeCols.map((col) => (
-              <button
-                key={col.key}
-                onClick={() => handleSort(col.key)}
-                className={`text-right hover:text-text transition-colors ${
-                  sortKey === col.key ? "text-accent" : ""
-                }`}
-              >
-                {col.label}
-                {sortKey === col.key ? (sortDir === "desc" ? " ↓" : " ↑") : ""}
-              </button>
-            ))}
-          </div>
+          {summaryCopy && (
+            <div className="text-xs text-text-dim px-3">
+              {summaryCopy}
+            </div>
+          )}
+          {emptyStateCopy && (
+            <div className="text-text-dim text-center py-12 text-sm">
+              {emptyStateCopy}
+            </div>
+          )}
 
-          {entries.map((entry, i) => {
-            const isMe = entry.faceitId === MY_FACEIT_ID;
-            return (
+          {!emptyStateCopy && (
+            <>
               <div
-                key={entry.faceitId}
-                className={`grid gap-2 items-center px-3 py-2 rounded text-sm ${
-                  isMe
-                    ? "bg-accent/10 border-l-2 border-accent"
-                    : "bg-bg-elevated"
-                }`}
+                className="grid gap-2 px-3 pb-1 text-[10px] text-text-dim uppercase tracking-wider"
                 style={{ gridTemplateColumns: `2rem 1fr 3rem repeat(${activeCols.length}, 4rem)` }}
               >
-                <span className={`text-xs font-bold ${rankColor(i)}`}>{i + 1}</span>
-                <div className="flex items-baseline gap-1.5 min-w-0">
-                  <span className={`font-bold truncate ${isMe ? "text-accent" : "text-text"}`}>
-                    {isMe ? "You" : entry.nickname}
-                  </span>
-                  {entry.elo > 0 && (
-                    <span className="text-text-dim text-[10px] shrink-0">{entry.elo}</span>
-                  )}
-                </div>
-                <span className="text-right text-text-muted text-xs">
-                  {entry.gamesPlayed || "—"}
-                </span>
+                <span>#</span>
+                <span>Player</span>
+                <span className="text-right">GP</span>
                 {activeCols.map((col) => (
-                  <span
+                  <button
                     key={col.key}
-                    className={`text-right text-xs ${
-                      sortKey === col.key ? "text-accent font-semibold" : "text-text-muted"
+                    onClick={() => handleSort(col.key)}
+                    className={`text-right hover:text-text transition-colors ${
+                      sortKey === col.key ? "text-accent" : ""
                     }`}
                   >
-                    {fmt(entry[col.key], col.decimals, col.suffix)}
-                  </span>
+                    {col.label}
+                    {sortKey === col.key ? (sortDir === "desc" ? " ↓" : " ↑") : ""}
+                  </button>
                 ))}
               </div>
-            );
-          })}
+
+              {entries.map((entry, i) => {
+                const isMe = entry.faceitId === MY_FACEIT_ID;
+                return (
+                  <div
+                    key={entry.faceitId}
+                    className={`grid gap-2 items-center px-3 py-2 rounded text-sm ${
+                      isMe
+                        ? "bg-accent/10 border-l-2 border-accent"
+                        : "bg-bg-elevated"
+                    }`}
+                    style={{ gridTemplateColumns: `2rem 1fr 3rem repeat(${activeCols.length}, 4rem)` }}
+                  >
+                    <span className={`text-xs font-bold ${rankColor(i)}`}>{i + 1}</span>
+                    <div className="flex items-baseline gap-1.5 min-w-0">
+                      <span className={`font-bold truncate ${isMe ? "text-accent" : "text-text"}`}>
+                        {isMe ? "You" : entry.nickname}
+                      </span>
+                      {entry.elo > 0 && (
+                        <span className="text-text-dim text-[10px] shrink-0">{entry.elo}</span>
+                      )}
+                    </div>
+                    <span className="text-right text-text-muted text-xs">
+                      {entry.gamesPlayed || "—"}
+                    </span>
+                    {activeCols.map((col) => (
+                      <span
+                        key={col.key}
+                        className={`text-right text-xs ${
+                          sortKey === col.key ? "text-accent font-semibold" : "text-text-muted"
+                        }`}
+                      >
+                        {fmt(entry[col.key], col.decimals, col.suffix)}
+                      </span>
+                    ))}
+                  </div>
+                );
+              })}
+            </>
+          )}
         </div>
       )}
     </div>
@@ -312,6 +371,8 @@ function LeaderboardPage() {
   });
 
   const friendIds = searchResult?.friends.map((f) => f.faceitId) ?? [];
+  const targetPlayerId = searchResult?.player.faceitId ?? "";
+  const targetNickname = searchResult?.player.nickname ?? "";
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -342,8 +403,7 @@ function LeaderboardPage() {
 
       {searchResult && (
         <div className="text-xs text-text-muted mb-4">
-          Showing friends of <span className="text-accent font-bold">{searchResult.player.nickname}</span>
-          {" · "}{searchResult.friends.length} players
+          Showing recent squad for <span className="text-accent font-bold">{searchResult.player.nickname}</span>
         </div>
       )}
       {searchError && (
@@ -366,7 +426,15 @@ function LeaderboardPage() {
         ))}
       </div>
 
-      {tab === "stats" ? <StatsTab playerIds={friendIds} /> : <BetsTab />}
+      {tab === "stats" ? (
+        <StatsTab
+          targetPlayerId={targetPlayerId}
+          targetNickname={targetNickname}
+          playerIds={friendIds}
+        />
+      ) : (
+        <BetsTab />
+      )}
     </div>
   );
 }
