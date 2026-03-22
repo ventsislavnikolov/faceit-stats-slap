@@ -157,9 +157,9 @@ export async function fetchPlayerLifetimeStats(playerId: string) {
   return parseLifetimeStats(data);
 }
 
-export async function fetchPlayerHistory(playerId: string, limit = 30) {
+export async function fetchPlayerHistory(playerId: string, limit = 30, offset = 0) {
   const data = (await faceitFetch(
-    `/players/${playerId}/history?game=cs2&offset=0&limit=${limit}`
+    `/players/${playerId}/history?game=cs2&offset=${offset}&limit=${limit}`
   )) as any;
   return data.items || [];
 }

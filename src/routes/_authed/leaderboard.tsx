@@ -172,7 +172,7 @@ function StatsTab({
           <span className="text-text-dim text-xs ml-1">days</span>
         </div>
         <button
-          onClick={() => sync.mutate(n)}
+          onClick={() => sync.mutate({ n, days })}
           disabled={sync.isPending || !targetPlayerId}
           className="text-xs px-3 py-1 rounded bg-bg-elevated text-text-muted hover:text-text disabled:opacity-50 transition-colors"
         >

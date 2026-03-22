@@ -1,10 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
 
 const HISTORY_SYNC_BATCH_SIZE = 3;
+const HISTORY_SYNC_PAGE_SIZE = 50;
+const HISTORY_SYNC_MAX_PAGES = 6;
 const LIVE_HISTORY_BATCH_SIZE = 1;
 const BATCH_DELAY_MS = 300;
 const LIVE_HISTORY_DELAY_MS = 200;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const DAY_MS = 24 * 60 * 60 * 1000;
 import {
   buildMatchScoreString,
   fetchPlayerHistory,
@@ -22,11 +25,45 @@ import { createServerSupabase } from "~/lib/supabase.server";
 import type { LiveMatch, StatsLeaderboardResult } from "~/lib/types";
 import { getWebhookLiveMatchMap } from "~/server/faceit-webhooks";
 
-const DAY_MS = 24 * 60 * 60 * 1000;
+function getHistoryTimestamp(item: any): number | null {
+  const raw = item?.finished_at ?? item?.started_at;
+  if (raw == null) return null;
+  const ts = typeof raw === "number" ? raw : Number(raw);
+  return Number.isFinite(ts) ? ts : null;
+}
 
-async function syncPlayerHistory(faceitId: string, n: number): Promise<void> {
+export async function fetchPlayerHistoryWindow(
+  faceitId: string,
+  days: 7 | 30 | 90,
+  pageSize = HISTORY_SYNC_PAGE_SIZE,
+  maxPages = HISTORY_SYNC_MAX_PAGES
+): Promise<any[]> {
+  const cutoff = Math.floor(Date.now() / 1000) - days * 24 * 60 * 60;
+  const history: any[] = [];
+
+  for (let page = 0; page < maxPages; page += 1) {
+    const offset = page * pageSize;
+    const pageHistory = await fetchPlayerHistory(faceitId, pageSize, offset);
+    if (pageHistory.length === 0) break;
+
+    for (const item of pageHistory) {
+      const ts = getHistoryTimestamp(item);
+      if (ts != null && ts >= cutoff) {
+        history.push(item);
+      }
+    }
+
+    const oldest = getHistoryTimestamp(pageHistory[pageHistory.length - 1]);
+    if (oldest == null || oldest < cutoff) break;
+  }
+
+  return history;
+}
+
+async function syncPlayerHistory(faceitId: string, n: number, days: 7 | 30 | 90): Promise<void> {
   const supabase = createServerSupabase();
-  const history = await fetchPlayerHistory(faceitId, n);
+  const pageSize = Math.max(HISTORY_SYNC_PAGE_SIZE, n);
+  const history = await fetchPlayerHistoryWindow(faceitId, days, pageSize);
 
   for (let i = 0; i < history.length; i += HISTORY_SYNC_BATCH_SIZE) {
     if (i > 0) await sleep(BATCH_DELAY_MS);
@@ -134,7 +171,7 @@ export const getLiveMatches = createServerFn({ method: "GET" })
       const batch = fallbackIds.slice(i, i + LIVE_HISTORY_BATCH_SIZE);
       const batchResults = await Promise.allSettled(
         batch.map(async (friendId) => {
-          const history = await fetchPlayerHistory(friendId, 5);
+          const history = await fetchPlayerHistory(friendId, 5, 0);
           const candidate = pickRelevantHistoryMatch(history);
           if (!candidate) return null;
           return { matchId: candidate.match_id, friendId };
@@ -490,17 +527,17 @@ export const getStatsLeaderboard = createServerFn({ method: "GET" })
   });
 
 export const syncAllPlayerHistory = createServerFn({ method: "POST" })
-  .inputValidator((input: { targetPlayerId: string; playerIds: string[]; n: number }) => input)
-  .handler(async ({ data: { targetPlayerId, playerIds, n } }): Promise<void> => {
+  .inputValidator((input: { targetPlayerId: string; playerIds: string[]; n: number; days: 7 | 30 | 90 }) => input)
+  .handler(async ({ data: { targetPlayerId, playerIds, n, days } }): Promise<void> => {
     for (const faceitId of [...new Set([targetPlayerId, ...playerIds])]) {
-      await syncPlayerHistory(faceitId, n);
+      await syncPlayerHistory(faceitId, n, days);
     }
   });
 
 export const getPlayerStats = createServerFn({ method: "GET" })
   .inputValidator((playerId: string) => playerId)
   .handler(async ({ data: playerId }) => {
-    const history = await fetchPlayerHistory(playerId, 15); // capped at 15 to limit API calls
+    const history = await fetchPlayerHistory(playerId, 15, 0); // capped at 15 to limit API calls
 
     const allResults: PromiseSettledResult<any>[] = [];
     for (let i = 0; i < history.length; i += 5) {

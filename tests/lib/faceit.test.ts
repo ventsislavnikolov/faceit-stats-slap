@@ -2,6 +2,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import {
   buildMatchScoreString,
   faceitFetch,
+  fetchPlayerHistory,
   pickRelevantHistoryMatch,
   parseMatchStats,
   parseMatchTeamScore,
@@ -180,5 +181,31 @@ describe("faceitFetch", () => {
 
     await expect(promise).resolves.toEqual({ ok: true });
     expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("fetchPlayerHistory", () => {
+  it("passes offset through to the history endpoint", async () => {
+    process.env.FACEIT_SERVER_SIDE_API_KEY = "test-key";
+
+    const fetchMock = vi
+      .spyOn(global, "fetch")
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ items: [] }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        })
+      );
+
+    await fetchPlayerHistory("player-123", 25, 75);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining("/players/player-123/history?game=cs2&offset=75&limit=25"),
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Authorization: "Bearer test-key",
+        }),
+      })
+    );
   });
 });
