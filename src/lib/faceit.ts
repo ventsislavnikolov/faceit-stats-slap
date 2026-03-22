@@ -58,6 +58,7 @@ export function parseMatchStats(raw: any): MatchPlayerStats {
     kdRatio: parseFloat(s["K/D Ratio"]) || 0,
     adr: parseFloat(s["ADR"]) || 0,
     hsPercent: parseInt(s["Headshots %"]) || 0,
+    krRatio: parseFloat(s["K/R Ratio"]) || 0,
     tripleKills: parseInt(s["Triple Kills"]) || 0,
     quadroKills: parseInt(s["Quadro Kills"]) || 0,
     pentaKills: parseInt(s["Penta Kills"]) || 0,

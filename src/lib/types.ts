@@ -59,6 +59,7 @@ export interface MatchPlayerStats {
   kdRatio: number;
   adr: number;
   hsPercent: number;
+  krRatio: number;
   tripleKills: number;
   quadroKills: number;
   pentaKills: number;
@@ -113,6 +114,18 @@ export interface Bet {
 
 export interface BetWithPool extends Bet {
   pool: BettingPool;
+}
+
+export interface StatsLeaderboardEntry {
+  faceitId: string;
+  nickname: string;
+  elo: number;
+  gamesPlayed: number;
+  avgKd: number;
+  avgAdr: number;
+  winRate: number;       // 0–100
+  avgHsPercent: number;  // 0–100
+  avgKrRatio: number;
 }
 
 export interface LeaderboardEntry {
