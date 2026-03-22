@@ -19,7 +19,7 @@ export const resolvePlayer = createServerFn({ method: "GET" })
     const trimmed = input.trim();
     const player = UUID_RE.test(trimmed)
       ? await fetchPlayer(trimmed)
-      : await fetchPlayerByNickname(trimmed.toLowerCase());
+      : await fetchPlayerByNickname(trimmed);
     return { faceitId: player.faceitId, nickname: player.nickname };
   });
 
@@ -37,7 +37,7 @@ export const searchAndLoadFriends = createServerFn({ method: "GET" })
       const trimmed = input.trim();
       const raw = UUID_RE.test(trimmed)
         ? await fetchPlayer(trimmed)
-        : await fetchPlayerByNickname(trimmed.toLowerCase());
+        : await fetchPlayerByNickname(trimmed);
 
       const { friendsIds, ...player } = raw;
       const totalFriends = friendsIds.length;
