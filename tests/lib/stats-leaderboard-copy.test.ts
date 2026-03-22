@@ -11,6 +11,21 @@ describe("stats leaderboard copy", () => {
     );
   });
 
+  it("supports the 730-day preset in summary and empty-state copy", () => {
+    expect(getStatsLeaderboardSummaryCopy("soavarice", 9, 730, 50)).toBe(
+      "Showing players you queued with in the last 730 days. Stats are from each player's own last 50 matches."
+    );
+
+    expect(
+      getStatsLeaderboardEmptyStateCopy({
+        targetNickname: "Target",
+        targetMatchCount: 4,
+        sharedFriendCount: 0,
+        days: 730,
+      })
+    ).toBe("No recently queued friends for Target in the last 730 days.");
+  });
+
   it("formats the no recent matches empty state", () => {
     expect(
       getStatsLeaderboardEmptyStateCopy({

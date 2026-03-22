@@ -33,7 +33,7 @@ function getHistoryTimestamp(item: any): number | null {
 
 export async function fetchPlayerHistoryWindow(
   faceitId: string,
-  days: 30 | 90 | 180 | 365,
+  days: 30 | 90 | 180 | 365 | 730,
   pageSize = HISTORY_SYNC_PAGE_SIZE
 ): Promise<any[]> {
   const cutoff = Math.floor(Date.now() / 1000) - days * 24 * 60 * 60;
@@ -58,7 +58,7 @@ export async function fetchPlayerHistoryWindow(
   return history;
 }
 
-async function syncPlayerHistory(faceitId: string, n: number, days: 30 | 90 | 180 | 365): Promise<void> {
+async function syncPlayerHistory(faceitId: string, n: number, days: 30 | 90 | 180 | 365 | 730): Promise<void> {
   const supabase = createServerSupabase();
   const pageSize = Math.max(HISTORY_SYNC_PAGE_SIZE, n);
   const history = await fetchPlayerHistoryWindow(faceitId, days, pageSize);
@@ -449,7 +449,7 @@ export const getMatchDetails = createServerFn({ method: "GET" })
   });
 
 export const getStatsLeaderboard = createServerFn({ method: "GET" })
-  .inputValidator((input: { targetPlayerId: string; playerIds: string[]; n: 20 | 50 | 100; days: 30 | 90 | 180 | 365 }) => input)
+  .inputValidator((input: { targetPlayerId: string; playerIds: string[]; n: 20 | 50 | 100; days: 30 | 90 | 180 | 365 | 730 }) => input)
   .handler(async ({ data: { targetPlayerId, playerIds, n, days } }): Promise<StatsLeaderboardResult> => {
     const supabase = createServerSupabase();
     const uniquePlayerIds = [...new Set([targetPlayerId, ...playerIds])];
@@ -523,7 +523,7 @@ export const getStatsLeaderboard = createServerFn({ method: "GET" })
   });
 
 export const syncAllPlayerHistory = createServerFn({ method: "POST" })
-  .inputValidator((input: { targetPlayerId: string; playerIds: string[]; n: number; days: 30 | 90 | 180 | 365 }) => input)
+  .inputValidator((input: { targetPlayerId: string; playerIds: string[]; n: number; days: 30 | 90 | 180 | 365 | 730 }) => input)
   .handler(async ({ data: { targetPlayerId, playerIds, n, days } }): Promise<void> => {
     for (const faceitId of [...new Set([targetPlayerId, ...playerIds])]) {
       await syncPlayerHistory(faceitId, n, days);

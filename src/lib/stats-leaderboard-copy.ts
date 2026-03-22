@@ -1,7 +1,7 @@
 export function getStatsLeaderboardSummaryCopy(
   _targetNickname: string,
   _sharedFriendCount: number,
-  days: 30 | 90 | 180 | 365,
+  days: 30 | 90 | 180 | 365 | 730,
   n: 20 | 50 | 100
 ): string {
   return `Showing players you queued with in the last ${days} days. Stats are from each player's own last ${n} matches.`;
@@ -16,7 +16,7 @@ export function getStatsLeaderboardEmptyStateCopy({
   targetNickname: string;
   targetMatchCount: number;
   sharedFriendCount: number;
-  days: 30 | 90 | 180 | 365;
+  days: 30 | 90 | 180 | 365 | 730;
 }): string | null {
   if (targetMatchCount === 0) {
     return `No recent matches for ${targetNickname} in the last ${days} days.`;

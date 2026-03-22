@@ -109,10 +109,15 @@ export function buildPersonalFormLeaderboard({
     }
   }
 
+  const includedPlayerIds = new Set(eligibleFriendIds);
+  if (targetMatchIds.size > 0) {
+    includedPlayerIds.add(targetPlayerId);
+  }
+
   const perFriendRows = new Map<string, ValidSharedStatsLeaderboardRow[]>();
   for (const row of rows) {
     const validRow = normalizeRow(row);
-    if (!validRow || !eligibleFriendIds.has(validRow.faceitId)) continue;
+    if (!validRow || !includedPlayerIds.has(validRow.faceitId)) continue;
 
     if (!perFriendRows.has(validRow.faceitId)) perFriendRows.set(validRow.faceitId, []);
     perFriendRows.get(validRow.faceitId)!.push(validRow);
@@ -157,7 +162,7 @@ export function buildPersonalFormLeaderboard({
   return {
     entries,
     targetMatchCount: targetMatchIds.size,
-    sharedFriendCount: entries.length,
+    sharedFriendCount: eligibleFriendIds.size,
   };
 }
 

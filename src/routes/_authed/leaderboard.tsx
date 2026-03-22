@@ -93,7 +93,7 @@ function StatsTab({
   playerIds: string[];
 }) {
   const [n, setN] = useState<20 | 50 | 100>(20);
-  const [days, setDays] = useState<30 | 90 | 180 | 365>(30);
+  const [days, setDays] = useState<30 | 90 | 180 | 365 | 730>(30);
   const [sortKey, setSortKey] = useState<SortKey>("avgKd");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [statGroup, setStatGroup] = useState<StatGroup>("combat");
@@ -158,7 +158,7 @@ function StatsTab({
         </div>
         <div className="flex items-center gap-1">
           <span className="text-text-dim text-xs mr-1">In the last</span>
-          {([30, 90, 180, 365] as const).map((v) => (
+          {([30, 90, 180, 365, 730] as const).map((v) => (
             <button
               key={v}
               onClick={() => setDays(v)}
@@ -403,7 +403,7 @@ function LeaderboardPage() {
 
       {searchResult && (
         <div className="text-xs text-text-muted mb-4">
-          Showing recent squad for <span className="text-accent font-bold">{searchResult.player.nickname}</span>
+          Showing leaderboard for <span className="text-accent font-bold">{searchResult.player.nickname}</span>
         </div>
       )}
       {searchError && (

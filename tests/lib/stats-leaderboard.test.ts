@@ -241,6 +241,60 @@ function makeRow(
 }
 
 describe("buildPersonalFormLeaderboard", () => {
+  it("includes the searched player with their own recent form sample", () => {
+    const result = buildPersonalFormLeaderboard({
+      rows: [
+        makeRow({
+          matchId: "target-match-1",
+          faceitId: "target",
+          playedAt: "2026-03-21T10:00:00.000Z",
+          nickname: "Target",
+          elo: 3333,
+          kdRatio: 1.3,
+          adr: 90,
+          hsPercent: 42,
+          krRatio: 0.8,
+          win: true,
+        }),
+        makeRow({
+          matchId: "target-match-1",
+          faceitId: "friend-a",
+          playedAt: "2026-03-21T10:00:00.000Z",
+          kdRatio: 1.1,
+        }),
+        makeRow({
+          matchId: "target-personal-1",
+          faceitId: "target",
+          playedAt: "2026-03-22T10:00:00.000Z",
+          nickname: "Target",
+          elo: 3333,
+          kdRatio: 1.5,
+          adr: 100,
+          hsPercent: 50,
+          krRatio: 0.9,
+          win: false,
+        }),
+      ],
+      targetPlayerId: "target",
+      friendIds: ["friend-a"],
+      n: 20,
+      days: 30,
+      now: "2026-03-22T12:00:00.000Z",
+    });
+
+    expect(result.entries.map((entry) => entry.faceitId)).toContain("target");
+    expect(result.entries).toContainEqual(
+      expect.objectContaining({
+        faceitId: "target",
+        nickname: "Target",
+        elo: 3333,
+        gamesPlayed: 2,
+        avgKd: 1.4,
+      })
+    );
+    expect(result.sharedFriendCount).toBe(1);
+  });
+
   it("uses personal recent matches after a friend qualifies via one shared match", () => {
     const result = buildPersonalFormLeaderboard({
       rows: [
@@ -322,7 +376,7 @@ describe("buildPersonalFormLeaderboard", () => {
 
     expect(result.targetMatchCount).toBe(2);
     expect(result.sharedFriendCount).toBe(1);
-    expect(result.entries.map((entry) => entry.faceitId)).toEqual(["friend-a"]);
+    expect(result.entries.map((entry) => entry.faceitId)).toEqual(["friend-a", "target"]);
     expect(result.entries[0]).toMatchObject({
       gamesPlayed: 3,
       avgKd: 1.5,
@@ -405,7 +459,12 @@ describe("buildPersonalFormLeaderboard", () => {
       now: "2026-03-22T12:00:00.000Z",
     });
 
-    expect(result.entries).toHaveLength(0);
+    expect(result.entries).toHaveLength(1);
+    expect(result.entries[0]).toMatchObject({
+      faceitId: "target",
+      gamesPlayed: 2,
+      avgKd: 0,
+    });
     expect(result.sharedFriendCount).toBe(0);
     expect(result.targetMatchCount).toBe(2);
   });
@@ -444,7 +503,7 @@ describe("buildPersonalFormLeaderboard", () => {
       now: "2026-03-22T12:00:00.000Z",
     });
 
-    expect(result.entries).toHaveLength(1);
+    expect(result.entries).toHaveLength(2);
     expect(result.entries[0]).toMatchObject({
       faceitId: "friend-a",
       gamesPlayed: 2,
@@ -499,12 +558,17 @@ describe("buildPersonalFormLeaderboard", () => {
       now: "2026-03-22T12:00:00.000Z",
     });
 
-    expect(noSharedFriends.entries).toEqual([]);
+    expect(noSharedFriends.entries).toEqual([
+      expect.objectContaining({
+        faceitId: "target",
+        gamesPlayed: 1,
+      }),
+    ]);
     expect(noSharedFriends.targetMatchCount).toBe(1);
     expect(noSharedFriends.sharedFriendCount).toBe(0);
   });
 
-  it("returns only recently queued friends and scores them with personal recent matches", async () => {
+  it("returns the searched player plus recently queued friends scored by personal recent matches", async () => {
     const result = await runWithStartContext(
       {
         contextAfterGlobalMiddlewares: {},
@@ -521,19 +585,24 @@ describe("buildPersonalFormLeaderboard", () => {
         } as any)
     );
 
-    expect(result).toEqual({
-      entries: [
-        expect.objectContaining({
-          faceitId: "friend-a",
-          nickname: "Friend A",
-          elo: 2010,
-          gamesPlayed: 3,
-          avgKd: 1.5,
-        }),
-      ],
-      targetMatchCount: 2,
-      sharedFriendCount: 1,
-    });
+    expect(result.entries).toEqual([
+      expect.objectContaining({
+        faceitId: "friend-a",
+        nickname: "Friend A",
+        elo: 2010,
+        gamesPlayed: 3,
+        avgKd: 1.5,
+      }),
+      expect.objectContaining({
+        faceitId: "target",
+        nickname: "Target",
+        elo: 3333,
+        gamesPlayed: 2,
+        avgKd: 1,
+      }),
+    ]);
+    expect(result.targetMatchCount).toBe(2);
+    expect(result.sharedFriendCount).toBe(1);
   });
 
   it("does not force-add MY_FACEIT_ID when querying a different target", async () => {
