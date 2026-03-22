@@ -8,7 +8,11 @@ export function useLiveMatches(playerIds: string[]) {
     queryFn: () => getLiveMatches({ data: playerIds }),
     refetchInterval: (query) => {
       const data = query.state.data;
-      return data && data.length > 0 ? 30_000 : 5 * 60 * 1000;
+      const hasActiveMatch = data?.some((match) =>
+        ["ONGOING", "READY", "VOTING", "CONFIGURING"].includes(match.status)
+      );
+
+      return hasActiveMatch ? 10_000 : 30_000;
     },
     staleTime: 20_000,
     enabled: playerIds.length > 0,

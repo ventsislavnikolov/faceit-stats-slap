@@ -103,6 +103,20 @@ export function buildMatchScoreString(roundStats: any, teams: any[]): string {
   return "";
 }
 
+const ACTIVE_MATCH_STATUSES = new Set([
+  "ONGOING",
+  "READY",
+  "VOTING",
+  "CONFIGURING",
+]);
+
+export function pickRelevantHistoryMatch(history: any[]): any | null {
+  if (!history.length) return null;
+
+  const active = history.find((item) => ACTIVE_MATCH_STATUSES.has(item?.status));
+  return active ?? history[0];
+}
+
 export async function fetchPlayer(
   playerId: string
 ): Promise<FaceitPlayer & { friendsIds: string[] }> {

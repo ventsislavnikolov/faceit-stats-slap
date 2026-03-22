@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   buildMatchScoreString,
+  pickRelevantHistoryMatch,
   parseMatchStats,
   parseMatchTeamScore,
   parseLifetimeStats,
@@ -125,5 +126,25 @@ describe("buildMatchScoreString", () => {
     );
 
     expect(result).toBe("13 / 10");
+  });
+});
+
+describe("pickRelevantHistoryMatch", () => {
+  it("prefers an active match from recent history over a newer finished one", () => {
+    const result = pickRelevantHistoryMatch([
+      { match_id: "finished-1", status: "FINISHED" },
+      { match_id: "ongoing-1", status: "ONGOING" },
+    ]);
+
+    expect(result?.match_id).toBe("ongoing-1");
+  });
+
+  it("falls back to the most recent history item when there is no active match", () => {
+    const result = pickRelevantHistoryMatch([
+      { match_id: "finished-1", status: "FINISHED" },
+      { match_id: "finished-2", status: "FINISHED" },
+    ]);
+
+    expect(result?.match_id).toBe("finished-1");
   });
 });

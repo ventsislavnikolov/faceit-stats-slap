@@ -8,6 +8,7 @@ import {
   fetchPlayerHistory,
   fetchMatch,
   fetchMatchStats,
+  pickRelevantHistoryMatch,
   parseMatchTeamScore,
   parseMatchStats,
 } from "~/lib/faceit";
@@ -119,9 +120,10 @@ export const getLiveMatches = createServerFn({ method: "GET" })
       const batch = ids.slice(i, i + 5);
       const batchResults = await Promise.allSettled(
         batch.map(async (friendId) => {
-          const history = await fetchPlayerHistory(friendId, 1);
-          if (!history.length) return null;
-          return { matchId: history[0].match_id, friendId };
+          const history = await fetchPlayerHistory(friendId, 5);
+          const candidate = pickRelevantHistoryMatch(history);
+          if (!candidate) return null;
+          return { matchId: candidate.match_id, friendId };
         })
       );
       historyResults.push(...batchResults);
@@ -215,6 +217,14 @@ export const getLiveMatches = createServerFn({ method: "GET" })
         { onConflict: "faceit_match_id" }
       );
     }
+
+    liveMatches.sort((a, b) => {
+      const aActive = a.status === "ONGOING" || a.status === "READY" || a.status === "VOTING" || a.status === "CONFIGURING";
+      const bActive = b.status === "ONGOING" || b.status === "READY" || b.status === "VOTING" || b.status === "CONFIGURING";
+
+      if (aActive !== bActive) return aActive ? -1 : 1;
+      return (b.startedAt || 0) - (a.startedAt || 0);
+    });
 
     // ── Betting pool lifecycle ─────────────────────────────────
 
