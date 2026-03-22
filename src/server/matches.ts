@@ -2,7 +2,6 @@ import { createServerFn } from "@tanstack/react-start";
 
 const HISTORY_SYNC_BATCH_SIZE = 3;
 const HISTORY_SYNC_PAGE_SIZE = 50;
-const HISTORY_SYNC_MAX_PAGES = 6;
 const LIVE_HISTORY_BATCH_SIZE = 1;
 const BATCH_DELAY_MS = 300;
 const LIVE_HISTORY_DELAY_MS = 200;
@@ -35,13 +34,12 @@ function getHistoryTimestamp(item: any): number | null {
 export async function fetchPlayerHistoryWindow(
   faceitId: string,
   days: 7 | 30 | 90,
-  pageSize = HISTORY_SYNC_PAGE_SIZE,
-  maxPages = HISTORY_SYNC_MAX_PAGES
+  pageSize = HISTORY_SYNC_PAGE_SIZE
 ): Promise<any[]> {
   const cutoff = Math.floor(Date.now() / 1000) - days * 24 * 60 * 60;
   const history: any[] = [];
 
-  for (let page = 0; page < maxPages; page += 1) {
+  for (let page = 0; ; page += 1) {
     const offset = page * pageSize;
     const pageHistory = await fetchPlayerHistory(faceitId, pageSize, offset);
     if (pageHistory.length === 0) break;
@@ -54,7 +52,7 @@ export async function fetchPlayerHistoryWindow(
     }
 
     const oldest = getHistoryTimestamp(pageHistory[pageHistory.length - 1]);
-    if (oldest == null || oldest < cutoff) break;
+    if (pageHistory.length < pageSize || oldest == null || oldest < cutoff) break;
   }
 
   return history;

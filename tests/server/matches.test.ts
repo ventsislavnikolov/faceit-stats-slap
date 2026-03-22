@@ -19,36 +19,32 @@ afterEach(() => {
 });
 
 describe("fetchPlayerHistoryWindow", () => {
-  it("pages history until it reaches matches older than the cutoff", async () => {
+  it("keeps paging past the old six-page ceiling until the cutoff or an empty page", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-03-22T12:00:00.000Z"));
 
-    const ts = (daysAgo: number) =>
-      Math.floor((Date.now() - daysAgo * DAY_MS) / 1000);
+    const ts = (daysAgo: number) => Math.floor((Date.now() - daysAgo * DAY_MS) / 1000);
 
     mockedFetchPlayerHistory.mockImplementation(async (_playerId, _limit, offset = 0) => {
-      if (offset === 0) {
+      const page = offset / 2;
+      if (page < 7) {
         return [
-          { match_id: "m-1", started_at: ts(5) },
-          { match_id: "m-2", started_at: ts(10) },
-        ];
-      }
-
-      if (offset === 50) {
-        return [
-          { match_id: "m-3", started_at: ts(20) },
-          { match_id: "m-old", started_at: ts(40) },
+          { match_id: `m-${page * 2 + 1}`, started_at: ts(5) },
+          { match_id: `m-${page * 2 + 2}`, started_at: ts(10) },
         ];
       }
 
       return [];
     });
 
-    const rows = await fetchPlayerHistoryWindow("player-1", 30);
+    const rows = await fetchPlayerHistoryWindow("player-1", 90, 2);
 
-    expect(mockedFetchPlayerHistory).toHaveBeenNthCalledWith(1, "player-1", 50, 0);
-    expect(mockedFetchPlayerHistory).toHaveBeenNthCalledWith(2, "player-1", 50, 50);
-    expect(mockedFetchPlayerHistory).toHaveBeenCalledTimes(2);
-    expect(rows.map((row) => row.match_id)).toEqual(["m-1", "m-2", "m-3"]);
+    expect(mockedFetchPlayerHistory).toHaveBeenNthCalledWith(1, "player-1", 2, 0);
+    expect(mockedFetchPlayerHistory).toHaveBeenNthCalledWith(7, "player-1", 2, 12);
+    expect(mockedFetchPlayerHistory).toHaveBeenNthCalledWith(8, "player-1", 2, 14);
+    expect(mockedFetchPlayerHistory).toHaveBeenCalledTimes(8);
+    expect(rows).toHaveLength(14);
+    expect(rows[0]?.match_id).toBe("m-1");
+    expect(rows[13]?.match_id).toBe("m-14");
   });
 });
