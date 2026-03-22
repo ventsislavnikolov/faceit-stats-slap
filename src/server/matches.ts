@@ -17,7 +17,7 @@ import {
   parseMatchStats,
 } from "~/lib/faceit";
 import {
-  buildSharedStatsLeaderboard,
+  buildPersonalFormLeaderboard,
   type SharedStatsLeaderboardRow,
 } from "~/lib/stats-leaderboard";
 import { createServerSupabase } from "~/lib/supabase.server";
@@ -33,7 +33,7 @@ function getHistoryTimestamp(item: any): number | null {
 
 export async function fetchPlayerHistoryWindow(
   faceitId: string,
-  days: 7 | 30 | 90,
+  days: 30 | 90 | 180 | 365,
   pageSize = HISTORY_SYNC_PAGE_SIZE
 ): Promise<any[]> {
   const cutoff = Math.floor(Date.now() / 1000) - days * 24 * 60 * 60;
@@ -58,7 +58,7 @@ export async function fetchPlayerHistoryWindow(
   return history;
 }
 
-async function syncPlayerHistory(faceitId: string, n: number, days: 7 | 30 | 90): Promise<void> {
+async function syncPlayerHistory(faceitId: string, n: number, days: 30 | 90 | 180 | 365): Promise<void> {
   const supabase = createServerSupabase();
   const pageSize = Math.max(HISTORY_SYNC_PAGE_SIZE, n);
   const history = await fetchPlayerHistoryWindow(faceitId, days, pageSize);
@@ -449,11 +449,10 @@ export const getMatchDetails = createServerFn({ method: "GET" })
   });
 
 export const getStatsLeaderboard = createServerFn({ method: "GET" })
-  .inputValidator((input: { targetPlayerId: string; playerIds: string[]; n: 20 | 50 | 100; days: 7 | 30 | 90 }) => input)
+  .inputValidator((input: { targetPlayerId: string; playerIds: string[]; n: 20 | 50 | 100; days: 30 | 90 | 180 | 365 }) => input)
   .handler(async ({ data: { targetPlayerId, playerIds, n, days } }): Promise<StatsLeaderboardResult> => {
     const supabase = createServerSupabase();
     const uniquePlayerIds = [...new Set([targetPlayerId, ...playerIds])];
-    const cutoffIso = new Date(Date.now() - days * DAY_MS).toISOString();
 
     const { data: friendRows } = playerIds.length === 0
       ? { data: [] }
@@ -470,7 +469,6 @@ export const getStatsLeaderboard = createServerFn({ method: "GET" })
       .from("match_player_stats")
       .select("match_id, faceit_player_id, nickname, played_at, kd_ratio, adr, hs_percent, kr_ratio, win, first_kills, clutch_kills, utility_damage, enemies_flashed, entry_count, entry_wins, sniper_kills")
       .in("faceit_player_id", uniquePlayerIds)
-      .gte("played_at", cutoffIso)
       .order("played_at", { ascending: false });
 
     const normalizedRows: SharedStatsLeaderboardRow[] = (rows || []).map((row: any) => {
@@ -497,7 +495,7 @@ export const getStatsLeaderboard = createServerFn({ method: "GET" })
       };
     });
 
-    let result = buildSharedStatsLeaderboard({
+    let result = buildPersonalFormLeaderboard({
       rows: normalizedRows,
       targetPlayerId,
       friendIds: playerIds,
@@ -525,7 +523,7 @@ export const getStatsLeaderboard = createServerFn({ method: "GET" })
   });
 
 export const syncAllPlayerHistory = createServerFn({ method: "POST" })
-  .inputValidator((input: { targetPlayerId: string; playerIds: string[]; n: number; days: 7 | 30 | 90 }) => input)
+  .inputValidator((input: { targetPlayerId: string; playerIds: string[]; n: number; days: 30 | 90 | 180 | 365 }) => input)
   .handler(async ({ data: { targetPlayerId, playerIds, n, days } }): Promise<void> => {
     for (const faceitId of [...new Set([targetPlayerId, ...playerIds])]) {
       await syncPlayerHistory(faceitId, n, days);

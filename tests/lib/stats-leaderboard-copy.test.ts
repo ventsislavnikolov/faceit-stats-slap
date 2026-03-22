@@ -5,9 +5,9 @@ import {
 } from "~/lib/stats-leaderboard-copy";
 
 describe("stats leaderboard copy", () => {
-  it("formats the shared-friends summary copy", () => {
-    expect(getStatsLeaderboardSummaryCopy("Target", 3, 30)).toBe(
-      "Recent squad leaderboard for Target · 3 shared friends in the last 30 days"
+  it("formats the personal-form summary copy", () => {
+    expect(getStatsLeaderboardSummaryCopy("soavarice", 9, 90, 20)).toBe(
+      "Showing players you queued with in the last 90 days. Stats are from each player's own last 20 matches."
     );
   });
 
@@ -17,19 +17,19 @@ describe("stats leaderboard copy", () => {
         targetNickname: "Target",
         targetMatchCount: 0,
         sharedFriendCount: 0,
-        days: 7,
+        days: 30,
       })
-    ).toBe("No recent matches for Target in the last 7 days.");
+    ).toBe("No recent matches for Target in the last 30 days.");
   });
 
-  it("formats the no shared-friends empty state", () => {
+  it("formats the no recently-queued-friends empty state", () => {
     expect(
       getStatsLeaderboardEmptyStateCopy({
         targetNickname: "Target",
         targetMatchCount: 4,
         sharedFriendCount: 0,
-        days: 30,
+        days: 365,
       })
-    ).toBe("No friends played with Target in the last 30 days.");
+    ).toBe("No recently queued friends for Target in the last 365 days.");
   });
 });

@@ -37,7 +37,7 @@ describe("fetchPlayerHistoryWindow", () => {
       return [];
     });
 
-    const rows = await fetchPlayerHistoryWindow("player-1", 90, 2);
+    const rows = await fetchPlayerHistoryWindow("player-1", 365, 2);
 
     expect(mockedFetchPlayerHistory).toHaveBeenNthCalledWith(1, "player-1", 2, 0);
     expect(mockedFetchPlayerHistory).toHaveBeenNthCalledWith(7, "player-1", 2, 12);

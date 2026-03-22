@@ -93,7 +93,7 @@ function StatsTab({
   playerIds: string[];
 }) {
   const [n, setN] = useState<20 | 50 | 100>(20);
-  const [days, setDays] = useState<7 | 30 | 90>(30);
+  const [days, setDays] = useState<30 | 90 | 180 | 365>(30);
   const [sortKey, setSortKey] = useState<SortKey>("avgKd");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [statGroup, setStatGroup] = useState<StatGroup>("combat");
@@ -109,7 +109,7 @@ function StatsTab({
   const activeCols = STATS_COLS[statGroup];
   const entries = sortEntries(leaderboard?.entries ?? [], sortKey, sortDir);
   const summaryCopy = leaderboard
-    ? getStatsLeaderboardSummaryCopy(targetNickname, leaderboard.sharedFriendCount, days)
+    ? getStatsLeaderboardSummaryCopy(targetNickname, leaderboard.sharedFriendCount, days, n)
     : null;
   const emptyStateCopy = leaderboard
     ? getStatsLeaderboardEmptyStateCopy({
@@ -158,7 +158,7 @@ function StatsTab({
         </div>
         <div className="flex items-center gap-1">
           <span className="text-text-dim text-xs mr-1">In the last</span>
-          {([7, 30, 90] as const).map((v) => (
+          {([30, 90, 180, 365] as const).map((v) => (
             <button
               key={v}
               onClick={() => setDays(v)}
@@ -200,7 +200,7 @@ function StatsTab({
 
       {!targetPlayerId ? (
         <div className="text-text-dim text-center py-12">
-          Search a player above to see their recent squad leaderboard
+          Search a player above to see who they queued with recently and how each friend is performing across their own recent matches
         </div>
       ) : isLoading ? (
         <div className="text-accent animate-pulse text-center py-8">Loading...</div>

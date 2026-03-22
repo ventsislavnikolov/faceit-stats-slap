@@ -6,7 +6,7 @@ export function useStatsLeaderboard(params: {
   targetPlayerId: string;
   playerIds: string[];
   n: 20 | 50 | 100;
-  days: 7 | 30 | 90;
+  days: 30 | 90 | 180 | 365;
 }) {
   const { targetPlayerId, playerIds, n, days } = params;
 
