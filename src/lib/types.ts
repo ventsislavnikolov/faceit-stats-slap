@@ -64,6 +64,21 @@ export interface MatchPlayerStats {
   quadroKills: number;
   pentaKills: number;
   result: boolean; // win or loss
+  damage: number;
+  firstKills: number;
+  entryCount: number;
+  entryWins: number;
+  clutchKills: number;
+  oneV1Count: number;
+  oneV1Wins: number;
+  oneV2Count: number;
+  oneV2Wins: number;
+  doubleKills: number;
+  utilityDamage: number;
+  enemiesFlashed: number;
+  flashCount: number;
+  sniperKills: number;
+  pistolKills: number;
 }
 
 export interface MatchWithStats {
@@ -126,6 +141,12 @@ export interface StatsLeaderboardEntry {
   winRate: number;       // 0–100
   avgHsPercent: number;  // 0–100
   avgKrRatio: number;
+  avgFirstKills: number;
+  avgClutchKills: number;
+  avgUtilityDamage: number;
+  avgEnemiesFlashed: number;
+  avgEntryRate: number;  // 0–1
+  avgSniperKills: number;
 }
 
 export interface LeaderboardEntry {

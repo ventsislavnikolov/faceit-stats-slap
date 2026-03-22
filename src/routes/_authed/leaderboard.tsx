@@ -31,16 +31,36 @@ export const Route = createFileRoute("/_authed/leaderboard")({
 });
 
 type Tab = "stats" | "bets";
-type SortKey = "avgKd" | "avgAdr" | "winRate" | "avgHsPercent" | "avgKrRatio" | "gamesPlayed";
+type SortKey = "avgKd" | "avgAdr" | "winRate" | "avgHsPercent" | "avgKrRatio" | "gamesPlayed"
+  | "avgFirstKills" | "avgClutchKills" | "avgUtilityDamage" | "avgEnemiesFlashed" | "avgEntryRate" | "avgSniperKills";
 type SortDir = "asc" | "desc";
+type StatGroup = "combat" | "entry" | "utility";
 
-const STATS_COLS: { key: SortKey; label: string; decimals: number; suffix?: string }[] = [
-  { key: "avgKd",        label: "K/D",  decimals: 2 },
-  { key: "avgAdr",       label: "ADR",  decimals: 1 },
-  { key: "winRate",      label: "WIN%", decimals: 0, suffix: "%" },
-  { key: "avgHsPercent", label: "HS%",  decimals: 0, suffix: "%" },
-  { key: "avgKrRatio",   label: "K/R",  decimals: 2 },
+const STAT_GROUPS: { key: StatGroup; label: string }[] = [
+  { key: "combat", label: "Combat" },
+  { key: "entry", label: "Entry & Clutch" },
+  { key: "utility", label: "Utility & Flash" },
 ];
+
+const STATS_COLS: Record<StatGroup, { key: SortKey; label: string; decimals: number; suffix?: string }[]> = {
+  combat: [
+    { key: "avgKd",        label: "K/D",  decimals: 2 },
+    { key: "avgAdr",       label: "ADR",  decimals: 1 },
+    { key: "winRate",      label: "WIN%", decimals: 0, suffix: "%" },
+    { key: "avgHsPercent", label: "HS%",  decimals: 0, suffix: "%" },
+    { key: "avgKrRatio",   label: "K/R",  decimals: 2 },
+  ],
+  entry: [
+    { key: "avgFirstKills",  label: "FK",   decimals: 2 },
+    { key: "avgEntryRate",   label: "ER",   decimals: 2 },
+    { key: "avgClutchKills", label: "CK",   decimals: 2 },
+    { key: "avgSniperKills", label: "AWP",  decimals: 2 },
+  ],
+  utility: [
+    { key: "avgUtilityDamage",  label: "UD",  decimals: 0 },
+    { key: "avgEnemiesFlashed", label: "EF",  decimals: 1 },
+  ],
+};
 
 function fmt(val: number, decimals: number, suffix = "") {
   return val === 0 ? "—" : `${val.toFixed(decimals)}${suffix}`;
@@ -60,10 +80,12 @@ function StatsTab({ playerIds }: { playerIds: string[] }) {
   const [n, setN] = useState<20 | 50 | 100>(20);
   const [sortKey, setSortKey] = useState<SortKey>("avgKd");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [statGroup, setStatGroup] = useState<StatGroup>("combat");
 
   const { data: rawEntries = [], isLoading } = useStatsLeaderboard(playerIds, n);
   const sync = useSyncPlayerHistory(playerIds);
 
+  const activeCols = STATS_COLS[statGroup];
   const entries = sortEntries(rawEntries, sortKey, sortDir);
 
   function handleSort(key: SortKey) {
@@ -111,6 +133,24 @@ function StatsTab({ playerIds }: { playerIds: string[] }) {
         </button>
       </div>
 
+      <div className="flex items-center gap-1">
+        {STAT_GROUPS.map((g) => (
+          <button
+            key={g.key}
+            onClick={() => {
+              setStatGroup(g.key);
+              setSortKey(STATS_COLS[g.key][0].key);
+              setSortDir("desc");
+            }}
+            className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+              statGroup === g.key ? "bg-accent text-black" : "bg-bg-elevated text-text-muted hover:text-text"
+            }`}
+          >
+            {g.label}
+          </button>
+        ))}
+      </div>
+
       {playerIds.length === 0 ? (
         <div className="text-text-dim text-center py-12">
           Search a player above to see their friends leaderboard
@@ -121,12 +161,12 @@ function StatsTab({ playerIds }: { playerIds: string[] }) {
         <div className="flex flex-col gap-1">
           <div
             className="grid gap-2 px-3 pb-1 text-[10px] text-text-dim uppercase tracking-wider"
-            style={{ gridTemplateColumns: "2rem 1fr 3rem repeat(5, 4rem)" }}
+            style={{ gridTemplateColumns: `2rem 1fr 3rem repeat(${activeCols.length}, 4rem)` }}
           >
             <span>#</span>
             <span>Player</span>
             <span className="text-right">GP</span>
-            {STATS_COLS.map((col) => (
+            {activeCols.map((col) => (
               <button
                 key={col.key}
                 onClick={() => handleSort(col.key)}
@@ -150,7 +190,7 @@ function StatsTab({ playerIds }: { playerIds: string[] }) {
                     ? "bg-accent/10 border-l-2 border-accent"
                     : "bg-bg-elevated"
                 }`}
-                style={{ gridTemplateColumns: "2rem 1fr 3rem repeat(5, 4rem)" }}
+                style={{ gridTemplateColumns: `2rem 1fr 3rem repeat(${activeCols.length}, 4rem)` }}
               >
                 <span className={`text-xs font-bold ${rankColor(i)}`}>{i + 1}</span>
                 <div className="flex items-baseline gap-1.5 min-w-0">
@@ -164,7 +204,7 @@ function StatsTab({ playerIds }: { playerIds: string[] }) {
                 <span className="text-right text-text-muted text-xs">
                   {entry.gamesPlayed || "—"}
                 </span>
-                {STATS_COLS.map((col) => (
+                {activeCols.map((col) => (
                   <span
                     key={col.key}
                     className={`text-right text-xs ${

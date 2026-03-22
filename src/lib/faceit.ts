@@ -63,6 +63,21 @@ export function parseMatchStats(raw: any): MatchPlayerStats {
     quadroKills: parseInt(s["Quadro Kills"]) || 0,
     pentaKills: parseInt(s["Penta Kills"]) || 0,
     result: s["Result"] === "1",
+    damage: parseInt(s["Damage"]) || 0,
+    firstKills: parseInt(s["First Kills"]) || 0,
+    entryCount: parseInt(s["Entry Count"]) || 0,
+    entryWins: parseInt(s["Entry Wins"]) || 0,
+    clutchKills: parseInt(s["Clutch Kills"]) || 0,
+    oneV1Count: parseInt(s["1v1Count"]) || 0,
+    oneV1Wins: parseInt(s["1v1Wins"]) || 0,
+    oneV2Count: parseInt(s["1v2Count"]) || 0,
+    oneV2Wins: parseInt(s["1v2Wins"]) || 0,
+    doubleKills: parseInt(s["Double Kills"]) || 0,
+    utilityDamage: parseInt(s["Utility Damage"]) || 0,
+    enemiesFlashed: parseInt(s["Enemies Flashed"]) || 0,
+    flashCount: parseInt(s["Flash Count"]) || 0,
+    sniperKills: parseInt(s["Sniper Kills"]) || 0,
+    pistolKills: parseInt(s["Pistol Kills"]) || 0,
   };
 }
 

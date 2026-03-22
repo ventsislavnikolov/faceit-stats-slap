@@ -74,6 +74,21 @@ async function syncPlayerHistory(faceitId: string, n: number): Promise<void> {
                 quadro_kills: p.quadroKills,
                 penta_kills: p.pentaKills,
                 win: p.result,
+                damage: p.damage,
+                first_kills: p.firstKills,
+                entry_count: p.entryCount,
+                entry_wins: p.entryWins,
+                clutch_kills: p.clutchKills,
+                one_v1_count: p.oneV1Count,
+                one_v1_wins: p.oneV1Wins,
+                one_v2_count: p.oneV2Count,
+                one_v2_wins: p.oneV2Wins,
+                double_kills: p.doubleKills,
+                utility_damage: p.utilityDamage,
+                enemies_flashed: p.enemiesFlashed,
+                flash_count: p.flashCount,
+                sniper_kills: p.sniperKills,
+                pistol_kills: p.pistolKills,
                 map,
                 played_at: h.finished_at
                   ? new Date(h.finished_at * 1000).toISOString()
@@ -324,6 +339,21 @@ export const getMatchDetails = createServerFn({ method: "GET" })
               quadro_kills: p.quadroKills,
               penta_kills: p.pentaKills,
               win: p.result,
+              damage: p.damage,
+              first_kills: p.firstKills,
+              entry_count: p.entryCount,
+              entry_wins: p.entryWins,
+              clutch_kills: p.clutchKills,
+              one_v1_count: p.oneV1Count,
+              one_v1_wins: p.oneV1Wins,
+              one_v2_count: p.oneV2Count,
+              one_v2_wins: p.oneV2Wins,
+              double_kills: p.doubleKills,
+              utility_damage: p.utilityDamage,
+              enemies_flashed: p.enemiesFlashed,
+              flash_count: p.flashCount,
+              sniper_kills: p.sniperKills,
+              pistol_kills: p.pistolKills,
               map: result.map,
               played_at: match.finished_at
                 ? new Date(match.finished_at * 1000).toISOString()
@@ -366,7 +396,7 @@ export const getStatsLeaderboard = createServerFn({ method: "GET" })
     for (const faceitId of allPlayers) {
       const { data: rows } = await supabase
         .from("match_player_stats")
-        .select("kd_ratio, adr, kr_ratio, hs_percent, win, nickname")
+        .select("kd_ratio, adr, kr_ratio, hs_percent, win, nickname, first_kills, clutch_kills, utility_damage, enemies_flashed, entry_count, sniper_kills")
         .eq("faceit_player_id", faceitId)
         .order("played_at", { ascending: false })
         .limit(n);
@@ -385,6 +415,12 @@ export const getStatsLeaderboard = createServerFn({ method: "GET" })
           winRate: 0,
           avgHsPercent: 0,
           avgKrRatio: 0,
+          avgFirstKills: 0,
+          avgClutchKills: 0,
+          avgUtilityDamage: 0,
+          avgEnemiesFlashed: 0,
+          avgEntryRate: 0,
+          avgSniperKills: 0,
         });
         continue;
       }
@@ -411,6 +447,14 @@ export const getStatsLeaderboard = createServerFn({ method: "GET" })
         winRate: Math.round((rows.filter((r: any) => r.win).length / gamesPlayed) * 100),
         avgHsPercent: Math.round(avg("hs_percent")),
         avgKrRatio: Math.round(avg("kr_ratio") * 100) / 100,
+        avgFirstKills: Math.round(avg("first_kills") * 100) / 100,
+        avgClutchKills: Math.round(avg("clutch_kills") * 100) / 100,
+        avgUtilityDamage: Math.round(avg("utility_damage")),
+        avgEnemiesFlashed: Math.round(avg("enemies_flashed") * 10) / 10,
+        avgEntryRate: Math.round((rows.reduce((s: number, r: any) => s + (Number(r.entry_count) || 0), 0) > 0
+          ? rows.reduce((s: number, r: any) => s + (Number(r.entry_count) || 0), 0) / gamesPlayed
+          : 0) * 100) / 100,
+        avgSniperKills: Math.round(avg("sniper_kills") * 100) / 100,
       });
     }
 
