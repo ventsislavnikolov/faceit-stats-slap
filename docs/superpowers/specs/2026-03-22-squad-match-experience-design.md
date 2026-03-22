@@ -72,7 +72,18 @@ ONGOING/READY/VOTING/CONFIGURING -> current LiveMatchCard (unchanged)
 FINISHED -> expanded post-match card with scoreboard
 ```
 
-The transition happens naturally: `useLiveMatches` polls every 30s. When FACEIT returns `FINISHED`, the `LiveMatch.status` updates, and the card re-renders with the new layout. The `useMatchStats` hook fires to fetch per-player stats.
+### Retaining Finished Matches in the UI
+
+**Problem**: `getLiveMatches` server function filters to `["ONGOING", "READY", "VOTING", "CONFIGURING"]` only. When a match finishes, it drops from the response and the card disappears.
+
+**Solution**: Modify `getLiveMatches` to also include `"FINISHED"` matches, but only if they finished recently (within 30 minutes). This way the post-match card stays visible after the match ends.
+
+Change in `src/server/matches.ts`:
+1. Expand `activeStatuses` to include `"FINISHED"`
+2. For FINISHED matches, filter to only those where `finished_at` is within the last 30 minutes
+3. This ensures old finished matches don't accumulate in the response
+
+The transition happens naturally: `useLiveMatches` polls every 30s. When FACEIT returns `FINISHED`, the `LiveMatch.status` updates, and the card re-renders with the new layout. The `useMatchStats` hook fires to fetch per-player stats. After 30 minutes the finished match drops from the feed.
 
 ### Scoreboard Details
 
@@ -90,7 +101,7 @@ The transition happens naturally: `useLiveMatches` polls every 30s. When FACEIT 
 
 ### Win/Loss Indicator
 
-Top-right of the card header: "WIN" in `text-accent` or "LOSS" in `text-error` based on whether the friend faction won (compare faction scores).
+Top-right of the card header: "WIN" in `text-accent` or "LOSS" in `text-error`. Determined using `MatchPlayerStats.result` from any friend in the match (all friends on the same faction share the same result). This avoids needing to parse the score string from `getMatchDetails`.
 
 ## Feature 3: Playful Banter
 
@@ -127,7 +138,7 @@ Random selection using `Math.random()`. Deterministic per match by seeding with 
 
 ### Display
 
-Shown at the bottom of the post-match card, below a top border. Italic, muted color (`text-text-muted`), centered. Two sentences: one carry, one roast.
+Shown at the bottom of the post-match card, below a top border. Italic, muted color (`text-text-muted`), centered. Two sentences: one carry, one roast. Only shown when 2+ friends are in the match (single friend would be both top and bottom fragger).
 
 ### Future LLM Swap
 
@@ -150,7 +161,7 @@ The `getBanterLine` function is the single integration point. To add LLM generat
 |------|--------|
 | `src/components/LiveMatchCard.tsx` | Add party badge, branch on status for post-match layout |
 | `src/lib/types.ts` | No changes needed — all types already exist |
-| `src/server/matches.ts` | No changes needed — `getMatchDetails` already exists |
+| `src/server/matches.ts` | Include recently-finished matches in `getLiveMatches` response |
 
 ## Out of Scope
 
