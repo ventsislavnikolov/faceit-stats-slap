@@ -10,6 +10,7 @@ import { FriendsSidebar } from "~/components/FriendsSidebar";
 import { TwitchEmbed } from "~/components/TwitchEmbed";
 import { LiveMatchCard } from "~/components/LiveMatchCard";
 import { RecentMatches } from "~/components/RecentMatches";
+import { resolveFaceitSearchTarget } from "~/lib/faceit-search";
 import { getPlayingFriendIds } from "~/lib/friends";
 import { searchAndLoadFriends } from "~/server/friends";
 
@@ -77,10 +78,18 @@ function PlayerDashboard() {
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
-    const trimmed = input.trim();
-    if (!trimmed || trimmed.toLowerCase() === nickname.toLowerCase()) return;
+    const target = resolveFaceitSearchTarget(input);
+    if (!target.value) return;
+
+    if (target.kind === "match") {
+      setSelectedFriendId(null);
+      navigate({ to: "/match/$matchId", params: { matchId: target.value } });
+      return;
+    }
+
+    if (target.value.toLowerCase() === nickname.toLowerCase()) return;
     setSelectedFriendId(null);
-    navigate({ to: "/$nickname", params: { nickname: trimmed } });
+    navigate({ to: "/$nickname", params: { nickname: target.value } });
   }
 
   return (
@@ -92,7 +101,7 @@ function PlayerDashboard() {
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="FACEIT nickname or player UUID..."
+            placeholder="FACEIT nickname, player UUID, or match ID..."
             className="flex-1 bg-bg-elevated border border-border rounded px-3 py-1.5 text-sm text-text focus:border-accent outline-none"
           />
           <button

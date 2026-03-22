@@ -8,8 +8,7 @@ function getFriendNicknames(team: MatchTeam, friendIds: string[]): string[] {
 
 function formatTeamLabel(friendNicknames: string[]): string {
   if (friendNicknames.length === 0) return "Opponents";
-  if (friendNicknames.length === 1) return friendNicknames[0];
-  return `${friendNicknames[0]} +${friendNicknames.length - 1}`;
+  return friendNicknames[0];
 }
 
 export function getLiveMatchTeamLabels(match: LiveMatch): {

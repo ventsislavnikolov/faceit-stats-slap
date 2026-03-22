@@ -36,7 +36,7 @@ describe("getLiveMatchTeamLabels", () => {
     };
 
     expect(getLiveMatchTeamLabels(match)).toEqual({
-      faction1: "TibaBG +1",
+      faction1: "TibaBG",
       faction2: "Opponents",
     });
   });
