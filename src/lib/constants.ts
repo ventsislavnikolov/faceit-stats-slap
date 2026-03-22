@@ -2,9 +2,9 @@ export const MY_FACEIT_ID = "15844c99-d26e-419e-bd14-30908f502c03";
 export const MY_NICKNAME = "soavarice";
 
 export const TWITCH_MAP: Record<string, string | undefined> = {
-  "ad8034c1-6324-4080-b28e-dbf04239670a": "bachiyski",  // TibaBG
-  "65c93ab1-d2b2-416c-a5d1-d45452c9517d": "kasheto88",  // F1aw1esss
-  "15844c99-d26e-419e-bd14-30908f502c03": "soavarice",   // soavarice
+  "8e42d5f3-b4e9-4a67-b402-be0ac3c0260b": "bachiyski", // TibaBG
+  "65c93ab1-d2b2-416c-a5d1-d45452c9517d": "kasheto88", // F1aw1esss
+  "15844c99-d26e-419e-bd14-30908f502c03": "soavarice", // soavarice
 };
 
 export const MAP_COLORS: Record<string, string> = {

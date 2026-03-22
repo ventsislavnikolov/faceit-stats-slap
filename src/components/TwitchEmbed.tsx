@@ -1,3 +1,4 @@
+import { buildTwitchEmbedUrl } from "~/lib/twitch";
 import type { TwitchStream } from "~/lib/types";
 
 interface TwitchEmbedProps {
@@ -6,6 +7,11 @@ interface TwitchEmbedProps {
 
 export function TwitchEmbed({ stream }: TwitchEmbedProps) {
   const hostname = typeof window !== "undefined" ? window.location.hostname : "localhost";
+  const extraParents = (import.meta.env.VITE_TWITCH_PARENT_DOMAINS ?? "")
+    .split(",")
+    .map((parent) => parent.trim())
+    .filter(Boolean);
+
   return (
     <div className="bg-[#18181b] border border-twitch/30 rounded-lg overflow-hidden mb-4">
       <div className="flex justify-between items-center px-3 py-2 bg-[#0e0e10]">
@@ -27,10 +33,11 @@ export function TwitchEmbed({ stream }: TwitchEmbedProps) {
         </a>
       </div>
       <iframe
-        src={`https://player.twitch.tv/?channel=${stream.channel}&parent=${hostname}`}
+        src={buildTwitchEmbedUrl(stream.channel, hostname, extraParents)}
         height="300"
         width="100%"
-        allowFullScreen
+        title={`${stream.channel} Twitch stream`}
+        allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
         className="border-0"
       />
     </div>

@@ -10,6 +10,7 @@ import { FriendsSidebar } from "~/components/FriendsSidebar";
 import { TwitchEmbed } from "~/components/TwitchEmbed";
 import { LiveMatchCard } from "~/components/LiveMatchCard";
 import { RecentMatches } from "~/components/RecentMatches";
+import { getPlayingFriendIds } from "~/lib/friends";
 import { searchAndLoadFriends } from "~/server/friends";
 
 const getClientSession = createIsomorphicFn()
@@ -53,7 +54,7 @@ function PlayerDashboard() {
   const { data: twitchStreams = [] } = useTwitchLive();
   const { data: playerStats = [], isLoading: statsLoading } = usePlayerStats(selectedFriendId);
 
-  const playingFriendIds = new Set(liveMatches.flatMap((m) => m.friendIds));
+  const playingFriendIds = getPlayingFriendIds(liveMatches, twitchStreams);
   const enrichedFriends = (searchResult?.friends ?? []).map((f) => ({
     ...f,
     isPlaying: playingFriendIds.has(f.faceitId),
@@ -119,18 +120,18 @@ function PlayerDashboard() {
             </span>
             <span className="text-border">|</span>
             <Link
-              to="/leaderboard"
-              search={{ player: nickname }}
-              className="text-accent hover:underline"
-            >
-              Leaderboard
-            </Link>
-            <Link
               to="/history"
               search={{ player: searchResult.player.nickname }}
               className="text-accent hover:underline"
             >
               History
+            </Link>
+            <Link
+              to="/leaderboard"
+              search={{ player: nickname }}
+              className="text-accent hover:underline"
+            >
+              Leaderboard
             </Link>
           </div>
         )}

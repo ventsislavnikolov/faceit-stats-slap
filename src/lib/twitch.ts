@@ -5,6 +5,52 @@ const TWITCH_API_URL = "https://api.twitch.tv/helix";
 
 let cachedToken: { token: string; expiresAt: number } | null = null;
 
+function sanitizeParentDomain(value: string | null | undefined): string | null {
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+
+  const withoutProtocol = trimmed.replace(/^https?:\/\//i, "");
+  const host = withoutProtocol.split("/")[0]?.split(":")[0]?.toLowerCase();
+
+  return host || null;
+}
+
+export function parseTwitchEmbedParents(
+  hostname: string | null | undefined,
+  extraParents: string[] = []
+): string[] {
+  const uniqueParents = new Set<string>();
+
+  for (const candidate of [hostname, ...extraParents]) {
+    const parent = sanitizeParentDomain(candidate);
+    if (parent) uniqueParents.add(parent);
+  }
+
+  if (uniqueParents.size === 0) {
+    uniqueParents.add("localhost");
+  }
+
+  return [...uniqueParents];
+}
+
+export function buildTwitchEmbedUrl(
+  channel: string,
+  hostname: string | null | undefined,
+  extraParents: string[] = []
+): string {
+  const params = new URLSearchParams({
+    channel,
+    autoplay: "true",
+    muted: "true",
+  });
+
+  for (const parent of parseTwitchEmbedParents(hostname, extraParents)) {
+    params.append("parent", parent);
+  }
+
+  return `https://player.twitch.tv/?${params.toString()}`;
+}
+
 async function getAppAccessToken(): Promise<string> {
   if (cachedToken && Date.now() < cachedToken.expiresAt) {
     return cachedToken.token;

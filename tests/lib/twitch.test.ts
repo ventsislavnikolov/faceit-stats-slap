@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseTwitchStreams } from "~/lib/twitch";
+import { buildTwitchEmbedUrl, parseTwitchStreams } from "~/lib/twitch";
 import { TWITCH_MAP } from "~/lib/constants";
 
 describe("parseTwitchStreams", () => {
@@ -26,5 +26,26 @@ describe("parseTwitchStreams", () => {
   it("handles empty data (no one live)", () => {
     const result = parseTwitchStreams({ data: [] }, TWITCH_MAP);
     expect(result.every((s) => !s.isLive)).toBe(true);
+  });
+});
+
+describe("buildTwitchEmbedUrl", () => {
+  it("includes sanitized parent domains and playback params", () => {
+    const url = new URL(
+      buildTwitchEmbedUrl("bachiyski", "preview.example.com:3000", [
+        "https://faceit-friends-live.vercel.app",
+        " localhost ",
+      ])
+    );
+
+    expect(url.origin).toBe("https://player.twitch.tv");
+    expect(url.searchParams.get("channel")).toBe("bachiyski");
+    expect(url.searchParams.getAll("parent")).toEqual([
+      "preview.example.com",
+      "faceit-friends-live.vercel.app",
+      "localhost",
+    ]);
+    expect(url.searchParams.get("autoplay")).toBe("true");
+    expect(url.searchParams.get("muted")).toBe("true");
   });
 });
