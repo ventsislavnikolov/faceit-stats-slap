@@ -1,8 +1,119 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import { runWithStartContext } from "../../node_modules/.pnpm/@tanstack+start-storage-context@1.166.15/node_modules/@tanstack/start-storage-context/dist/esm/index.js";
 import {
   buildSharedStatsLeaderboard,
   type SharedStatsLeaderboardRow,
 } from "~/lib/stats-leaderboard";
+import { getStatsLeaderboard } from "~/server/matches";
+
+const mockSupabase = vi.hoisted(() => {
+  const trackedFriendsRows = [
+    { faceit_id: "friend-a", nickname: "Friend A", elo: 2010 },
+  ];
+
+  const sharedRowsByPlayer = new Map<string, any[]>([
+    [
+      "target",
+      [
+        {
+          match_id: "match-1",
+          faceit_player_id: "target",
+          nickname: "Target",
+          played_at: "2026-03-21T10:00:00.000Z",
+          kd_ratio: 1.1,
+          adr: 60,
+          hs_percent: 30,
+          kr_ratio: 0.4,
+          win: true,
+          first_kills: 0,
+          clutch_kills: 0,
+          utility_damage: 4,
+          enemies_flashed: 1,
+          entry_count: 0,
+          entry_wins: 0,
+          sniper_kills: 0,
+        },
+      ],
+    ],
+    [
+      "friend-a",
+      [
+        {
+          match_id: "match-1",
+          faceit_player_id: "friend-a",
+          nickname: "Friend A",
+          played_at: "2026-03-21T10:00:00.000Z",
+          kd_ratio: 2,
+          adr: 90,
+          hs_percent: 40,
+          kr_ratio: 0.8,
+          win: true,
+          first_kills: 1,
+          clutch_kills: 0,
+          utility_damage: 12,
+          enemies_flashed: 3,
+          entry_count: 1,
+          entry_wins: 1,
+          sniper_kills: 0,
+        },
+      ],
+    ],
+    ["15844c99-d26e-419e-bd14-30908f502c03", []],
+  ]);
+
+  const matchPlayerStatsQuery = () => {
+    let faceitIds: string[] = [];
+    return {
+      select: () => ({
+        in: (_column: string, value: string[]) => {
+          faceitIds = value;
+          return {
+            gte: () => ({
+              order: async () => ({
+                data: faceitIds.flatMap((faceitId) => sharedRowsByPlayer.get(faceitId) ?? []),
+              }),
+            }),
+          };
+        },
+      }),
+    };
+  };
+
+  const supabase = {
+    from: vi.fn((table: string) => {
+      if (table === "tracked_friends") {
+        return {
+          select: () => ({
+            in: async () => ({ data: trackedFriendsRows }),
+          }),
+        };
+      }
+
+      if (table === "match_player_stats") {
+        return matchPlayerStatsQuery();
+      }
+
+      throw new Error(`Unexpected table: ${table}`);
+    }),
+  };
+
+  return { supabase };
+});
+
+vi.mock("~/lib/supabase.server", () => ({
+  createServerSupabase: () => mockSupabase.supabase,
+}));
+
+vi.mock("~/lib/faceit", () => ({
+  fetchPlayer: vi.fn(async () => ({
+    faceitId: "15844c99-d26e-419e-bd14-30908f502c03",
+    nickname: "soavarice",
+    avatar: "",
+    elo: 1690,
+    skillLevel: 8,
+    country: "BG",
+  })),
+}));
 
 function makeRow(
   overrides: Pick<SharedStatsLeaderboardRow, "matchId" | "faceitId" | "playedAt"> &
@@ -316,5 +427,36 @@ describe("buildSharedStatsLeaderboard", () => {
     expect(noSharedFriends.entries).toEqual([]);
     expect(noSharedFriends.targetMatchCount).toBe(1);
     expect(noSharedFriends.sharedFriendCount).toBe(0);
+  });
+
+  it("returns the shared leaderboard result contract from the server query", async () => {
+    const result = await runWithStartContext(
+      {
+        contextAfterGlobalMiddlewares: {},
+        request: new Request("http://localhost"),
+      } as any,
+      () =>
+        getStatsLeaderboard({
+          data: {
+            targetPlayerId: "target",
+            playerIds: ["friend-a"],
+            n: 20,
+            days: 30,
+          },
+        } as any)
+    );
+
+    expect(result).toEqual({
+      entries: [
+        expect.objectContaining({
+          faceitId: "friend-a",
+          nickname: "Friend A",
+          elo: 2010,
+          gamesPlayed: 1,
+        }),
+      ],
+      targetMatchCount: 1,
+      sharedFriendCount: 1,
+    });
   });
 });

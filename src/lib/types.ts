@@ -167,6 +167,12 @@ export interface StatsLeaderboardEntry {
   avgSniperKills: number;
 }
 
+export interface StatsLeaderboardResult {
+  entries: StatsLeaderboardEntry[];
+  targetMatchCount: number;
+  sharedFriendCount: number;
+}
+
 export interface LeaderboardEntry {
   userId: string;
   nickname: string;
