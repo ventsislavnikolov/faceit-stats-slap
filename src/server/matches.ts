@@ -44,12 +44,21 @@ export const getLiveMatches = createServerFn({ method: "GET" })
       uniqueMatches.get(matchId)!.push(friendId);
     }
 
+    const THIRTY_MINUTES = 30 * 60;
     const matchResults = await Promise.allSettled(
       [...uniqueMatches.entries()].map(async ([matchId]) => {
         const match = await fetchMatch(matchId);
         const activeStatuses = ["ONGOING", "READY", "VOTING", "CONFIGURING"];
-        if (!activeStatuses.includes(match.status)) return null;
-        return { match, friendIds: uniqueMatches.get(matchId)! };
+        if (activeStatuses.includes(match.status)) {
+          return { match, friendIds: uniqueMatches.get(matchId)! };
+        }
+        if (match.status === "FINISHED" && match.finished_at) {
+          const age = Math.floor(Date.now() / 1000) - match.finished_at;
+          if (age <= THIRTY_MINUTES) {
+            return { match, friendIds: uniqueMatches.get(matchId)! };
+          }
+        }
+        return null;
       })
     );
 
@@ -134,7 +143,9 @@ export const getLiveMatches = createServerFn({ method: "GET" })
     }
 
     // 2. Stale pool sweep: resolve/cancel pools whose match left the live list
-    const liveIds = liveMatches.map((m) => m.matchId);
+    const liveIds = liveMatches
+      .filter((m) => m.status !== "FINISHED")
+      .map((m) => m.matchId);
     const { data: stalePools } = await supabase
       .from("betting_pools")
       .select("faceit_match_id")
