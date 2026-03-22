@@ -1,0 +1,17 @@
+-- Extended per-match player stats from FACEIT API
+ALTER TABLE match_player_stats
+  ADD COLUMN damage INTEGER DEFAULT 0,
+  ADD COLUMN first_kills INTEGER DEFAULT 0,
+  ADD COLUMN entry_count INTEGER DEFAULT 0,
+  ADD COLUMN entry_wins INTEGER DEFAULT 0,
+  ADD COLUMN clutch_kills INTEGER DEFAULT 0,
+  ADD COLUMN one_v1_count INTEGER DEFAULT 0,
+  ADD COLUMN one_v1_wins INTEGER DEFAULT 0,
+  ADD COLUMN one_v2_count INTEGER DEFAULT 0,
+  ADD COLUMN one_v2_wins INTEGER DEFAULT 0,
+  ADD COLUMN double_kills INTEGER DEFAULT 0,
+  ADD COLUMN utility_damage INTEGER DEFAULT 0,
+  ADD COLUMN enemies_flashed INTEGER DEFAULT 0,
+  ADD COLUMN flash_count INTEGER DEFAULT 0,
+  ADD COLUMN sniper_kills INTEGER DEFAULT 0,
+  ADD COLUMN pistol_kills INTEGER DEFAULT 0;
