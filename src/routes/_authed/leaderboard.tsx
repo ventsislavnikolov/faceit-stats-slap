@@ -9,6 +9,7 @@ import {
   getStatsLeaderboardEmptyStateCopy,
   getStatsLeaderboardSummaryCopy,
 } from "~/lib/stats-leaderboard-copy";
+import { getHistoryQueueOptions } from "~/lib/history-page";
 import {
   buildStatsLeaderboardSyncKey,
   buildStatsLeaderboardSyncPlayerIds,
@@ -91,6 +92,7 @@ function StatsTab({
 }) {
   const [n, setN] = useState<20 | 50 | 100>(20);
   const [days, setDays] = useState<30 | 90 | 180 | 365 | 730>(30);
+  const [queue, setQueue] = useState<"all" | "solo" | "party">("all");
   const [sortKey, setSortKey] = useState<SortKey>("avgKd");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [statGroup, setStatGroup] = useState<StatGroup>("combat");
@@ -101,6 +103,7 @@ function StatsTab({
     playerIds,
     n,
     days,
+    queue,
   });
   const autoSync = useSyncPlayerHistory({
     targetPlayerId,
@@ -114,7 +117,7 @@ function StatsTab({
   const activeCols = STATS_COLS[statGroup];
   const entries = sortEntries(leaderboard?.entries ?? [], sortKey, sortDir);
   const summaryCopy = leaderboard
-    ? getStatsLeaderboardSummaryCopy(targetNickname, leaderboard.sharedFriendCount, days, n)
+    ? getStatsLeaderboardSummaryCopy(targetNickname, leaderboard.sharedFriendCount, days, n, queue)
     : null;
   const emptyStateCopy = leaderboard
     ? getStatsLeaderboardEmptyStateCopy({
@@ -122,6 +125,7 @@ function StatsTab({
         targetMatchCount: leaderboard.targetMatchCount,
         sharedFriendCount: leaderboard.sharedFriendCount,
         days,
+        queue,
       })
     : null;
 
@@ -193,6 +197,22 @@ function StatsTab({
           ))}
           <span className="text-text-dim text-xs ml-1">days</span>
         </div>
+        <div className="flex items-center gap-1">
+          <span className="text-text-dim text-xs mr-1">Queue</span>
+          {getHistoryQueueOptions().map((option) => (
+            <button
+              key={option.value}
+              onClick={() => setQueue(option.value)}
+              className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+                queue === option.value
+                  ? "bg-accent text-black"
+                  : "bg-bg-elevated text-text-muted hover:text-text"
+              }`}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
         <button
           onClick={() => manualSync.mutate({ n, days })}
           disabled={manualSync.isPending || !targetPlayerId}
@@ -207,6 +227,10 @@ function StatsTab({
           Syncing older history in the background...
         </div>
       )}
+
+      <div className="text-[10px] text-text-dim px-1">
+        Party means a player plus at least 2 other players from the current leaderboard list in the same match.
+      </div>
 
       <div className="flex items-center gap-1">
         {STAT_GROUPS.map((g) => (

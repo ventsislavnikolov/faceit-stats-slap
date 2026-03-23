@@ -6,6 +6,7 @@ import {
   buildSharedStatsLeaderboard,
   type SharedStatsLeaderboardRow,
 } from "~/lib/stats-leaderboard";
+import { fetchMatchStats } from "~/lib/faceit";
 import { getStatsLeaderboard } from "~/server/matches";
 
 vi.mock("~/lib/stats-leaderboard", async () => {
@@ -214,6 +215,24 @@ vi.mock("~/lib/supabase.server", () => ({
 }));
 
 vi.mock("~/lib/faceit", () => ({
+  fetchMatchStats: vi.fn(async (matchId: string) => ({
+    rounds: [
+      {
+        teams: [
+          {
+            players:
+              matchId === "match-shared"
+                ? [
+                    { player_id: "target" },
+                    { player_id: "friend-a" },
+                    { player_id: "friend-b" },
+                  ]
+                : [{ player_id: "target" }, { player_id: "random" }],
+          },
+        ],
+      },
+    ],
+  })),
   fetchPlayer: vi.fn(async (playerId: string) => ({
     faceitId: playerId,
     nickname: playerId === "target" ? "Target" : "soavarice",
@@ -221,6 +240,7 @@ vi.mock("~/lib/faceit", () => ({
     elo: playerId === "target" ? 3333 : 1690,
     skillLevel: 8,
     country: "BG",
+    friendsIds: playerId === "target" ? ["friend-a", "friend-b"] : [],
   })),
 }));
 
@@ -954,5 +974,305 @@ describe("buildPersonalFormLeaderboard", () => {
       avgUtilityDamage: 0,
       avgEnemiesFlashed: 0,
     });
+  });
+
+  it("filters each friend's personal sample to cohort-based party matches", async () => {
+    mockSupabase.setLeaderboardRows("target", [
+      {
+        match_id: "match-party-shared",
+        faceit_player_id: "target",
+        nickname: "Target",
+        played_at: "2026-03-21T10:00:00.000Z",
+        kills: 19,
+        kd_ratio: 1.1,
+        adr: 60,
+        hs_percent: 30,
+        kr_ratio: 0.4,
+        win: true,
+        first_kills: 0,
+        clutch_kills: 0,
+        utility_damage: 4,
+        enemies_flashed: 1,
+        entry_count: 0,
+        entry_wins: 0,
+        sniper_kills: 0,
+      },
+      {
+        match_id: "match-party-two",
+        faceit_player_id: "target",
+        nickname: "Target",
+        played_at: "2026-03-20T10:00:00.000Z",
+        kills: 17,
+        kd_ratio: 1,
+        adr: 58,
+        hs_percent: 28,
+        kr_ratio: 0.38,
+        win: true,
+        first_kills: 0,
+        clutch_kills: 0,
+        utility_damage: 3,
+        enemies_flashed: 1,
+        entry_count: 0,
+        entry_wins: 0,
+        sniper_kills: 0,
+      },
+      {
+        match_id: "match-target-solo",
+        faceit_player_id: "target",
+        nickname: "Target",
+        played_at: "2026-03-19T10:00:00.000Z",
+        kills: 15,
+        kd_ratio: 0.9,
+        adr: 55,
+        hs_percent: 22,
+        kr_ratio: 0.35,
+        win: false,
+        first_kills: 0,
+        clutch_kills: 0,
+        utility_damage: 2,
+        enemies_flashed: 1,
+        entry_count: 0,
+        entry_wins: 0,
+        sniper_kills: 0,
+      },
+    ]);
+    mockSupabase.setLeaderboardRows("friend-a", [
+      {
+        match_id: "match-party-shared",
+        faceit_player_id: "friend-a",
+        nickname: "Friend A",
+        played_at: "2026-03-21T10:00:00.000Z",
+        kills: 22,
+        kd_ratio: 1.2,
+        adr: 90,
+        hs_percent: 40,
+        kr_ratio: 0.8,
+        win: true,
+        first_kills: 1,
+        clutch_kills: 0,
+        utility_damage: 12,
+        enemies_flashed: 3,
+        entry_count: 1,
+        entry_wins: 1,
+        sniper_kills: 0,
+      },
+      {
+        match_id: "match-party-two",
+        faceit_player_id: "friend-a",
+        nickname: "Friend A",
+        played_at: "2026-03-20T10:00:00.000Z",
+        kills: 24,
+        kd_ratio: 1.8,
+        adr: 100,
+        hs_percent: 45,
+        kr_ratio: 0.9,
+        win: true,
+        first_kills: 1,
+        clutch_kills: 1,
+        utility_damage: 10,
+        enemies_flashed: 2,
+        entry_count: 1,
+        entry_wins: 1,
+        sniper_kills: 1,
+      },
+      {
+        match_id: "match-friend-a-solo",
+        faceit_player_id: "friend-a",
+        nickname: "Friend A",
+        played_at: "2026-03-22T10:00:00.000Z",
+        kills: 40,
+        kd_ratio: 2.4,
+        adr: 120,
+        hs_percent: 55,
+        kr_ratio: 1.1,
+        win: true,
+        first_kills: 2,
+        clutch_kills: 1,
+        utility_damage: 15,
+        enemies_flashed: 4,
+        entry_count: 2,
+        entry_wins: 2,
+        sniper_kills: 1,
+      },
+    ]);
+    mockSupabase.setLeaderboardRows("friend-b", [
+      {
+        match_id: "match-party-shared",
+        faceit_player_id: "friend-b",
+        nickname: "Friend B",
+        played_at: "2026-03-21T10:00:00.000Z",
+        kills: 18,
+        kd_ratio: 1.1,
+        adr: 78,
+        hs_percent: 38,
+        kr_ratio: 0.7,
+        win: true,
+        first_kills: 0,
+        clutch_kills: 0,
+        utility_damage: 8,
+        enemies_flashed: 2,
+        entry_count: 0,
+        entry_wins: 0,
+        sniper_kills: 0,
+      },
+      {
+        match_id: "match-party-two",
+        faceit_player_id: "friend-b",
+        nickname: "Friend B",
+        played_at: "2026-03-20T10:00:00.000Z",
+        kills: 16,
+        kd_ratio: 1,
+        adr: 70,
+        hs_percent: 32,
+        kr_ratio: 0.65,
+        win: true,
+        first_kills: 0,
+        clutch_kills: 0,
+        utility_damage: 7,
+        enemies_flashed: 2,
+        entry_count: 0,
+        entry_wins: 0,
+        sniper_kills: 0,
+      },
+    ]);
+    vi.mocked(fetchMatchStats).mockImplementation(async (matchId: string) => ({
+      rounds: [
+        {
+          teams: [
+            {
+              players:
+                matchId === "match-target-solo" || matchId === "match-friend-a-solo"
+                  ? [{ player_id: "target" }, { player_id: "random" }]
+                  : [
+                      { player_id: "target" },
+                      { player_id: "friend-a" },
+                      { player_id: "friend-b" },
+                    ],
+            },
+          ],
+        },
+      ],
+    }));
+
+    const result = await runWithStartContext(
+      {
+        contextAfterGlobalMiddlewares: {},
+        request: new Request("http://localhost"),
+      } as any,
+      () =>
+        getStatsLeaderboard({
+          data: {
+            targetPlayerId: "target",
+            playerIds: ["friend-a", "friend-b"],
+            n: 2,
+            days: 30,
+            queue: "party",
+          },
+        } as any)
+    );
+
+    expect(result.entries).toEqual([
+      expect.objectContaining({
+        faceitId: "friend-a",
+        gamesPlayed: 2,
+        avgKills: 23,
+      }),
+      expect.objectContaining({
+        faceitId: "friend-b",
+        gamesPlayed: 2,
+        avgKills: 17,
+      }),
+      expect.objectContaining({
+        faceitId: "target",
+        gamesPlayed: 2,
+        avgKills: 18,
+      }),
+    ]);
+    expect(result.targetMatchCount).toBe(2);
+    expect(result.sharedFriendCount).toBe(2);
+  });
+
+  it("drops shared friends when only solo-classified target matches remain", async () => {
+    mockSupabase.setLeaderboardRows("target", [
+      {
+        match_id: "match-target-solo",
+        faceit_player_id: "target",
+        nickname: "Target",
+        played_at: "2026-03-21T10:00:00.000Z",
+        kills: 15,
+        kd_ratio: 0.9,
+        adr: 55,
+        hs_percent: 22,
+        kr_ratio: 0.35,
+        win: false,
+        first_kills: 0,
+        clutch_kills: 0,
+        utility_damage: 2,
+        enemies_flashed: 1,
+        entry_count: 0,
+        entry_wins: 0,
+        sniper_kills: 0,
+      },
+    ]);
+    mockSupabase.setLeaderboardRows("friend-a", [
+      {
+        match_id: "match-friend-a-solo",
+        faceit_player_id: "friend-a",
+        nickname: "Friend A",
+        played_at: "2026-03-20T10:00:00.000Z",
+        kills: 40,
+        kd_ratio: 2.4,
+        adr: 120,
+        hs_percent: 55,
+        kr_ratio: 1.1,
+        win: true,
+        first_kills: 2,
+        clutch_kills: 1,
+        utility_damage: 15,
+        enemies_flashed: 4,
+        entry_count: 2,
+        entry_wins: 2,
+        sniper_kills: 1,
+      },
+    ]);
+    mockSupabase.setLeaderboardRows("friend-b", []);
+    vi.mocked(fetchMatchStats).mockImplementation(async () => ({
+      rounds: [
+        {
+          teams: [
+            {
+              players: [{ player_id: "target" }, { player_id: "random" }],
+            },
+          ],
+        },
+      ],
+    }));
+
+    const result = await runWithStartContext(
+      {
+        contextAfterGlobalMiddlewares: {},
+        request: new Request("http://localhost"),
+      } as any,
+      () =>
+        getStatsLeaderboard({
+          data: {
+            targetPlayerId: "target",
+            playerIds: ["friend-a", "friend-b"],
+            n: 20,
+            days: 30,
+            queue: "solo",
+          },
+        } as any)
+    );
+
+    expect(result.entries).toEqual([
+      expect.objectContaining({
+        faceitId: "target",
+        gamesPlayed: 1,
+        avgKills: 15,
+      }),
+    ]);
+    expect(result.targetMatchCount).toBe(1);
+    expect(result.sharedFriendCount).toBe(0);
   });
 });

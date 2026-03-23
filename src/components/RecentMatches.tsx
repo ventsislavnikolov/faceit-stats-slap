@@ -10,6 +10,7 @@ interface RecentMatch {
   hsPercent: number;
   result: boolean;
   eloDelta?: number | null;
+  queueBucket?: "solo" | "party" | "unknown";
 }
 
 interface RecentMatchesProps {

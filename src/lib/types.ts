@@ -1,4 +1,5 @@
 export type MatchStatus = "ONGOING" | "READY" | "VOTING" | "CONFIGURING" | "FINISHED" | "CANCELLED";
+export type MatchQueueBucket = "solo" | "party" | "unknown";
 
 export interface FaceitPlayer {
   faceitId: string;
@@ -79,6 +80,18 @@ export interface MatchPlayerStats {
   flashCount: number;
   sniperKills: number;
   pistolKills: number;
+}
+
+export interface PlayerHistoryMatch extends MatchPlayerStats {
+  matchId: string;
+  map: string;
+  score: string;
+  startedAt: number;
+  finishedAt: number | null;
+  queueBucket: MatchQueueBucket;
+  knownQueuedFriendCount: number;
+  knownQueuedFriendIds: string[];
+  partySize: number | null;
 }
 
 export interface MatchWithStats {

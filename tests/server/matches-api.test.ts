@@ -9,6 +9,7 @@ import {
 } from "~/server/matches";
 
 const faceitMocks = vi.hoisted(() => ({
+  fetchPlayer: vi.fn(),
   fetchPlayerHistory: vi.fn(),
   fetchMatch: vi.fn(),
   fetchMatchStats: vi.fn(),
@@ -116,6 +117,7 @@ vi.mock("~/lib/faceit", async () => {
   const actual = await vi.importActual<typeof import("~/lib/faceit")>("~/lib/faceit");
   return {
     ...actual,
+    fetchPlayer: faceitMocks.fetchPlayer,
     fetchPlayerHistory: faceitMocks.fetchPlayerHistory,
     fetchMatch: faceitMocks.fetchMatch,
     fetchMatchStats: faceitMocks.fetchMatchStats,
@@ -174,6 +176,15 @@ beforeEach(() => {
   for (const mock of Object.values(faceitMocks)) {
     mock.mockReset();
   }
+  faceitMocks.fetchPlayer.mockResolvedValue({
+    faceitId: "target",
+    nickname: "Target",
+    avatar: "",
+    elo: 2000,
+    skillLevel: 10,
+    country: "BG",
+    friendsIds: ["friend-1", "friend-2", "friend-3"],
+  });
   webhookMocks.getWebhookLiveMatchMap.mockReset();
   webhookMocks.getWebhookLiveMatchMap.mockResolvedValue(new Map());
 });
@@ -426,13 +437,16 @@ describe("getPlayerStats", () => {
         contextAfterGlobalMiddlewares: {},
         request: new Request("http://localhost"),
       } as any,
-      () => getPlayerStats({ data: "target" } as any)
+      () =>
+        getPlayerStats({
+          data: { playerId: "target", n: 20 },
+        } as any)
     );
 
     await vi.runAllTimersAsync();
     const result = await promise;
 
-    expect(faceitMocks.fetchPlayerHistory).toHaveBeenCalledWith("target", 15, 0);
+    expect(faceitMocks.fetchPlayerHistory).toHaveBeenCalledWith("target", 20, 0);
     expect(faceitMocks.fetchMatchStats).toHaveBeenCalledTimes(6);
     expect(result).toHaveLength(4);
     expect(result[0]).toMatchObject({
@@ -469,7 +483,10 @@ describe("getPlayerStats", () => {
         contextAfterGlobalMiddlewares: {},
         request: new Request("http://localhost"),
       } as any,
-      () => getPlayerStats({ data: "target" } as any)
+      () =>
+        getPlayerStats({
+          data: { playerId: "target", n: 50 },
+        } as any)
     );
 
     expect(result).toEqual([
@@ -506,7 +523,10 @@ describe("getPlayerStats", () => {
         contextAfterGlobalMiddlewares: {},
         request: new Request("http://localhost"),
       } as any,
-      () => getPlayerStats({ data: "target" } as any)
+      () =>
+        getPlayerStats({
+          data: { playerId: "target", n: 100 },
+        } as any)
     );
 
     expect(result).toEqual([]);
@@ -540,7 +560,10 @@ describe("getPlayerStats", () => {
         contextAfterGlobalMiddlewares: {},
         request: new Request("http://localhost"),
       } as any,
-      () => getPlayerStats({ data: "target" } as any)
+      () =>
+        getPlayerStats({
+          data: { playerId: "target", n: 20 },
+        } as any)
     );
 
     expect(result).toEqual([
@@ -549,6 +572,108 @@ describe("getPlayerStats", () => {
         map: "de_mirage",
         score: "13 / 7",
         kills: 19,
+      }),
+    ]);
+  });
+
+  it("filters to party-classified matches before truncating the requested sample", async () => {
+    faceitMocks.fetchPlayerHistory.mockResolvedValue([
+      { match_id: "solo-match", started_at: 10, finished_at: 20 },
+      { match_id: "party-match", started_at: 30, finished_at: 40 },
+    ]);
+    faceitMocks.fetchMatchStats.mockImplementation(async (matchId: string) => ({
+      rounds: [
+        {
+          round_stats: {
+            Map: `map-${matchId}`,
+            Score: `score-${matchId}`,
+          },
+          teams: [
+            {
+              players:
+                matchId === "party-match"
+                  ? [
+                      { player_id: "target" },
+                      { player_id: "friend-1" },
+                      { player_id: "friend-2" },
+                    ]
+                  : [{ player_id: "target" }, { player_id: "friend-1" }],
+            },
+          ],
+        },
+      ],
+    }));
+    faceitMocks.parseMatchStats.mockReturnValue(buildParsedPlayer("target", "Target", 23));
+
+    const result = await runWithStartContext(
+      {
+        contextAfterGlobalMiddlewares: {},
+        request: new Request("http://localhost"),
+      } as any,
+      () =>
+        getPlayerStats({
+          data: { playerId: "target", n: 1, queue: "party" },
+        } as any)
+    );
+
+    expect(result).toEqual([
+      expect.objectContaining({
+        matchId: "party-match",
+        queueBucket: "party",
+        knownQueuedFriendCount: 2,
+        knownQueuedFriendIds: ["friend-1", "friend-2"],
+        partySize: 3,
+      }),
+    ]);
+  });
+
+  it("filters to solo-classified matches when the queue filter is solo", async () => {
+    faceitMocks.fetchPlayerHistory.mockResolvedValue([
+      { match_id: "party-match", started_at: 10, finished_at: 20 },
+      { match_id: "solo-match", started_at: 30, finished_at: 40 },
+    ]);
+    faceitMocks.fetchMatchStats.mockImplementation(async (matchId: string) => ({
+      rounds: [
+        {
+          round_stats: {
+            Map: `map-${matchId}`,
+            Score: `score-${matchId}`,
+          },
+          teams: [
+            {
+              players:
+                matchId === "party-match"
+                  ? [
+                      { player_id: "target" },
+                      { player_id: "friend-1" },
+                      { player_id: "friend-2" },
+                    ]
+                  : [{ player_id: "target" }, { player_id: "friend-1" }],
+            },
+          ],
+        },
+      ],
+    }));
+    faceitMocks.parseMatchStats.mockReturnValue(buildParsedPlayer("target", "Target", 18));
+
+    const result = await runWithStartContext(
+      {
+        contextAfterGlobalMiddlewares: {},
+        request: new Request("http://localhost"),
+      } as any,
+      () =>
+        getPlayerStats({
+          data: { playerId: "target", n: 1, queue: "solo" },
+        } as any)
+    );
+
+    expect(result).toEqual([
+      expect.objectContaining({
+        matchId: "solo-match",
+        queueBucket: "solo",
+        knownQueuedFriendCount: 1,
+        knownQueuedFriendIds: ["friend-1"],
+        partySize: 2,
       }),
     ]);
   });

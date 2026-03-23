@@ -3,6 +3,7 @@ package-lock.json
 .worktrees/
 .output/
 dist/
+coverage/
 .env.local
 .env*.local
 .vinxi/

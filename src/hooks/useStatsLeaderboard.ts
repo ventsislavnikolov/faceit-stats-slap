@@ -7,14 +7,15 @@ export function useStatsLeaderboard(params: {
   playerIds: string[];
   n: 20 | 50 | 100;
   days: 30 | 90 | 180 | 365 | 730;
+  queue: "all" | "solo" | "party";
 }) {
-  const { targetPlayerId, playerIds, n, days } = params;
+  const { targetPlayerId, playerIds, n, days, queue } = params;
 
   return useQuery<StatsLeaderboardResult>({
-    queryKey: ["stats-leaderboard", targetPlayerId, playerIds, n, days],
+    queryKey: ["stats-leaderboard", targetPlayerId, playerIds, n, days, queue],
     queryFn: () =>
       getStatsLeaderboard({
-        data: { targetPlayerId, playerIds, n, days },
+        data: { targetPlayerId, playerIds, n, days, queue },
       }),
     enabled: !!targetPlayerId,
     staleTime: 5 * 60 * 1000,

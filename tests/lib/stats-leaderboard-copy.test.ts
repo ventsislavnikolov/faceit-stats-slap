@@ -26,6 +26,32 @@ describe("stats leaderboard copy", () => {
     ).toBe("No recently queued friends for Target in the last 730 days.");
   });
 
+  it("formats queue-specific summary and empty-state copy", () => {
+    expect(getStatsLeaderboardSummaryCopy("soavarice", 9, 90, 20, "party")).toBe(
+      "Showing players from party matches in the last 90 days. Stats are from each player's own last 20 matches."
+    );
+
+    expect(
+      getStatsLeaderboardEmptyStateCopy({
+        targetNickname: "Target",
+        targetMatchCount: 0,
+        sharedFriendCount: 0,
+        days: 30,
+        queue: "solo",
+      })
+    ).toBe("No recent solo matches for Target in the last 30 days.");
+
+    expect(
+      getStatsLeaderboardEmptyStateCopy({
+        targetNickname: "Target",
+        targetMatchCount: 4,
+        sharedFriendCount: 0,
+        days: 30,
+        queue: "party",
+      })
+    ).toBe("No recently queued friends for Target in party matches in the last 30 days.");
+  });
+
   it("formats the no recent matches empty state", () => {
     expect(
       getStatsLeaderboardEmptyStateCopy({

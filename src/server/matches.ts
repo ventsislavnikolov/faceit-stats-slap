@@ -12,17 +12,19 @@ import {
   fetchPlayerHistory,
   fetchMatch,
   fetchMatchStats,
+  fetchPlayer,
   pickRelevantHistoryMatch,
   parseMatchTeamScore,
   parseMatchStats,
 } from "~/lib/faceit";
+import { classifyKnownFriendQueue } from "~/lib/match-queue";
 import {
   buildPersonalFormLeaderboard,
   type SharedStatsLeaderboardRow,
 } from "~/lib/stats-leaderboard";
 import { filterUnsyncedHistoryItems } from "~/lib/history-sync";
 import { createServerSupabase } from "~/lib/supabase.server";
-import type { LiveMatch, StatsLeaderboardResult } from "~/lib/types";
+import type { LiveMatch, PlayerHistoryMatch, StatsLeaderboardResult } from "~/lib/types";
 import { getWebhookLiveMatchMap } from "~/server/faceit-webhooks";
 
 function getHistoryTimestamp(item: any): number | null {
@@ -460,9 +462,45 @@ export const getMatchDetails = createServerFn({ method: "GET" })
     return result;
   });
 
+function buildLeaderboardQueueKey(matchId: string, faceitId: string): string {
+  return `${matchId}:${faceitId}`;
+}
+
+function classifyLeaderboardQueueBuckets(params: {
+  rows: SharedStatsLeaderboardRow[];
+}): Map<string, "solo" | "party"> {
+  const { rows } = params;
+  const buckets = new Map<string, "solo" | "party">();
+  const rowPlayerIdsByMatch = new Map<string, Set<string>>();
+
+  for (const row of rows) {
+    const existingPlayerIds = rowPlayerIdsByMatch.get(row.matchId) ?? new Set<string>();
+    existingPlayerIds.add(row.faceitId);
+    rowPlayerIdsByMatch.set(row.matchId, existingPlayerIds);
+  }
+
+  for (const row of rows) {
+    const cohortPlayersInMatch = rowPlayerIdsByMatch.get(row.matchId) ?? new Set<string>();
+    const otherCohortPlayers = [...cohortPlayersInMatch].filter((faceitId) => faceitId !== row.faceitId);
+
+    buckets.set(
+      buildLeaderboardQueueKey(row.matchId, row.faceitId),
+      otherCohortPlayers.length >= 2 ? "party" : "solo"
+    );
+  }
+
+  return buckets;
+}
+
 export const getStatsLeaderboard = createServerFn({ method: "GET" })
-  .inputValidator((input: { targetPlayerId: string; playerIds: string[]; n: 20 | 50 | 100; days: 30 | 90 | 180 | 365 | 730 }) => input)
-  .handler(async ({ data: { targetPlayerId, playerIds, n, days } }): Promise<StatsLeaderboardResult> => {
+  .inputValidator((input: {
+    targetPlayerId: string;
+    playerIds: string[];
+    n: 20 | 50 | 100;
+    days: 30 | 90 | 180 | 365 | 730;
+    queue?: "all" | "solo" | "party";
+  }) => input)
+  .handler(async ({ data: { targetPlayerId, playerIds, n, days, queue = "all" } }): Promise<StatsLeaderboardResult> => {
     const supabase = createServerSupabase();
     const uniquePlayerIds = [...new Set([targetPlayerId, ...playerIds])];
 
@@ -508,8 +546,20 @@ export const getStatsLeaderboard = createServerFn({ method: "GET" })
       };
     });
 
+    let rowsForLeaderboard = normalizedRows;
+
+    if (queue !== "all") {
+      const queueBuckets = classifyLeaderboardQueueBuckets({
+        rows: normalizedRows,
+      });
+
+      rowsForLeaderboard = normalizedRows.filter(
+        (row) => queueBuckets.get(buildLeaderboardQueueKey(row.matchId, row.faceitId)) === queue
+      );
+    }
+
     let result = buildPersonalFormLeaderboard({
-      rows: normalizedRows,
+      rows: rowsForLeaderboard,
       targetPlayerId,
       friendIds: playerIds,
       n,
@@ -544,43 +594,77 @@ export const syncAllPlayerHistory = createServerFn({ method: "POST" })
   });
 
 export const getPlayerStats = createServerFn({ method: "GET" })
-  .inputValidator((playerId: string) => playerId)
-  .handler(async ({ data: playerId }) => {
-    const history = await fetchPlayerHistory(playerId, 15, 0); // capped at 15 to limit API calls
+  .inputValidator((input: {
+    playerId: string;
+    n: number;
+    queue?: "all" | "solo" | "party";
+  }) => input)
+  .handler(async ({ data: { playerId, n, queue = "all" } }): Promise<PlayerHistoryMatch[]> => {
+    const targetFriendIds = await fetchPlayer(playerId)
+      .then((player) => player.friendsIds)
+      .catch(() => null);
 
-    const allResults: PromiseSettledResult<any>[] = [];
-    for (let i = 0; i < history.length; i += 5) {
-      if (i > 0) await sleep(BATCH_DELAY_MS);
-      const batch = history.slice(i, i + 5);
-      const batchResults = await Promise.allSettled(
-        batch.map(async (h: any) => {
-          const stats = await fetchMatchStats(h.match_id);
-          const round = stats.rounds?.[0];
-          if (!round) return null;
+    const matches: PlayerHistoryMatch[] = [];
+    const pageSize = Math.max(n, 20);
 
-          for (const team of round.teams || []) {
-            const player = (team.players || []).find(
-              (p: any) => p.player_id === playerId
-            );
-            if (player) {
-              return {
-                matchId: h.match_id,
-                map: round.round_stats?.Map || "unknown",
-                score: round.round_stats?.Score || "",
-                startedAt: h.started_at,
-                finishedAt: h.finished_at,
-                ...parseMatchStats(player),
-              };
+    for (let offset = 0; matches.length < n; offset += pageSize) {
+      const history = await fetchPlayerHistory(playerId, pageSize, offset);
+      if (history.length === 0) break;
+
+      const batchResults: PromiseSettledResult<PlayerHistoryMatch | null>[] = [];
+      for (let i = 0; i < history.length; i += 5) {
+        if (i > 0 || offset > 0) await sleep(BATCH_DELAY_MS);
+        const batch = history.slice(i, i + 5);
+        const settled = await Promise.allSettled(
+          batch.map(async (h: any) => {
+            const stats = await fetchMatchStats(h.match_id);
+            const round = stats.rounds?.[0];
+            if (!round) return null;
+
+            const queueInfo = classifyKnownFriendQueue({
+              targetPlayerId: playerId,
+              targetFriendIds,
+              teams: round.teams || [],
+            });
+
+            for (const team of round.teams || []) {
+              const player = (team.players || []).find(
+                (p: any) => p.player_id === playerId
+              );
+              if (player) {
+                return {
+                  matchId: h.match_id,
+                  map: round.round_stats?.Map || "unknown",
+                  score: round.round_stats?.Score || "",
+                  startedAt: h.started_at,
+                  finishedAt: h.finished_at,
+                  queueBucket: queueInfo.queueBucket,
+                  knownQueuedFriendCount: queueInfo.knownQueuedFriendCount,
+                  knownQueuedFriendIds: queueInfo.knownQueuedFriendIds,
+                  partySize: queueInfo.partySize,
+                  ...parseMatchStats(player),
+                } satisfies PlayerHistoryMatch;
+              }
             }
-          }
-          return null;
-        })
-      );
-      allResults.push(...batchResults);
-    }
-    const matches = allResults;
 
-    return matches
-      .filter((r) => r.status === "fulfilled" && r.value)
-      .map((r: any) => r.value);
+            return null;
+          })
+        );
+        batchResults.push(...settled);
+      }
+
+      matches.push(
+        ...batchResults
+          .filter((result): result is PromiseFulfilledResult<PlayerHistoryMatch | null> => result.status === "fulfilled")
+          .map((result) => result.value)
+          .filter((match): match is PlayerHistoryMatch => {
+            if (!match) return false;
+            return queue === "all" ? true : match.queueBucket === queue;
+          })
+      );
+
+      if (history.length < pageSize) break;
+    }
+
+    return matches.slice(0, n);
   });

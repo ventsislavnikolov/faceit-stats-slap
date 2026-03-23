@@ -57,7 +57,7 @@ function AppLayout() {
           <div className="flex gap-3 text-xs">
             <Link
               to="/history"
-              search={{ player: undefined }}
+              search={{ player: undefined, matches: 20, queue: "all" }}
               activeProps={{ className: "text-accent border-b border-accent pb-0.5" }}
               inactiveProps={{ className: "text-text-muted hover:text-accent" }}
             >

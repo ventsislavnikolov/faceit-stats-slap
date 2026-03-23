@@ -130,7 +130,11 @@ function PlayerDashboard() {
             <span className="text-border">|</span>
             <Link
               to="/history"
-              search={{ player: searchResult.player.nickname }}
+              search={{
+                player: searchResult.player.nickname,
+                matches: 20,
+                queue: "all",
+              }}
               className="text-accent hover:underline"
             >
               History

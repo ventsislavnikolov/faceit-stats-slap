@@ -11,9 +11,21 @@ interface MatchRowProps {
   hsPercent: number;
   win: boolean;
   eloDelta?: number | null;
+  queueBucket?: "solo" | "party" | "unknown";
 }
 
-export function MatchRow({ nickname, matchId, map, score, kdRatio, adr, hsPercent, win, eloDelta }: MatchRowProps) {
+export function MatchRow({
+  nickname,
+  matchId,
+  map,
+  score,
+  kdRatio,
+  adr,
+  hsPercent,
+  win,
+  eloDelta,
+  queueBucket,
+}: MatchRowProps) {
   const content = (
     <div
       className={`flex items-center bg-bg-card rounded px-2.5 py-2 text-xs border-l-[3px] ${
@@ -31,6 +43,11 @@ export function MatchRow({ nickname, matchId, map, score, kdRatio, adr, hsPercen
       <span className="text-text-muted flex-1">
         K/D {kdRatio.toFixed(1)} · ADR {adr.toFixed(0)} · HS {hsPercent}%
       </span>
+      {queueBucket && queueBucket !== "unknown" && (
+        <span className="text-[10px] uppercase tracking-wide text-text-muted mr-2">
+          {queueBucket}
+        </span>
+      )}
       {eloDelta != null && (
         <span className={eloDelta >= 0 ? "text-accent" : "text-error"}>
           {eloDelta >= 0 ? "+" : ""}
