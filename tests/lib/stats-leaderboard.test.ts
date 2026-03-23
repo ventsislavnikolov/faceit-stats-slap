@@ -160,26 +160,63 @@ const mockSupabase = vi.hoisted(() => {
 
   let lastMatchPlayerStatIds: string[] = [];
 
-  const buildMatchPlayerStatsRows = (value: string[], cutoffIso?: string) => ({
-    data: value
-      .flatMap((faceitId) => leaderboardRowsByPlayer.get(faceitId) ?? [])
-      .filter((row) => (cutoffIso ? row.played_at >= cutoffIso : true)),
+  const getAllLeaderboardRows = () =>
+    [...leaderboardRowsByPlayer.values()]
+      .flat()
+      .sort((a, b) => b.played_at.localeCompare(a.played_at));
+
+  const buildMatchPlayerStatsPage = (rows: any[], from = 0, to = rows.length - 1) => ({
+    data: rows.slice(from, to + 1),
   });
 
   const matchPlayerStatsQuery = () => ({
     select: () => ({
-      in: (_column: string, value: string[]) => ({
-        order: async () => {
-          lastMatchPlayerStatIds = value;
-          return buildMatchPlayerStatsRows(value);
-        },
+      eq: (column: string, value: string) => ({
         gte: (_gteColumn: string, cutoffIso: string) => ({
-          order: async () => {
-            lastMatchPlayerStatIds = value;
-            return buildMatchPlayerStatsRows(value, cutoffIso);
-          },
+          order: () => ({
+            range: async (from: number, to: number) => {
+              if (column !== "faceit_player_id") {
+                throw new Error(`Unexpected eq column: ${column}`);
+              }
+
+              const rows = (leaderboardRowsByPlayer.get(value) ?? [])
+                .filter((row) => row.played_at >= cutoffIso)
+                .sort((a, b) => b.played_at.localeCompare(a.played_at));
+
+              return buildMatchPlayerStatsPage(rows, from, to);
+            },
+          }),
         }),
       }),
+      in: (column: string, value: string[]) => {
+        if (column === "faceit_player_id") {
+          lastMatchPlayerStatIds = value;
+          const rows = value
+            .flatMap((faceitId) => leaderboardRowsByPlayer.get(faceitId) ?? [])
+            .sort((a, b) => b.played_at.localeCompare(a.played_at));
+
+          return {
+            order: () => ({
+              range: async (from: number, to: number) => buildMatchPlayerStatsPage(rows, from, to),
+            }),
+          };
+        }
+
+        if (column === "match_id") {
+          const rows = getAllLeaderboardRows().filter((row) => value.includes(row.match_id));
+          return {
+            data: rows,
+            in: (_nextColumn: string, _nextValue: string[]) => ({
+              order: () => ({
+                range: async (from: number, to: number) => buildMatchPlayerStatsPage(rows, from, to),
+              }),
+            }),
+            order: async () => ({ data: rows }),
+          };
+        }
+
+        throw new Error(`Unexpected in column: ${column}`);
+      },
     }),
   });
 
@@ -416,6 +453,7 @@ describe("buildPersonalFormLeaderboard", () => {
     expect(result.entries[0]).toMatchObject({
       gamesPlayed: 3,
       avgKills: 22.67,
+      avgImpact: 158.1,
       avgKd: 1.5,
       avgAdr: 98.3,
       winRate: 67,
@@ -428,6 +466,151 @@ describe("buildPersonalFormLeaderboard", () => {
       avgEntryRate: 0.75,
       avgSniperKills: 0.33,
     });
+  });
+
+  it("scores impact relative to elo-adjusted expectations per match", () => {
+    const result = buildPersonalFormLeaderboard({
+      rows: [
+        makeRow({
+          matchId: "shared-match",
+          faceitId: "target",
+          playedAt: "2026-03-21T10:00:00.000Z",
+        }),
+        makeRow({
+          matchId: "shared-match",
+          faceitId: "friend-a",
+          playedAt: "2026-03-21T10:00:00.000Z",
+          elo: 2010,
+          kdRatio: 1.2,
+          adr: 90,
+          krRatio: 0.8,
+          win: true,
+          entryCount: 1,
+          entryWins: 1,
+        }),
+        makeRow({
+          matchId: "friend-a-personal-1",
+          faceitId: "friend-a",
+          playedAt: "2026-03-22T09:00:00.000Z",
+          elo: 2010,
+          kdRatio: 1.6,
+          adr: 110,
+          krRatio: 0.9,
+          win: false,
+          entryCount: 2,
+          entryWins: 1,
+        }),
+      ],
+      targetPlayerId: "target",
+      friendIds: ["friend-a"],
+      n: 20,
+      days: 30,
+      now: "2026-03-22T12:00:00.000Z",
+    });
+
+    expect(result.entries[0]).toMatchObject({
+      faceitId: "friend-a",
+      avgImpact: 135,
+    });
+  });
+
+  it("sorts by impact before nickname and games played", () => {
+    const result = buildPersonalFormLeaderboard({
+      rows: [
+        makeRow({
+          matchId: "shared-match",
+          faceitId: "target",
+          playedAt: "2026-03-21T10:00:00.000Z",
+        }),
+        makeRow({
+          matchId: "shared-match",
+          faceitId: "friend-high-kd",
+          playedAt: "2026-03-21T10:00:00.000Z",
+          nickname: "Raw Fragger",
+          elo: 900,
+          kdRatio: 1.45,
+          adr: 82,
+          krRatio: 0.76,
+          win: false,
+          entryCount: 2,
+          entryWins: 1,
+        }),
+        makeRow({
+          matchId: "shared-match",
+          faceitId: "friend-high-elo",
+          playedAt: "2026-03-21T10:00:00.000Z",
+          nickname: "Hard Lobby",
+          elo: 2600,
+          kdRatio: 1.35,
+          adr: 99,
+          krRatio: 0.86,
+          win: true,
+          entryCount: 2,
+          entryWins: 1,
+        }),
+      ],
+      targetPlayerId: "target",
+      friendIds: ["friend-high-kd", "friend-high-elo"],
+      n: 20,
+      days: 30,
+      now: "2026-03-22T12:00:00.000Z",
+    });
+
+    expect(result.entries.map((entry) => entry.faceitId)).toEqual([
+      "friend-high-elo",
+      "friend-high-kd",
+      "target",
+    ]);
+    expect(result.entries[0].avgImpact).toBeGreaterThan(result.entries[1].avgImpact);
+    expect(result.entries[0].avgKd).toBeLessThan(result.entries[1].avgKd);
+  });
+
+  it("raises impact expectations for players above 2000 elo", () => {
+    const result = buildPersonalFormLeaderboard({
+      rows: [
+        makeRow({
+          matchId: "shared-match",
+          faceitId: "target",
+          playedAt: "2026-03-21T10:00:00.000Z",
+        }),
+        makeRow({
+          matchId: "shared-match",
+          faceitId: "friend-2070",
+          playedAt: "2026-03-21T10:00:00.000Z",
+          nickname: "TibaBG",
+          elo: 2070,
+          kdRatio: 1.25,
+          adr: 93,
+          krRatio: 0.85,
+          win: true,
+          entryCount: 2,
+          entryWins: 1,
+        }),
+        makeRow({
+          matchId: "shared-match",
+          faceitId: "friend-2574",
+          playedAt: "2026-03-21T10:00:00.000Z",
+          nickname: "F1aw1esss",
+          elo: 2574,
+          kdRatio: 1.25,
+          adr: 93,
+          krRatio: 0.85,
+          win: true,
+          entryCount: 2,
+          entryWins: 1,
+        }),
+      ],
+      targetPlayerId: "target",
+      friendIds: ["friend-2070", "friend-2574"],
+      n: 20,
+      days: 30,
+      now: "2026-03-22T12:00:00.000Z",
+    });
+
+    const lowerElo = result.entries.find((entry) => entry.faceitId === "friend-2070");
+    const higherElo = result.entries.find((entry) => entry.faceitId === "friend-2574");
+
+    expect(lowerElo?.avgImpact).toBeGreaterThan(higherElo?.avgImpact ?? 0);
   });
 
   it("computes entry rate as a normalized fraction from the personal sample", () => {
@@ -711,7 +894,7 @@ describe("buildPersonalFormLeaderboard", () => {
           playedAt: "2026-03-20T10:00:00.000Z",
           nickname: "Bravo",
           kdRatio: 1,
-          win: false,
+          win: true,
         }),
         makeRow({
           matchId: "shared-match",
@@ -807,6 +990,7 @@ describe("buildPersonalFormLeaderboard", () => {
         elo: 2010,
         gamesPlayed: 3,
         avgKills: 22.33,
+        avgImpact: 132.8,
         avgKd: 1.5,
       }),
       expect.objectContaining({
@@ -822,6 +1006,113 @@ describe("buildPersonalFormLeaderboard", () => {
     expect(result.sharedFriendCount).toBe(1);
   });
 
+  it("keeps friends eligible even when the qualifying shared match falls past the first 1000 combined rows", async () => {
+    const sharedPlayedAt = "2026-03-20T00:00:00.000Z";
+    mockSupabase.setLeaderboardRows(
+      "target",
+      Array.from({ length: 1000 }, (_, index) => ({
+        match_id: `target-recent-${index}`,
+        faceit_player_id: "target",
+        nickname: "Target",
+        played_at: new Date(Date.UTC(2026, 2, 21, 23, 59 - index)).toISOString(),
+        kills: 15,
+        kd_ratio: 1,
+        adr: 70,
+        hs_percent: 30,
+        kr_ratio: 0.65,
+        win: index % 2 === 0,
+        first_kills: 0,
+        clutch_kills: 0,
+        utility_damage: 4,
+        enemies_flashed: 1,
+        entry_count: 0,
+        entry_wins: 0,
+        sniper_kills: 0,
+      })).concat([
+        {
+          match_id: "target-shared-old",
+          faceit_player_id: "target",
+          nickname: "Target",
+          played_at: sharedPlayedAt,
+          kills: 17,
+          kd_ratio: 1.1,
+          adr: 72,
+          hs_percent: 34,
+          kr_ratio: 0.68,
+          win: true,
+          first_kills: 0,
+          clutch_kills: 0,
+          utility_damage: 5,
+          enemies_flashed: 1,
+          entry_count: 0,
+          entry_wins: 0,
+          sniper_kills: 0,
+        },
+      ])
+    );
+    mockSupabase.setLeaderboardRows(
+      "friend-a",
+      Array.from({ length: 20 }, (_, index) => ({
+        match_id: `friend-a-recent-${index}`,
+        faceit_player_id: "friend-a",
+        nickname: "Friend A",
+        played_at: new Date(Date.UTC(2026, 2, 21, 22, 59 - index)).toISOString(),
+        kills: 20 + (index % 3),
+        kd_ratio: 1.2,
+        adr: 82,
+        hs_percent: 40,
+        kr_ratio: 0.75,
+        win: true,
+        first_kills: 1,
+        clutch_kills: 0,
+        utility_damage: 8,
+        enemies_flashed: 2,
+        entry_count: 1,
+        entry_wins: 1,
+        sniper_kills: 0,
+      })).concat([
+        {
+          match_id: "target-shared-old",
+          faceit_player_id: "friend-a",
+          nickname: "Friend A",
+          played_at: sharedPlayedAt,
+          kills: 19,
+          kd_ratio: 1.15,
+          adr: 78,
+          hs_percent: 38,
+          kr_ratio: 0.72,
+          win: true,
+          first_kills: 1,
+          clutch_kills: 0,
+          utility_damage: 7,
+          enemies_flashed: 2,
+          entry_count: 1,
+          entry_wins: 1,
+          sniper_kills: 0,
+        },
+      ])
+    );
+
+    const result = await runWithStartContext(
+      {
+        contextAfterGlobalMiddlewares: {},
+        request: new Request("http://localhost"),
+      } as any,
+      () =>
+        getStatsLeaderboard({
+          data: {
+            targetPlayerId: "target",
+            playerIds: ["friend-a"],
+            n: 20,
+            days: 30,
+          },
+        } as any)
+    );
+
+    expect(result.entries.map((entry) => entry.faceitId)).toContain("friend-a");
+    expect(result.sharedFriendCount).toBe(1);
+  });
+
   it("does not force-add MY_FACEIT_ID when querying a different target", async () => {
     vi.mocked(buildPersonalFormLeaderboard).mockReturnValueOnce({
       entries: [
@@ -830,6 +1121,7 @@ describe("buildPersonalFormLeaderboard", () => {
           nickname: "Target",
           elo: 0,
           gamesPlayed: 1,
+          avgImpact: 100,
           avgKd: 1,
           avgAdr: 60,
           winRate: 100,
@@ -882,6 +1174,7 @@ describe("buildPersonalFormLeaderboard", () => {
           nickname: "Friend A",
           elo: 2010,
           gamesPlayed: 1,
+          avgImpact: 126.7,
           avgKd: 1.2,
           avgAdr: 80,
           winRate: 100,
@@ -925,6 +1218,27 @@ describe("buildPersonalFormLeaderboard", () => {
   });
 
   it("normalizes nullable utility and flash stats to zero", async () => {
+    mockSupabase.setLeaderboardRows("target", [
+      {
+        match_id: "match-shared",
+        faceit_player_id: "target",
+        nickname: "Target",
+        played_at: "2026-03-21T10:00:00.000Z",
+        kills: 19,
+        kd_ratio: 1.1,
+        adr: 60,
+        hs_percent: 30,
+        kr_ratio: 0.4,
+        win: true,
+        first_kills: 0,
+        clutch_kills: 0,
+        utility_damage: 4,
+        enemies_flashed: 1,
+        entry_count: 0,
+        entry_wins: 0,
+        sniper_kills: 0,
+      },
+    ]);
     mockSupabase.setLeaderboardRows("friend-null", [
       {
         match_id: "match-shared",
@@ -1178,14 +1492,14 @@ describe("buildPersonalFormLeaderboard", () => {
         avgKills: 23,
       }),
       expect.objectContaining({
-        faceitId: "friend-b",
-        gamesPlayed: 2,
-        avgKills: 17,
-      }),
-      expect.objectContaining({
         faceitId: "target",
         gamesPlayed: 2,
         avgKills: 18,
+      }),
+      expect.objectContaining({
+        faceitId: "friend-b",
+        gamesPlayed: 2,
+        avgKills: 17,
       }),
     ]);
     expect(result.targetMatchCount).toBe(2);

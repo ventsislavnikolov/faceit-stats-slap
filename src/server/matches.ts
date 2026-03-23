@@ -61,10 +61,27 @@ export async function fetchPlayerHistoryWindow(
   return history;
 }
 
-async function syncPlayerHistory(faceitId: string, n: number, days: 30 | 90 | 180 | 365 | 730): Promise<void> {
+export async function fetchPlayerRecentHistory(
+  faceitId: string,
+  n: number,
+  pageSize = HISTORY_SYNC_PAGE_SIZE
+): Promise<any[]> {
+  const history: any[] = [];
+
+  for (let page = 0; history.length < n; page += 1) {
+    const offset = page * pageSize;
+    const pageHistory = await fetchPlayerHistory(faceitId, pageSize, offset);
+    if (pageHistory.length === 0) break;
+
+    history.push(...pageHistory);
+    if (pageHistory.length < pageSize) break;
+  }
+
+  return history.slice(0, n);
+}
+
+async function syncHistoryItems(history: any[]): Promise<void> {
   const supabase = createServerSupabase();
-  const pageSize = Math.max(HISTORY_SYNC_PAGE_SIZE, n);
-  const history = await fetchPlayerHistoryWindow(faceitId, days, pageSize);
   const historyMatchIds = [...new Set(history.map((item) => item.match_id).filter(Boolean))];
   const { data: existingMatches } = historyMatchIds.length === 0
     ? { data: [] }
@@ -162,6 +179,19 @@ async function syncPlayerHistory(faceitId: string, n: number, days: 30 | 90 | 18
       })
     );
   }
+}
+
+async function syncPlayerHistoryWindow(faceitId: string, n: number, days: 30 | 90 | 180 | 365 | 730): Promise<any[]> {
+  const pageSize = Math.max(HISTORY_SYNC_PAGE_SIZE, n);
+  const history = await fetchPlayerHistoryWindow(faceitId, days, pageSize);
+  await syncHistoryItems(history);
+  return history;
+}
+
+async function syncPlayerRecentHistory(faceitId: string, n: number): Promise<void> {
+  const pageSize = Math.max(HISTORY_SYNC_PAGE_SIZE, n);
+  const history = await fetchPlayerRecentHistory(faceitId, n, pageSize);
+  await syncHistoryItems(history);
 }
 
 export const getLiveMatches = createServerFn({ method: "GET" })
@@ -492,6 +522,148 @@ function classifyLeaderboardQueueBuckets(params: {
   return buckets;
 }
 
+const STATS_LEADERBOARD_ROW_SELECT = "match_id, faceit_player_id, nickname, played_at, kills, kd_ratio, adr, hs_percent, kr_ratio, win, first_kills, clutch_kills, utility_damage, enemies_flashed, entry_count, entry_wins, sniper_kills";
+const STATS_LEADERBOARD_PAGE_SIZE = 1000;
+const STATS_LEADERBOARD_MATCH_CHUNK_SIZE = 50;
+
+function normalizeStatsLeaderboardRows(params: {
+  rows: any[];
+  friendMap: Map<string, { nickname: string; elo: number }>;
+}): SharedStatsLeaderboardRow[] {
+  const { rows, friendMap } = params;
+
+  return rows.map((row: any) => {
+    const meta = friendMap.get(row.faceit_player_id);
+
+    return {
+      matchId: row.match_id,
+      playedAt: row.played_at,
+      faceitId: row.faceit_player_id,
+      nickname: row.nickname || meta?.nickname || row.faceit_player_id,
+      elo: meta?.elo ?? 0,
+      kills: Number(row.kills) || 0,
+      kdRatio: Number(row.kd_ratio) || 0,
+      adr: Number(row.adr) || 0,
+      hsPercent: Number(row.hs_percent) || 0,
+      krRatio: Number(row.kr_ratio) || 0,
+      win: Boolean(row.win),
+      firstKills: Number(row.first_kills) || 0,
+      clutchKills: Number(row.clutch_kills) || 0,
+      utilityDamage: Number(row.utility_damage) || 0,
+      enemiesFlashed: Number(row.enemies_flashed) || 0,
+      entryCount: Number(row.entry_count) || 0,
+      entryWins: Number(row.entry_wins) || 0,
+      sniperKills: Number(row.sniper_kills) || 0,
+    };
+  });
+}
+
+function dedupeStatsLeaderboardRows(rows: SharedStatsLeaderboardRow[]): SharedStatsLeaderboardRow[] {
+  const seen = new Set<string>();
+  const deduped: SharedStatsLeaderboardRow[] = [];
+
+  for (const row of rows) {
+    const key = `${row.matchId}:${row.faceitId}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    deduped.push(row);
+  }
+
+  return deduped;
+}
+
+async function fetchTargetStatsLeaderboardRows(params: {
+  supabase: ReturnType<typeof createServerSupabase>;
+  targetPlayerId: string;
+  days: 30 | 90 | 180 | 365 | 730;
+}): Promise<any[]> {
+  const { supabase, targetPlayerId, days } = params;
+  const cutoffIso = new Date(Date.now() - days * DAY_MS).toISOString();
+  const rows: any[] = [];
+
+  for (let from = 0; ; from += STATS_LEADERBOARD_PAGE_SIZE) {
+    const to = from + STATS_LEADERBOARD_PAGE_SIZE - 1;
+    const { data: pageRows } = await supabase
+      .from("match_player_stats")
+      .select(STATS_LEADERBOARD_ROW_SELECT)
+      .eq("faceit_player_id", targetPlayerId)
+      .gte("played_at", cutoffIso)
+      .order("played_at", { ascending: false })
+      .range(from, to);
+
+    if (!pageRows?.length) break;
+    rows.push(...pageRows);
+    if (pageRows.length < STATS_LEADERBOARD_PAGE_SIZE) break;
+  }
+
+  return rows;
+}
+
+async function fetchEligibleStatsLeaderboardFriendIds(params: {
+  supabase: ReturnType<typeof createServerSupabase>;
+  targetMatchIds: string[];
+  friendIds: string[];
+}): Promise<string[]> {
+  const { supabase, targetMatchIds, friendIds } = params;
+  if (targetMatchIds.length === 0 || friendIds.length === 0) return [];
+
+  const friendSet = new Set(friendIds);
+  const eligibleFriendIds = new Set<string>();
+
+  for (let index = 0; index < targetMatchIds.length; index += STATS_LEADERBOARD_MATCH_CHUNK_SIZE) {
+    const matchIdChunk = targetMatchIds.slice(index, index + STATS_LEADERBOARD_MATCH_CHUNK_SIZE);
+    const { data: sharedRows } = await supabase
+      .from("match_player_stats")
+      .select("match_id, faceit_player_id")
+      .in("match_id", matchIdChunk);
+
+    for (const row of sharedRows || []) {
+      if (friendSet.has(row.faceit_player_id)) {
+        eligibleFriendIds.add(row.faceit_player_id);
+      }
+    }
+  }
+
+  return [...eligibleFriendIds];
+}
+
+async function fetchRecentStatsLeaderboardRows(params: {
+  supabase: ReturnType<typeof createServerSupabase>;
+  playerIds: string[];
+  n: 20 | 50 | 100;
+}): Promise<any[]> {
+  const { supabase, playerIds, n } = params;
+  if (playerIds.length === 0) return [];
+
+  const rows: any[] = [];
+  const rowCounts = new Map(playerIds.map((playerId) => [playerId, 0]));
+
+  for (let from = 0; ; from += STATS_LEADERBOARD_PAGE_SIZE) {
+    const to = from + STATS_LEADERBOARD_PAGE_SIZE - 1;
+    const { data: pageRows } = await supabase
+      .from("match_player_stats")
+      .select(STATS_LEADERBOARD_ROW_SELECT)
+      .in("faceit_player_id", playerIds)
+      .order("played_at", { ascending: false })
+      .range(from, to);
+
+    if (!pageRows?.length) break;
+    rows.push(...pageRows);
+
+    for (const row of pageRows) {
+      rowCounts.set(row.faceit_player_id, (rowCounts.get(row.faceit_player_id) ?? 0) + 1);
+    }
+
+    if (playerIds.every((playerId) => (rowCounts.get(playerId) ?? 0) >= n)) {
+      break;
+    }
+
+    if (pageRows.length < STATS_LEADERBOARD_PAGE_SIZE) break;
+  }
+
+  return rows;
+}
+
 export const getStatsLeaderboard = createServerFn({ method: "GET" })
   .inputValidator((input: {
     targetPlayerId: string;
@@ -502,7 +674,6 @@ export const getStatsLeaderboard = createServerFn({ method: "GET" })
   }) => input)
   .handler(async ({ data: { targetPlayerId, playerIds, n, days, queue = "all" } }): Promise<StatsLeaderboardResult> => {
     const supabase = createServerSupabase();
-    const uniquePlayerIds = [...new Set([targetPlayerId, ...playerIds])];
 
     const { data: friendRows } = playerIds.length === 0
       ? { data: [] }
@@ -515,36 +686,29 @@ export const getStatsLeaderboard = createServerFn({ method: "GET" })
       (friendRows || []).map((f: any) => [f.faceit_id, { nickname: f.nickname, elo: f.elo ?? 0 }])
     );
 
-    const { data: rows } = await supabase
-      .from("match_player_stats")
-      .select("match_id, faceit_player_id, nickname, played_at, kills, kd_ratio, adr, hs_percent, kr_ratio, win, first_kills, clutch_kills, utility_damage, enemies_flashed, entry_count, entry_wins, sniper_kills")
-      .in("faceit_player_id", uniquePlayerIds)
-      .order("played_at", { ascending: false });
-
-    const normalizedRows: SharedStatsLeaderboardRow[] = (rows || []).map((row: any) => {
-      const meta = friendMap.get(row.faceit_player_id);
-
-      return {
-        matchId: row.match_id,
-        playedAt: row.played_at,
-        faceitId: row.faceit_player_id,
-        nickname: row.nickname || meta?.nickname || row.faceit_player_id,
-        elo: meta?.elo ?? 0,
-        kills: Number(row.kills) || 0,
-        kdRatio: Number(row.kd_ratio) || 0,
-        adr: Number(row.adr) || 0,
-        hsPercent: Number(row.hs_percent) || 0,
-        krRatio: Number(row.kr_ratio) || 0,
-        win: Boolean(row.win),
-        firstKills: Number(row.first_kills) || 0,
-        clutchKills: Number(row.clutch_kills) || 0,
-        utilityDamage: Number(row.utility_damage) || 0,
-        enemiesFlashed: Number(row.enemies_flashed) || 0,
-        entryCount: Number(row.entry_count) || 0,
-        entryWins: Number(row.entry_wins) || 0,
-        sniperKills: Number(row.sniper_kills) || 0,
-      };
+    const targetRows = await fetchTargetStatsLeaderboardRows({
+      supabase,
+      targetPlayerId,
+      days,
     });
+    const targetMatchIds = [...new Set(targetRows.map((row: any) => row.match_id).filter(Boolean))];
+    const eligibleFriendIds = await fetchEligibleStatsLeaderboardFriendIds({
+      supabase,
+      targetMatchIds,
+      friendIds: playerIds,
+    });
+    const recentRows = await fetchRecentStatsLeaderboardRows({
+      supabase,
+      playerIds: targetMatchIds.length > 0 ? [targetPlayerId, ...eligibleFriendIds] : [],
+      n,
+    });
+
+    const normalizedRows = dedupeStatsLeaderboardRows(
+      normalizeStatsLeaderboardRows({
+        rows: [...targetRows, ...recentRows],
+        friendMap,
+      })
+    );
 
     let rowsForLeaderboard = normalizedRows;
 
@@ -562,6 +726,7 @@ export const getStatsLeaderboard = createServerFn({ method: "GET" })
       rows: rowsForLeaderboard,
       targetPlayerId,
       friendIds: playerIds,
+      eligibleFriendIds,
       n,
       days,
     });
@@ -588,8 +753,25 @@ export const getStatsLeaderboard = createServerFn({ method: "GET" })
 export const syncAllPlayerHistory = createServerFn({ method: "POST" })
   .inputValidator((input: { targetPlayerId: string; playerIds: string[]; n: number; days: 30 | 90 | 180 | 365 | 730 }) => input)
   .handler(async ({ data: { targetPlayerId, playerIds, n, days } }): Promise<void> => {
-    for (const faceitId of [...new Set([targetPlayerId, ...playerIds])]) {
-      await syncPlayerHistory(faceitId, n, days);
+    const targetHistory = await syncPlayerHistoryWindow(targetPlayerId, n, days);
+    const targetMatchIds = [...new Set(targetHistory.map((item) => item.match_id).filter(Boolean))];
+    if (targetMatchIds.length === 0 || playerIds.length === 0) return;
+
+    const supabase = createServerSupabase();
+    const { data: sharedRows } = await supabase
+      .from("match_player_stats")
+      .select("match_id, faceit_player_id")
+      .in("match_id", targetMatchIds);
+
+    const friendSet = new Set(playerIds);
+    const eligibleFriendIds = [...new Set(
+      (sharedRows || [])
+        .map((row: any) => row.faceit_player_id)
+        .filter((faceitId: string) => friendSet.has(faceitId))
+    )];
+
+    for (const faceitId of eligibleFriendIds) {
+      await syncPlayerRecentHistory(faceitId, n);
     }
   });
 

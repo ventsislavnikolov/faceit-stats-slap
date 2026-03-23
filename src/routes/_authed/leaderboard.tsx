@@ -35,7 +35,7 @@ export const Route = createFileRoute("/_authed/leaderboard")({
 });
 
 type Tab = "stats" | "bets";
-type SortKey = "avgKills" | "avgKd" | "avgAdr" | "winRate" | "avgHsPercent" | "avgKrRatio" | "gamesPlayed"
+type SortKey = "avgImpact" | "avgKills" | "avgKd" | "avgAdr" | "winRate" | "avgHsPercent" | "avgKrRatio" | "gamesPlayed"
   | "avgFirstKills" | "avgClutchKills" | "avgUtilityDamage" | "avgEnemiesFlashed" | "avgEntryRate" | "avgSniperKills";
 type SortDir = "asc" | "desc";
 type StatGroup = "combat" | "entry" | "utility";
@@ -48,6 +48,7 @@ const STAT_GROUPS: { key: StatGroup; label: string }[] = [
 
 const STATS_COLS: Record<StatGroup, { key: SortKey; label: string; decimals: number; suffix?: string }[]> = {
   combat: [
+    { key: "avgImpact",    label: "Impact", decimals: 1 },
     { key: "avgKills",     label: "Kills", decimals: 2 },
     { key: "avgKd",        label: "K/D",  decimals: 2 },
     { key: "avgAdr",       label: "ADR",  decimals: 1 },
@@ -93,7 +94,7 @@ function StatsTab({
   const [n, setN] = useState<20 | 50 | 100>(20);
   const [days, setDays] = useState<30 | 90 | 180 | 365 | 730>(30);
   const [queue, setQueue] = useState<"all" | "solo" | "party">("all");
-  const [sortKey, setSortKey] = useState<SortKey>("avgKd");
+  const [sortKey, setSortKey] = useState<SortKey>("avgImpact");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [statGroup, setStatGroup] = useState<StatGroup>("combat");
   const attemptedSyncKeysRef = useRef<Set<string>>(new Set());
@@ -433,7 +434,7 @@ function LeaderboardPage() {
   };
 
   return (
-    <div className="flex-1 p-6 max-w-2xl mx-auto w-full overflow-y-auto">
+    <div className="flex-1 p-6 max-w-6xl mx-auto w-full overflow-y-auto">
       <h2 className="text-lg font-bold mb-4">Leaderboard</h2>
 
       <form onSubmit={handleSearch} className="flex gap-2 mb-4">

@@ -78,13 +78,13 @@ describe("stats leaderboard auto-sync policy", () => {
     ).toBe(false);
   });
 
-  it("auto-sync only backfills the searched player history", () => {
+  it("auto-sync keeps the full friend scope for older shared-match backfills", () => {
     expect(
       buildStatsLeaderboardSyncPlayerIds({
         mode: "auto",
         playerIds: ["friend-a", "friend-b"],
       })
-    ).toEqual([]);
+    ).toEqual(["friend-a", "friend-b"]);
   });
 
   it("manual sync keeps the full friend scope", () => {

@@ -6,7 +6,7 @@ export function buildStatsLeaderboardSyncPlayerIds(params: {
   mode: StatsLeaderboardSyncMode;
   playerIds: string[];
 }): string[] {
-  return params.mode === "auto" ? [] : params.playerIds;
+  return params.playerIds;
 }
 
 export function buildStatsLeaderboardSyncKey(params: {

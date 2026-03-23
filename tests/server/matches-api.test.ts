@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { runWithStartContext } from "../../node_modules/.pnpm/@tanstack+start-storage-context@1.166.15/node_modules/@tanstack/start-storage-context/dist/esm/index.js";
 import {
+  fetchPlayerRecentHistory,
   fetchPlayerHistoryWindow,
   getLiveMatches,
   getMatchDetails,
@@ -51,6 +52,13 @@ const supabaseState = vi.hoisted(() => {
   const bettingPoolsSelect = vi.fn(() => ({
     in: bettingPoolsSelectIn,
   }));
+  let matchPlayerStatsRowsByMatchId = new Map<string, any[]>();
+  const matchPlayerStatsSelectIn = vi.fn(async (_column: string, value: string[]) => ({
+    data: value.flatMap((matchId) => matchPlayerStatsRowsByMatchId.get(matchId) ?? []),
+  }));
+  const matchPlayerStatsSelect = vi.fn(() => ({
+    in: matchPlayerStatsSelectIn,
+  }));
 
   const from = vi.fn((table: string) => {
     if (table === "matches") {
@@ -63,6 +71,7 @@ const supabaseState = vi.hoisted(() => {
     if (table === "match_player_stats") {
       return {
         upsert: matchPlayerStatsUpsert,
+        select: matchPlayerStatsSelect,
       };
     }
 
@@ -86,6 +95,7 @@ const supabaseState = vi.hoisted(() => {
     matchesSelectIn,
     matchesUpsert,
     matchPlayerStatsUpsert,
+    matchPlayerStatsSelectIn,
     bettingPoolInsert,
     bettingPoolIgnore,
     bettingPoolsSelectIn,
@@ -96,11 +106,17 @@ const supabaseState = vi.hoisted(() => {
     setMatchRow(value: { id: string } | null) {
       matchRow = value;
     },
+    setMatchPlayerStatsRowsByMatchId(value: Map<string, any[]>) {
+      matchPlayerStatsRowsByMatchId = value;
+    },
     reset() {
       stalePools = [];
       matchRow = { id: "db-match-1" };
+      matchPlayerStatsRowsByMatchId = new Map();
       matchesUpsert.mockClear();
       matchPlayerStatsUpsert.mockClear();
+      matchPlayerStatsSelect.mockClear();
+      matchPlayerStatsSelectIn.mockClear();
       bettingPoolInsert.mockClear();
       bettingPoolIgnore.mockClear();
       bettingPoolsSelectIn.mockClear();
@@ -227,6 +243,30 @@ describe("fetchPlayerHistoryWindow", () => {
 
     expect(faceitMocks.fetchPlayerHistory).toHaveBeenCalledTimes(1);
     expect(result).toEqual([{ match_id: "recent-1", finished_at: 1774000000 }]);
+  });
+});
+
+describe("fetchPlayerRecentHistory", () => {
+  it("stops after collecting the requested number of recent matches", async () => {
+    faceitMocks.fetchPlayerHistory
+      .mockResolvedValueOnce([
+        { match_id: "recent-1", finished_at: 1774000000 },
+        { match_id: "recent-2", finished_at: 1773900000 },
+      ])
+      .mockResolvedValueOnce([
+        { match_id: "recent-3", finished_at: 1773800000 },
+        { match_id: "recent-4", finished_at: 1773700000 },
+      ]);
+
+    const result = await fetchPlayerRecentHistory("target", 3, 2);
+
+    expect(faceitMocks.fetchPlayerHistory).toHaveBeenNthCalledWith(1, "target", 2, 0);
+    expect(faceitMocks.fetchPlayerHistory).toHaveBeenNthCalledWith(2, "target", 2, 2);
+    expect(result).toEqual([
+      { match_id: "recent-1", finished_at: 1774000000 },
+      { match_id: "recent-2", finished_at: 1773900000 },
+      { match_id: "recent-3", finished_at: 1773800000 },
+    ]);
   });
 });
 
@@ -699,10 +739,10 @@ describe("syncAllPlayerHistory", () => {
         } as any)
     );
 
-    expect(faceitMocks.fetchPlayerHistory).toHaveBeenCalledTimes(2);
+    expect(faceitMocks.fetchPlayerHistory).toHaveBeenCalledTimes(1);
     expect(faceitMocks.fetchPlayerHistory).toHaveBeenNthCalledWith(1, "target", 50, 0);
-    expect(faceitMocks.fetchPlayerHistory).toHaveBeenNthCalledWith(2, "friend-a", 50, 0);
     expect(supabaseState.matchesSelectIn).not.toHaveBeenCalled();
+    expect(supabaseState.matchPlayerStatsSelectIn).not.toHaveBeenCalled();
     expect(supabaseState.matchesUpsert).not.toHaveBeenCalled();
     expect(supabaseState.matchPlayerStatsUpsert).not.toHaveBeenCalled();
   });
@@ -807,6 +847,91 @@ describe("syncAllPlayerHistory", () => {
     expect(faceitMocks.fetchMatchStats).not.toHaveBeenCalled();
     expect(supabaseState.matchesUpsert).not.toHaveBeenCalled();
     expect(supabaseState.matchPlayerStatsUpsert).not.toHaveBeenCalled();
+  });
+
+  it("syncs the target window first, then only recent matches for eligible friends", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-03-22T12:00:00.000Z"));
+
+    faceitMocks.fetchPlayerHistory
+      .mockResolvedValueOnce([
+        {
+          match_id: "target-shared-match",
+          started_at: 1774170000,
+          finished_at: 1774170900,
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          match_id: "eligible-friend-recent-1",
+          started_at: 1774160000,
+          finished_at: 1774160900,
+        },
+        {
+          match_id: "eligible-friend-recent-2",
+          started_at: 1774150000,
+          finished_at: 1774150900,
+        },
+      ]);
+
+    supabaseState.setMatchPlayerStatsRowsByMatchId(
+      new Map([
+        [
+          "target-shared-match",
+          [
+            { match_id: "target-shared-match", faceit_player_id: "target" },
+            { match_id: "target-shared-match", faceit_player_id: "friend-a" },
+            { match_id: "target-shared-match", faceit_player_id: "random" },
+          ],
+        ],
+      ])
+    );
+
+    faceitMocks.fetchMatchStats.mockImplementation(async (matchId: string) => ({
+      rounds: [
+        {
+          round_stats: {
+            Map: "de_ancient",
+            Score: "13 / 8",
+          },
+          teams: [
+            {
+              players: [{ player_id: `${matchId}-p1` }],
+            },
+            {
+              players: [{ player_id: `${matchId}-p2` }],
+            },
+          ],
+        },
+      ],
+    }));
+    faceitMocks.parseMatchStats.mockImplementation((player: { player_id: string }) =>
+      buildParsedPlayer(player.player_id, player.player_id, 20)
+    );
+
+    await runWithStartContext(
+      {
+        contextAfterGlobalMiddlewares: {},
+        request: new Request("http://localhost"),
+      } as any,
+      () =>
+        syncAllPlayerHistory({
+          data: {
+            targetPlayerId: "target",
+            playerIds: ["friend-a", "friend-b"],
+            n: 20,
+            days: 730,
+          },
+        } as any)
+    );
+
+    expect(faceitMocks.fetchPlayerHistory).toHaveBeenCalledTimes(2);
+    expect(faceitMocks.fetchPlayerHistory).toHaveBeenNthCalledWith(1, "target", 50, 0);
+    expect(faceitMocks.fetchPlayerHistory).toHaveBeenNthCalledWith(2, "friend-a", 50, 0);
+    expect(faceitMocks.fetchPlayerHistory).not.toHaveBeenCalledWith("friend-b", 50, 0);
+    expect(supabaseState.matchPlayerStatsSelectIn).toHaveBeenCalledWith("match_id", [
+      "target-shared-match",
+    ]);
   });
 });
 
