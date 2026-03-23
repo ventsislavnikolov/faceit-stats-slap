@@ -92,6 +92,158 @@ describe("extractFaceitWebhookMatchUpdate", () => {
       shouldClear: true,
     });
   });
+
+  it("derives configuring events from payload-only match objects", () => {
+    const result = extractFaceitWebhookMatchUpdate({
+      payload: {
+        id: "1-configuring-match",
+        state: "CONFIGURING",
+        teams: {
+          faction1: {
+            roster: [{ faceit_id: TRACKED_WEBHOOK_PLAYERS.soavarice.faceitId }],
+          },
+        },
+      },
+    });
+
+    expect(result).toEqual({
+      event: "match_status_configuring",
+      matchId: "1-configuring-match",
+      playerIds: [TRACKED_WEBHOOK_PLAYERS.soavarice.faceitId],
+      shouldActivate: true,
+      shouldClear: false,
+    });
+  });
+
+  it("extracts match ids from nested payload arrays when the event is provided", () => {
+    const result = extractFaceitWebhookMatchUpdate({
+      event: "match_status_finished",
+      payload: [
+        {
+          object: {
+            id: "1-finished-match",
+            teams: {
+              faction1: {
+                roster: [{ player_id: TRACKED_WEBHOOK_PLAYERS.tibabg.faceitId }],
+              },
+            },
+          },
+        },
+      ],
+    });
+
+    expect(result).toEqual({
+      event: "match_status_finished",
+      matchId: "1-finished-match",
+      playerIds: [TRACKED_WEBHOOK_PLAYERS.tibabg.faceitId],
+      shouldActivate: false,
+      shouldClear: true,
+    });
+  });
+
+  it("derives cancelled events from payload-only match objects", () => {
+    const result = extractFaceitWebhookMatchUpdate({
+      payload: {
+        id: "1-cancelled-match",
+        state: "CANCELLED",
+        teams: {
+          faction1: {
+            roster: [{ player_id: TRACKED_WEBHOOK_PLAYERS.soavarice.faceitId }],
+          },
+        },
+      },
+    });
+
+    expect(result).toEqual({
+      event: "match_status_cancelled",
+      matchId: "1-cancelled-match",
+      playerIds: [TRACKED_WEBHOOK_PLAYERS.soavarice.faceitId],
+      shouldActivate: false,
+      shouldClear: true,
+    });
+  });
+
+  it("derives aborted events from payload-only match objects", () => {
+    const result = extractFaceitWebhookMatchUpdate({
+      payload: {
+        id: "1-aborted-match",
+        state: "ABORTED",
+        teams: {
+          faction1: {
+            roster: [{ player_id: TRACKED_WEBHOOK_PLAYERS.f1aw1esss.faceitId }],
+          },
+        },
+      },
+    });
+
+    expect(result).toEqual({
+      event: "match_status_aborted",
+      matchId: "1-aborted-match",
+      playerIds: [TRACKED_WEBHOOK_PLAYERS.f1aw1esss.faceitId],
+      shouldActivate: false,
+      shouldClear: true,
+    });
+  });
+
+  it("returns unknown when no event or tracked players can be extracted", () => {
+    const result = extractFaceitWebhookMatchUpdate({
+      payload: {
+        object: {
+          state: "PAUSED",
+          teams: {
+            faction1: {
+              roster: [{ player_id: "someone-else" }],
+            },
+          },
+        },
+      },
+    });
+
+    expect(result).toEqual({
+      event: "unknown",
+      matchId: null,
+      playerIds: [],
+      shouldActivate: false,
+      shouldClear: false,
+    });
+  });
+
+  it("returns a null match id when nested arrays do not contain a match object", () => {
+    const result = extractFaceitWebhookMatchUpdate({
+      event: "match_status_ready",
+      payload: [{ object: { teams: [] } }],
+    });
+
+    expect(result).toEqual({
+      event: "match_status_ready",
+      matchId: null,
+      playerIds: [],
+      shouldActivate: true,
+      shouldClear: false,
+    });
+  });
+
+  it("derives finished events from payload-only match objects", () => {
+    const result = extractFaceitWebhookMatchUpdate({
+      payload: {
+        id: "1-finished-direct",
+        state: "FINISHED",
+        teams: {
+          faction1: {
+            roster: [{ player_id: TRACKED_WEBHOOK_PLAYERS.tibabg.faceitId }],
+          },
+        },
+      },
+    });
+
+    expect(result).toEqual({
+      event: "match_status_finished",
+      matchId: "1-finished-direct",
+      playerIds: [TRACKED_WEBHOOK_PLAYERS.tibabg.faceitId],
+      shouldActivate: false,
+      shouldClear: true,
+    });
+  });
 });
 
 describe("groupWebhookStateByMatch", () => {

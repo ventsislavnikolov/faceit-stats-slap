@@ -8,6 +8,7 @@ export interface SharedStatsLeaderboardRow {
   faceitId: string;
   nickname: string;
   elo: number;
+  kills: number;
   kdRatio: number;
   adr: number;
   hsPercent: number;
@@ -141,6 +142,7 @@ export function buildPersonalFormLeaderboard({
         nickname: latest.nickname || faceitId,
         elo: Number(latest.elo) || 0,
         gamesPlayed: recentPersonalRows.length,
+        avgKills: averageRounded(recentPersonalRows, (row) => row.kills, 2),
         avgKd: averageRounded(recentPersonalRows, (row) => row.kdRatio, 2),
         avgAdr: averageRounded(recentPersonalRows, (row) => row.adr, 1),
         winRate: recentPersonalRows.length > 0 ? Math.round((wins / recentPersonalRows.length) * 100) : 0,

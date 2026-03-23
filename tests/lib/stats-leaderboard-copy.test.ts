@@ -47,4 +47,15 @@ describe("stats leaderboard copy", () => {
       })
     ).toBe("No recently queued friends for Target in the last 365 days.");
   });
+
+  it("returns null when the leaderboard has recent matches and shared friends", () => {
+    expect(
+      getStatsLeaderboardEmptyStateCopy({
+        targetNickname: "Target",
+        targetMatchCount: 4,
+        sharedFriendCount: 2,
+        days: 90,
+      })
+    ).toBeNull();
+  });
 });

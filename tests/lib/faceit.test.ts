@@ -2,7 +2,12 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import {
   buildMatchScoreString,
   faceitFetch,
+  fetchMatch,
+  fetchMatchStats,
+  fetchPlayer,
+  fetchPlayerByNickname,
   fetchPlayerHistory,
+  fetchPlayerLifetimeStats,
   pickRelevantHistoryMatch,
   parseMatchStats,
   parseMatchTeamScore,
@@ -71,6 +76,17 @@ describe("parseLifetimeStats", () => {
     expect(result.totalMatches).toBe(910);
     expect(result.recentResults).toEqual([true, true, false, true, false]);
   });
+
+  it("falls back to zero values when lifetime fields are missing", () => {
+    expect(parseLifetimeStats({})).toEqual({
+      lifetimeKd: 0,
+      lifetimeHs: 0,
+      lifetimeAdr: 0,
+      winRate: 0,
+      totalMatches: 0,
+      recentResults: [],
+    });
+  });
 });
 
 describe("parseMatchStats", () => {
@@ -100,6 +116,46 @@ describe("parseMatchStats", () => {
     expect(result.adr).toBe(112.3);
     expect(result.result).toBe(true);
   });
+
+  it("falls back to zero values when player stats are missing", () => {
+    expect(
+      parseMatchStats({
+        player_id: "abc-123",
+        nickname: "TestPlayer",
+      })
+    ).toEqual({
+      playerId: "abc-123",
+      nickname: "TestPlayer",
+      kills: 0,
+      deaths: 0,
+      assists: 0,
+      headshots: 0,
+      mvps: 0,
+      kdRatio: 0,
+      adr: 0,
+      hsPercent: 0,
+      krRatio: 0,
+      tripleKills: 0,
+      quadroKills: 0,
+      pentaKills: 0,
+      result: false,
+      damage: 0,
+      firstKills: 0,
+      entryCount: 0,
+      entryWins: 0,
+      clutchKills: 0,
+      oneV1Count: 0,
+      oneV1Wins: 0,
+      oneV2Count: 0,
+      oneV2Wins: 0,
+      doubleKills: 0,
+      utilityDamage: 0,
+      enemiesFlashed: 0,
+      flashCount: 0,
+      sniperKills: 0,
+      pistolKills: 0,
+    });
+  });
 });
 
 describe("parseMatchTeamScore", () => {
@@ -107,6 +163,11 @@ describe("parseMatchTeamScore", () => {
     expect(parseMatchTeamScore({ "Current Score": "9" })).toBe(9);
     expect(parseMatchTeamScore({ Score: "7" })).toBe(7);
     expect(parseMatchTeamScore({ "Final Score": "13" })).toBe(13);
+  });
+
+  it("returns zero when no score fields are present", () => {
+    expect(parseMatchTeamScore({})).toBe(0);
+    expect(parseMatchTeamScore(undefined)).toBe(0);
   });
 });
 
@@ -134,6 +195,10 @@ describe("buildMatchScoreString", () => {
 
     expect(result).toBe("13 / 10");
   });
+
+  it("returns an empty string when no scores are available anywhere", () => {
+    expect(buildMatchScoreString({}, [{ team_stats: {} }, { team_stats: {} }])).toBe("");
+  });
 });
 
 describe("pickRelevantHistoryMatch", () => {
@@ -153,6 +218,10 @@ describe("pickRelevantHistoryMatch", () => {
     ]);
 
     expect(result?.match_id).toBe("finished-1");
+  });
+
+  it("returns null for empty history", () => {
+    expect(pickRelevantHistoryMatch([])).toBeNull();
   });
 });
 
@@ -182,6 +251,48 @@ describe("faceitFetch", () => {
     await expect(promise).resolves.toEqual({ ok: true });
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
+
+  it("throws immediately for non-retryable responses", async () => {
+    process.env.FACEIT_SERVER_SIDE_API_KEY = "test-key";
+
+    vi.spyOn(global, "fetch").mockResolvedValueOnce(
+      new Response("bad request", {
+        status: 400,
+        statusText: "Bad Request",
+      })
+    );
+
+    await expect(faceitFetch("/players/test-player")).rejects.toThrow(
+      "FACEIT API error: 400 Bad Request for /players/test-player"
+    );
+  });
+
+  it("throws after exhausting retry attempts", async () => {
+    vi.useFakeTimers();
+    process.env.FACEIT_SERVER_SIDE_API_KEY = "test-key";
+
+    const fetchMock = vi.spyOn(global, "fetch").mockResolvedValue(
+      new Response("unavailable", {
+        status: 503,
+        statusText: "Service Unavailable",
+      })
+    );
+
+    const promise = expect(faceitFetch("/players/test-player")).rejects.toThrow(
+      "FACEIT API error: 503 Service Unavailable for /players/test-player"
+    );
+    await vi.runAllTimersAsync();
+    await promise;
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it("throws when the FACEIT api key is missing", async () => {
+    delete process.env.FACEIT_SERVER_SIDE_API_KEY;
+
+    await expect(faceitFetch("/players/test-player")).rejects.toThrow(
+      "Missing FACEIT_SERVER_SIDE_API_KEY"
+    );
+  });
 });
 
 describe("fetchPlayerHistory", () => {
@@ -207,5 +318,134 @@ describe("fetchPlayerHistory", () => {
         }),
       })
     );
+  });
+});
+
+describe("FACEIT endpoint helpers", () => {
+  it("fetches a player profile and falls back to an empty friends list", async () => {
+    process.env.FACEIT_SERVER_SIDE_API_KEY = "test-key";
+
+    vi.spyOn(global, "fetch").mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          player_id: "player-123",
+          nickname: "SoAvarice",
+          country: "BG",
+          games: {
+            cs2: { faceit_elo: 1690, skill_level: 8 },
+          },
+        }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }
+      )
+    );
+
+    await expect(fetchPlayer("player-123")).resolves.toEqual({
+      faceitId: "player-123",
+      nickname: "SoAvarice",
+      avatar: "",
+      elo: 1690,
+      skillLevel: 8,
+      country: "BG",
+      friendsIds: [],
+    });
+  });
+
+  it("fetches a player by nickname and preserves returned friends ids", async () => {
+    process.env.FACEIT_SERVER_SIDE_API_KEY = "test-key";
+
+    const fetchMock = vi.spyOn(global, "fetch").mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          player_id: "player-123",
+          nickname: "So Avarice",
+          country: "BG",
+          avatar: "https://avatar.test/player.png",
+          friends_ids: ["friend-1"],
+          games: {
+            cs2: { faceit_elo: 1690, skill_level: 8 },
+          },
+        }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }
+      )
+    );
+
+    await expect(fetchPlayerByNickname("So Avarice")).resolves.toEqual({
+      faceitId: "player-123",
+      nickname: "So Avarice",
+      avatar: "https://avatar.test/player.png",
+      elo: 1690,
+      skillLevel: 8,
+      country: "BG",
+      friendsIds: ["friend-1"],
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining("/players?nickname=So%20Avarice&game=cs2"),
+      expect.any(Object)
+    );
+  });
+
+  it("fetches player lifetime stats through the stats endpoint", async () => {
+    process.env.FACEIT_SERVER_SIDE_API_KEY = "test-key";
+
+    vi.spyOn(global, "fetch").mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          lifetime: {
+            "Average K/D Ratio": "1.10",
+            "Average Headshots %": "40",
+            ADR: "82.5",
+            "Win Rate %": "51",
+            Matches: "300",
+            "Recent Results": ["1", "0"],
+          },
+        }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }
+      )
+    );
+
+    await expect(fetchPlayerLifetimeStats("player-123")).resolves.toEqual({
+      lifetimeKd: 1.1,
+      lifetimeHs: 40,
+      lifetimeAdr: 82.5,
+      winRate: 51,
+      totalMatches: 300,
+      recentResults: [true, false],
+    });
+  });
+
+  it("fetches raw match and match stats payloads", async () => {
+    process.env.FACEIT_SERVER_SIDE_API_KEY = "test-key";
+
+    vi.spyOn(global, "fetch")
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ match_id: "match-1", status: "READY" }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        })
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ rounds: [{ round_stats: { Map: "de_nuke" } }] }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        })
+      );
+
+    await expect(fetchMatch("match-1")).resolves.toEqual({
+      match_id: "match-1",
+      status: "READY",
+    });
+    await expect(fetchMatchStats("match-1")).resolves.toEqual({
+      rounds: [{ round_stats: { Map: "de_nuke" } }],
+    });
   });
 });

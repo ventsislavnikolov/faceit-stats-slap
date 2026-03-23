@@ -101,7 +101,7 @@ function PlayerDashboard() {
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="FACEIT nickname, player UUID, or match ID..."
+            placeholder="FACEIT nickname, profile link, player UUID, or match ID..."
             className="flex-1 bg-bg-elevated border border-border rounded px-3 py-1.5 text-sm text-text focus:border-accent outline-none"
           />
           <button

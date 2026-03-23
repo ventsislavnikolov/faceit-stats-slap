@@ -24,4 +24,61 @@ describe("resolveFaceitSearchTarget", () => {
       value: "15844c99-d26e-419e-bd14-30908f502c03",
     });
   });
+
+  it("extracts the nickname from a FACEIT profile url", () => {
+    expect(
+      resolveFaceitSearchTarget("https://www.faceit.com/en/players/soavarice")
+    ).toEqual({
+      kind: "player",
+      value: "soavarice",
+    });
+  });
+
+  it("extracts the nickname from a FACEIT profile url with extra path details", () => {
+    expect(
+      resolveFaceitSearchTarget(" https://www.faceit.com/en/players/soavarice/stats/cs2 ")
+    ).toEqual({
+      kind: "player",
+      value: "soavarice",
+    });
+  });
+
+  it("extracts nicknames from FACEIT profile urls without an explicit protocol", () => {
+    expect(resolveFaceitSearchTarget("faceit.com/en/players/soavarice")).toEqual({
+      kind: "player",
+      value: "soavarice",
+    });
+  });
+
+  it("keeps non-FACEIT urls on the player dashboard flow", () => {
+    expect(
+      resolveFaceitSearchTarget("https://example.com/en/players/soavarice")
+    ).toEqual({
+      kind: "player",
+      value: "https://example.com/en/players/soavarice",
+    });
+  });
+
+  it("keeps malformed FACEIT profile urls on the player dashboard flow", () => {
+    expect(
+      resolveFaceitSearchTarget("https://www.faceit.com/en/players/%E0%A4%A")
+    ).toEqual({
+      kind: "player",
+      value: "https://www.faceit.com/en/players/%E0%A4%A",
+    });
+  });
+
+  it("keeps incomplete FACEIT profile urls on the player dashboard flow", () => {
+    expect(resolveFaceitSearchTarget("https://www.faceit.com/en/players")).toEqual({
+      kind: "player",
+      value: "https://www.faceit.com/en/players",
+    });
+  });
+
+  it("keeps FACEIT urls without a player segment on the player dashboard flow", () => {
+    expect(resolveFaceitSearchTarget("https://www.faceit.com/en/home")).toEqual({
+      kind: "player",
+      value: "https://www.faceit.com/en/home",
+    });
+  });
 });

@@ -154,6 +154,7 @@ export interface StatsLeaderboardEntry {
   nickname: string;
   elo: number;
   gamesPlayed: number;
+  avgKills: number;
   avgKd: number;
   avgAdr: number;
   winRate: number;       // 0–100

@@ -1,19 +1,12 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { createIsomorphicFn } from "@tanstack/react-start";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { usePlayerStats } from "~/hooks/usePlayerStats";
 import { useUserBets } from "~/hooks/useUserBets";
 import { RecentMatches } from "~/components/RecentMatches";
+import { getHistoryTabs, normalizeHistoryTab, type HistoryTab } from "~/lib/history-page";
 import { resolvePlayer } from "~/server/friends";
-
-const requireAuth = createIsomorphicFn()
-  .server(() => {})
-  .client(async () => {
-    const { getSupabaseClient } = await import("~/lib/supabase.client");
-    const { data: { session } } = await getSupabaseClient().auth.getSession();
-    if (!session) throw redirect({ to: "/sign-in" as any });
-  });
 
 const getClientUserId = createIsomorphicFn()
   .server(() => null)
@@ -24,20 +17,17 @@ const getClientUserId = createIsomorphicFn()
   });
 
 export const Route = createFileRoute("/_authed/history")({
-  beforeLoad: () => requireAuth(),
   validateSearch: (search: Record<string, unknown>) => ({
     player: (search.player as string) || undefined,
   }),
   component: HistoryPage,
 });
 
-type Tab = "matches" | "bets";
-
 function HistoryPage() {
   const { player: urlPlayer } = Route.useSearch();
   const [input, setInput] = useState(urlPlayer ?? "");
   const [search, setSearch] = useState<string | null>(urlPlayer ?? null);
-  const [tab, setTab] = useState<Tab>("matches");
+  const [tab, setTab] = useState<HistoryTab>("matches");
   const [userId, setUserId] = useState<string | null>(null);
 
   const {
@@ -58,6 +48,12 @@ function HistoryPage() {
   useEffect(() => {
     getClientUserId().then(setUserId);
   }, []);
+
+  const availableTabs = getHistoryTabs(!!userId);
+
+  useEffect(() => {
+    setTab((currentTab) => normalizeHistoryTab(currentTab, !!userId));
+  }, [userId]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,7 +77,7 @@ function HistoryPage() {
     <div className="flex-1 p-6 max-w-4xl mx-auto w-full overflow-y-auto">
       {/* Tabs */}
       <div className="flex gap-1 mb-6 bg-bg-elevated rounded p-1 w-fit">
-        {(["matches", "bets"] as Tab[]).map((t) => (
+        {availableTabs.map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}

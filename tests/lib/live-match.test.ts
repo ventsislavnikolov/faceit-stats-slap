@@ -40,6 +40,35 @@ describe("getLiveMatchTeamLabels", () => {
       faction2: "Opponents",
     });
   });
+
+  it("falls back to opponents when neither side contains tracked friends", () => {
+    const match: LiveMatch = {
+      matchId: "m2",
+      status: "ONGOING",
+      map: "de_nuke",
+      score: { faction1: 2, faction2: 1 },
+      startedAt: 0,
+      friendFaction: "faction1",
+      friendIds: ["friend-1"],
+      teams: {
+        faction1: {
+          teamId: "team-1",
+          name: "Team 1",
+          roster: [{ playerId: "enemy-1", nickname: "EnemyOne", avatar: "", skillLevel: 8 }],
+        },
+        faction2: {
+          teamId: "team-2",
+          name: "Team 2",
+          roster: [{ playerId: "enemy-2", nickname: "EnemyTwo", avatar: "", skillLevel: 7 }],
+        },
+      },
+    };
+
+    expect(getLiveMatchTeamLabels(match)).toEqual({
+      faction1: "Opponents",
+      faction2: "Opponents",
+    });
+  });
 });
 
 describe("getLiveMatchDisplayScore", () => {
@@ -85,6 +114,60 @@ describe("getLiveMatchDisplayScore", () => {
     };
 
     expect(getLiveMatchDisplayScore(match, detail)).toEqual({ faction1: 9, faction2: 6 });
+  });
+
+  it("falls back to the live match score when detail scores are empty", () => {
+    const match: LiveMatch = {
+      matchId: "m2",
+      status: "ONGOING",
+      map: "de_dust2",
+      score: { faction1: 5, faction2: 3 },
+      startedAt: 0,
+      friendFaction: "faction1",
+      friendIds: ["friend-1"],
+      teams: {
+        faction1: { teamId: "team-1", name: "Team 1", roster: [] },
+        faction2: { teamId: "team-2", name: "Team 2", roster: [] },
+      },
+    };
+
+    const detail: MatchDetail = {
+      matchId: "m2",
+      map: "de_dust2",
+      score: "0 / 0",
+      status: "ONGOING",
+      startedAt: 0,
+      finishedAt: null,
+      players: [],
+      demoUrl: null,
+      teams: {
+        faction1: { name: "Team 1", score: 0, playerIds: [] },
+        faction2: { name: "Team 2", score: 0, playerIds: [] },
+      },
+      rounds: 0,
+      region: "EU",
+      competitionName: "Ranked",
+    };
+
+    expect(getLiveMatchDisplayScore(match, detail)).toEqual({ faction1: 5, faction2: 3 });
+  });
+
+  it("falls back to the live match score when details are unavailable", () => {
+    const match: LiveMatch = {
+      matchId: "m3",
+      status: "ONGOING",
+      map: "de_inferno",
+      score: { faction1: 7, faction2: 4 },
+      startedAt: 0,
+      friendFaction: "faction1",
+      friendIds: ["friend-1"],
+      teams: {
+        faction1: { teamId: "team-1", name: "Team 1", roster: [] },
+        faction2: { teamId: "team-2", name: "Team 2", roster: [] },
+      },
+    };
+
+    expect(getLiveMatchDisplayScore(match)).toEqual({ faction1: 7, faction2: 4 });
   });
 });
 

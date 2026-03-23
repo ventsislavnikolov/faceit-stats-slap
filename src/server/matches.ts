@@ -479,7 +479,7 @@ export const getStatsLeaderboard = createServerFn({ method: "GET" })
 
     const { data: rows } = await supabase
       .from("match_player_stats")
-      .select("match_id, faceit_player_id, nickname, played_at, kd_ratio, adr, hs_percent, kr_ratio, win, first_kills, clutch_kills, utility_damage, enemies_flashed, entry_count, entry_wins, sniper_kills")
+      .select("match_id, faceit_player_id, nickname, played_at, kills, kd_ratio, adr, hs_percent, kr_ratio, win, first_kills, clutch_kills, utility_damage, enemies_flashed, entry_count, entry_wins, sniper_kills")
       .in("faceit_player_id", uniquePlayerIds)
       .order("played_at", { ascending: false });
 
@@ -492,6 +492,7 @@ export const getStatsLeaderboard = createServerFn({ method: "GET" })
         faceitId: row.faceit_player_id,
         nickname: row.nickname || meta?.nickname || row.faceit_player_id,
         elo: meta?.elo ?? 0,
+        kills: Number(row.kills) || 0,
         kdRatio: Number(row.kd_ratio) || 0,
         adr: Number(row.adr) || 0,
         hsPercent: Number(row.hs_percent) || 0,

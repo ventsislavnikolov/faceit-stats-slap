@@ -1,4 +1,4 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { createIsomorphicFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useLeaderboard } from "~/hooks/useLeaderboard";
@@ -18,14 +18,6 @@ import { searchAndLoadFriends } from "~/server/friends";
 import { useEffect, useRef, useState } from "react";
 import type { StatsLeaderboardEntry } from "~/lib/types";
 
-const requireAuth = createIsomorphicFn()
-  .server(() => {})
-  .client(async () => {
-    const { getSupabaseClient } = await import("~/lib/supabase.client");
-    const { data: { session } } = await getSupabaseClient().auth.getSession();
-    if (!session) throw redirect({ to: "/sign-in" as any });
-  });
-
 const getCurrentUserId = createIsomorphicFn()
   .server(() => null)
   .client(async () => {
@@ -35,7 +27,6 @@ const getCurrentUserId = createIsomorphicFn()
   });
 
 export const Route = createFileRoute("/_authed/leaderboard")({
-  beforeLoad: () => requireAuth(),
   validateSearch: (search: Record<string, unknown>) => ({
     player: (search.player as string) || undefined,
   }),
@@ -43,7 +34,7 @@ export const Route = createFileRoute("/_authed/leaderboard")({
 });
 
 type Tab = "stats" | "bets";
-type SortKey = "avgKd" | "avgAdr" | "winRate" | "avgHsPercent" | "avgKrRatio" | "gamesPlayed"
+type SortKey = "avgKills" | "avgKd" | "avgAdr" | "winRate" | "avgHsPercent" | "avgKrRatio" | "gamesPlayed"
   | "avgFirstKills" | "avgClutchKills" | "avgUtilityDamage" | "avgEnemiesFlashed" | "avgEntryRate" | "avgSniperKills";
 type SortDir = "asc" | "desc";
 type StatGroup = "combat" | "entry" | "utility";
@@ -56,6 +47,7 @@ const STAT_GROUPS: { key: StatGroup; label: string }[] = [
 
 const STATS_COLS: Record<StatGroup, { key: SortKey; label: string; decimals: number; suffix?: string }[]> = {
   combat: [
+    { key: "avgKills",     label: "Kills", decimals: 2 },
     { key: "avgKd",        label: "K/D",  decimals: 2 },
     { key: "avgAdr",       label: "ADR",  decimals: 1 },
     { key: "winRate",      label: "WIN%", decimals: 0, suffix: "%" },

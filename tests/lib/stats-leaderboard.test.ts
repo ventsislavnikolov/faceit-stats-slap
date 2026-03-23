@@ -33,6 +33,7 @@ const mockSupabase = vi.hoisted(() => {
           faceit_player_id: "target",
           nickname: "Target",
           played_at: "2026-03-21T10:00:00.000Z",
+          kills: 19,
           kd_ratio: 1.1,
           adr: 60,
           hs_percent: 30,
@@ -51,6 +52,7 @@ const mockSupabase = vi.hoisted(() => {
           faceit_player_id: "target",
           nickname: "Target",
           played_at: "2026-03-20T10:00:00.000Z",
+          kills: 15,
           kd_ratio: 0.9,
           adr: 55,
           hs_percent: 22,
@@ -74,6 +76,7 @@ const mockSupabase = vi.hoisted(() => {
           faceit_player_id: "friend-a",
           nickname: "Friend A",
           played_at: "2026-03-21T10:00:00.000Z",
+          kills: 22,
           kd_ratio: 1.2,
           adr: 90,
           hs_percent: 40,
@@ -92,6 +95,7 @@ const mockSupabase = vi.hoisted(() => {
           faceit_player_id: "friend-a",
           nickname: "Friend A",
           played_at: "2026-02-15T09:00:00.000Z",
+          kills: 24,
           kd_ratio: 1.8,
           adr: 100,
           hs_percent: 45,
@@ -110,6 +114,7 @@ const mockSupabase = vi.hoisted(() => {
           faceit_player_id: "friend-a",
           nickname: "Friend A",
           played_at: "2026-02-14T08:00:00.000Z",
+          kills: 21,
           kd_ratio: 1.5,
           adr: 98,
           hs_percent: 35,
@@ -133,6 +138,7 @@ const mockSupabase = vi.hoisted(() => {
           faceit_player_id: "friend-b",
           nickname: "Friend B",
           played_at: "2026-02-13T07:00:00.000Z",
+          kills: 27,
           kd_ratio: 2.7,
           adr: 120,
           hs_percent: 55,
@@ -197,6 +203,9 @@ const mockSupabase = vi.hoisted(() => {
   return {
     supabase,
     getLastMatchPlayerStatIds: () => lastMatchPlayerStatIds,
+    setLeaderboardRows(faceitId: string, rows: any[]) {
+      leaderboardRowsByPlayer.set(faceitId, rows);
+    },
   };
 });
 
@@ -225,6 +234,7 @@ function makeRow(
     faceitId: overrides.faceitId,
     nickname: overrides.nickname ?? overrides.faceitId,
     elo: overrides.elo ?? 0,
+    kills: overrides.kills ?? 0,
     kdRatio: overrides.kdRatio ?? 0,
     adr: overrides.adr ?? 0,
     hsPercent: overrides.hsPercent ?? 0,
@@ -250,6 +260,7 @@ describe("buildPersonalFormLeaderboard", () => {
           playedAt: "2026-03-21T10:00:00.000Z",
           nickname: "Target",
           elo: 3333,
+          kills: 18,
           kdRatio: 1.3,
           adr: 90,
           hsPercent: 42,
@@ -268,6 +279,7 @@ describe("buildPersonalFormLeaderboard", () => {
           playedAt: "2026-03-22T10:00:00.000Z",
           nickname: "Target",
           elo: 3333,
+          kills: 24,
           kdRatio: 1.5,
           adr: 100,
           hsPercent: 50,
@@ -289,6 +301,7 @@ describe("buildPersonalFormLeaderboard", () => {
         nickname: "Target",
         elo: 3333,
         gamesPlayed: 2,
+        avgKills: 21,
         avgKd: 1.4,
       })
     );
@@ -307,6 +320,7 @@ describe("buildPersonalFormLeaderboard", () => {
           matchId: "target-match-1",
           faceitId: "friend-a",
           playedAt: "2026-03-21T10:00:00.000Z",
+          kills: 21,
           kdRatio: 1.2,
           adr: 90,
           hsPercent: 40,
@@ -324,6 +338,7 @@ describe("buildPersonalFormLeaderboard", () => {
           matchId: "friend-a-personal-1",
           faceitId: "friend-a",
           playedAt: "2026-03-22T09:00:00.000Z",
+          kills: 27,
           kdRatio: 1.6,
           adr: 110,
           hsPercent: 50,
@@ -341,6 +356,7 @@ describe("buildPersonalFormLeaderboard", () => {
           matchId: "friend-a-personal-2",
           faceitId: "friend-a",
           playedAt: "2026-03-22T08:00:00.000Z",
+          kills: 20,
           kdRatio: 1.7,
           adr: 95,
           hsPercent: 35,
@@ -379,6 +395,7 @@ describe("buildPersonalFormLeaderboard", () => {
     expect(result.entries.map((entry) => entry.faceitId)).toEqual(["friend-a", "target"]);
     expect(result.entries[0]).toMatchObject({
       gamesPlayed: 3,
+      avgKills: 22.67,
       avgKd: 1.5,
       avgAdr: 98.3,
       winRate: 67,
@@ -424,6 +441,53 @@ describe("buildPersonalFormLeaderboard", () => {
     });
 
     expect(result.entries[0].avgEntryRate).toBe(0.5);
+  });
+
+  it("computes average kills per match from the capped personal sample", () => {
+    const result = buildPersonalFormLeaderboard({
+      rows: [
+        makeRow({
+          matchId: "shared-match",
+          faceitId: "target",
+          playedAt: "2026-03-21T10:00:00.000Z",
+        }),
+        makeRow({
+          matchId: "shared-match",
+          faceitId: "friend-a",
+          playedAt: "2026-03-21T10:00:00.000Z",
+          kills: 16,
+        }),
+        makeRow({
+          matchId: "friend-a-personal-1",
+          faceitId: "friend-a",
+          playedAt: "2026-03-22T10:00:00.000Z",
+          kills: 25,
+        }),
+        makeRow({
+          matchId: "friend-a-personal-2",
+          faceitId: "friend-a",
+          playedAt: "2026-03-22T09:00:00.000Z",
+          kills: 19,
+        }),
+        makeRow({
+          matchId: "friend-a-personal-3",
+          faceitId: "friend-a",
+          playedAt: "2026-03-22T08:00:00.000Z",
+          kills: 12,
+        }),
+      ],
+      targetPlayerId: "target",
+      friendIds: ["friend-a"],
+      n: 2,
+      days: 30,
+      now: "2026-03-22T12:00:00.000Z",
+    });
+
+    expect(result.entries[0]).toMatchObject({
+      faceitId: "friend-a",
+      gamesPlayed: 2,
+      avgKills: 22,
+    });
   });
 
   it("skips rows with invalid playedAt values", () => {
@@ -568,6 +632,137 @@ describe("buildPersonalFormLeaderboard", () => {
     expect(noSharedFriends.sharedFriendCount).toBe(0);
   });
 
+  it("falls back to the faceit id when the latest row has no nickname", () => {
+    const result = buildPersonalFormLeaderboard({
+      rows: [
+        makeRow({
+          matchId: "shared-match",
+          faceitId: "target",
+          playedAt: "2026-03-21T10:00:00.000Z",
+          nickname: "Target",
+          kdRatio: 1,
+          win: true,
+        }),
+        makeRow({
+          matchId: "shared-match",
+          faceitId: "friend-empty",
+          playedAt: "2026-03-21T10:00:00.000Z",
+          nickname: "",
+          kdRatio: 1,
+          win: true,
+        }),
+      ],
+      targetPlayerId: "target",
+      friendIds: ["friend-empty"],
+      n: 20,
+      days: 30,
+      now: "2026-03-22T00:00:00.000Z",
+    });
+
+    expect(result.entries[0]).toMatchObject({
+      faceitId: "friend-empty",
+      nickname: "friend-empty",
+    });
+    expect(result.sharedFriendCount).toBe(1);
+  });
+
+  it("breaks leaderboard ties by games played and then nickname", () => {
+    const result = buildPersonalFormLeaderboard({
+      rows: [
+        makeRow({
+          matchId: "shared-match",
+          faceitId: "target",
+          playedAt: "2026-03-21T10:00:00.000Z",
+          nickname: "Target",
+          kdRatio: 1,
+          win: true,
+        }),
+        makeRow({
+          matchId: "shared-match",
+          faceitId: "friend-bravo",
+          playedAt: "2026-03-21T10:00:00.000Z",
+          nickname: "Bravo",
+          kdRatio: 1,
+          win: true,
+        }),
+        makeRow({
+          matchId: "bravo-personal",
+          faceitId: "friend-bravo",
+          playedAt: "2026-03-20T10:00:00.000Z",
+          nickname: "Bravo",
+          kdRatio: 1,
+          win: false,
+        }),
+        makeRow({
+          matchId: "shared-match",
+          faceitId: "friend-alpha",
+          playedAt: "2026-03-21T10:00:00.000Z",
+          nickname: "Alpha",
+          kdRatio: 1,
+          win: true,
+        }),
+        makeRow({
+          matchId: "shared-match",
+          faceitId: "friend-charlie",
+          playedAt: "2026-03-21T10:00:00.000Z",
+          nickname: "Charlie",
+          kdRatio: 1,
+          win: true,
+        }),
+      ],
+      targetPlayerId: "target",
+      friendIds: ["friend-bravo", "friend-alpha", "friend-charlie"],
+      n: 20,
+      days: 30,
+      now: "2026-03-22T00:00:00.000Z",
+    });
+
+    expect(result.entries.map((entry) => entry.faceitId)).toEqual([
+      "friend-bravo",
+      "friend-alpha",
+      "friend-charlie",
+      "target",
+    ]);
+  });
+
+  it("accepts Date objects for row timestamps and the comparison clock", () => {
+    const result = buildPersonalFormLeaderboard({
+      rows: [
+        makeRow({
+          matchId: "shared-match",
+          faceitId: "target",
+          playedAt: new Date("2026-03-21T10:00:00.000Z"),
+          nickname: "Target",
+          kdRatio: 1,
+          win: true,
+        }),
+        makeRow({
+          matchId: "shared-match",
+          faceitId: "friend-a",
+          playedAt: new Date("2026-03-21T10:00:00.000Z"),
+          nickname: "Friend A",
+          kdRatio: 1.5,
+          win: true,
+        }),
+      ],
+      targetPlayerId: "target",
+      friendIds: ["friend-a"],
+      n: 20,
+      days: 30,
+      now: new Date("2026-03-22T00:00:00.000Z"),
+    });
+
+    expect(result.entries).toEqual([
+      expect.objectContaining({
+        faceitId: "friend-a",
+        avgKd: 1.5,
+      }),
+      expect.objectContaining({
+        faceitId: "target",
+      }),
+    ]);
+  });
+
   it("returns the searched player plus recently queued friends scored by personal recent matches", async () => {
     const result = await runWithStartContext(
       {
@@ -591,6 +786,7 @@ describe("buildPersonalFormLeaderboard", () => {
         nickname: "Friend A",
         elo: 2010,
         gamesPlayed: 3,
+        avgKills: 22.33,
         avgKd: 1.5,
       }),
       expect.objectContaining({
@@ -598,6 +794,7 @@ describe("buildPersonalFormLeaderboard", () => {
         nickname: "Target",
         elo: 3333,
         gamesPlayed: 2,
+        avgKills: 17,
         avgKd: 1,
       }),
     ]);
@@ -617,6 +814,7 @@ describe("buildPersonalFormLeaderboard", () => {
           avgAdr: 60,
           winRate: 100,
           avgHsPercent: 30,
+          avgKills: 17,
           avgKrRatio: 0.4,
           avgFirstKills: 0,
           avgClutchKills: 0,
@@ -654,5 +852,107 @@ describe("buildPersonalFormLeaderboard", () => {
         elo: 3333,
       }),
     ]);
+  });
+
+  it("skips the live elo lookup when the leaderboard does not include the target", async () => {
+    vi.mocked(buildPersonalFormLeaderboard).mockReturnValueOnce({
+      entries: [
+        {
+          faceitId: "friend-a",
+          nickname: "Friend A",
+          elo: 2010,
+          gamesPlayed: 1,
+          avgKd: 1.2,
+          avgAdr: 80,
+          winRate: 100,
+          avgHsPercent: 40,
+          avgKills: 20,
+          avgKrRatio: 0.8,
+          avgFirstKills: 1,
+          avgClutchKills: 0,
+          avgUtilityDamage: 10,
+          avgEnemiesFlashed: 2,
+          avgEntryRate: 1,
+          avgSniperKills: 0,
+        },
+      ],
+      targetMatchCount: 0,
+      sharedFriendCount: 1,
+    });
+
+    const result = await runWithStartContext(
+      {
+        contextAfterGlobalMiddlewares: {},
+        request: new Request("http://localhost"),
+      } as any,
+      () =>
+        getStatsLeaderboard({
+          data: {
+            targetPlayerId: "target",
+            playerIds: ["friend-a"],
+            n: 20,
+            days: 30,
+          },
+        } as any)
+    );
+
+    expect(result.entries).toEqual([
+      expect.objectContaining({
+        faceitId: "friend-a",
+        elo: 2010,
+      }),
+    ]);
+  });
+
+  it("normalizes nullable utility and flash stats to zero", async () => {
+    mockSupabase.setLeaderboardRows("friend-null", [
+      {
+        match_id: "match-shared",
+        faceit_player_id: "friend-null",
+        nickname: "",
+        played_at: "2026-03-21T10:00:00.000Z",
+        kills: null,
+        kd_ratio: null,
+        adr: null,
+        hs_percent: null,
+        kr_ratio: null,
+        win: true,
+        first_kills: 0,
+        clutch_kills: 0,
+        utility_damage: null,
+        enemies_flashed: null,
+        entry_count: 0,
+        entry_wins: 0,
+        sniper_kills: 0,
+      },
+    ]);
+
+    const result = await runWithStartContext(
+      {
+        contextAfterGlobalMiddlewares: {},
+        request: new Request("http://localhost"),
+      } as any,
+      () =>
+        getStatsLeaderboard({
+          data: {
+            targetPlayerId: "target",
+            playerIds: ["friend-null"],
+            n: 20,
+            days: 30,
+          },
+        } as any)
+    );
+
+    expect(result.entries.find((entry) => entry.faceitId === "friend-null")).toMatchObject({
+      faceitId: "friend-null",
+      nickname: "friend-null",
+      avgKills: 0,
+      avgKd: 0,
+      avgAdr: 0,
+      avgHsPercent: 0,
+      avgKrRatio: 0,
+      avgUtilityDamage: 0,
+      avgEnemiesFlashed: 0,
+    });
   });
 });
