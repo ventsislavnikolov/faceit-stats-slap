@@ -8,6 +8,7 @@ import { resolveFaceitSearchTarget } from "~/lib/faceit-search";
 import {
   getHistoryMatchCountOptions,
   getHistoryQueueOptions,
+  type HistoryMatchCount,
   normalizeHistoryMatchCount,
   normalizeHistoryQueueFilter,
 } from "~/lib/history-page";
@@ -53,7 +54,7 @@ function HistoryPage() {
 
   const updateSearch = (next: {
     player?: string;
-    matches?: 20 | 50 | 100;
+    matches?: HistoryMatchCount;
     queue?: "all" | "solo" | "party";
   }) => {
     navigate({
@@ -116,18 +117,18 @@ function HistoryPage() {
               <div className="flex items-center gap-2">
                 <span className="text-text-dim">Last</span>
                 <div className="flex gap-1">
-                  {getHistoryMatchCountOptions().map((count) => (
+                  {getHistoryMatchCountOptions().map((option) => (
                     <button
-                      key={count}
+                      key={option.value}
                       type="button"
-                      onClick={() => updateSearch({ matches: count })}
+                      onClick={() => updateSearch({ matches: option.value })}
                       className={`rounded px-3 py-1.5 transition-colors ${
-                        selectedMatchCount === count
+                        selectedMatchCount === option.value
                           ? "bg-accent font-bold text-bg"
                           : "bg-bg-elevated text-text-muted hover:text-text"
                       }`}
                     >
-                      {count}
+                      {option.label}
                     </button>
                   ))}
                 </div>

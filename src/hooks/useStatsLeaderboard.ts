@@ -5,7 +5,7 @@ import type { StatsLeaderboardResult } from "~/lib/types";
 export function useStatsLeaderboard(params: {
   targetPlayerId: string;
   playerIds: string[];
-  n: 20 | 50 | 100;
+  n: "yesterday" | 20 | 50 | 100;
   days: 30 | 90 | 180 | 365 | 730;
   queue: "all" | "solo" | "party";
 }) {

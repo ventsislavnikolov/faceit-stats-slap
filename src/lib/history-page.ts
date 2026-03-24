@@ -1,8 +1,16 @@
 export type HistoryTab = "matches" | "bets";
-export type HistoryMatchCount = 20 | 50 | 100;
+export type HistoryMatchCount = "yesterday" | 20 | 50 | 100;
 export type HistoryQueueFilter = "all" | "solo" | "party";
 
-const HISTORY_MATCH_COUNT_OPTIONS: HistoryMatchCount[] = [20, 50, 100];
+const HISTORY_MATCH_COUNT_OPTIONS: Array<{
+  value: HistoryMatchCount;
+  label: string;
+}> = [
+  { value: "yesterday", label: "Yesterday" },
+  { value: 20, label: "20" },
+  { value: 50, label: "50" },
+  { value: 100, label: "100" },
+];
 
 export function getHistoryTabs(isSignedIn: boolean): HistoryTab[] {
   return isSignedIn ? ["matches", "bets"] : ["matches"];
@@ -16,16 +24,23 @@ export function normalizeHistoryTab(tab: HistoryTab, isSignedIn: boolean): Histo
   return tab;
 }
 
-export function getHistoryMatchCountOptions(): HistoryMatchCount[] {
+export function getHistoryMatchCountOptions(): Array<{
+  value: HistoryMatchCount;
+  label: string;
+}> {
   return HISTORY_MATCH_COUNT_OPTIONS;
 }
 
 export function normalizeHistoryMatchCount(value: unknown): HistoryMatchCount {
+  if (value === "yesterday") {
+    return "yesterday";
+  }
+
   const numericValue = typeof value === "number" ? value : Number(value);
 
-  return HISTORY_MATCH_COUNT_OPTIONS.includes(numericValue as HistoryMatchCount)
-    ? (numericValue as HistoryMatchCount)
-    : 20;
+  return HISTORY_MATCH_COUNT_OPTIONS.some((option) => option.value === numericValue)
+    ? (numericValue as Exclude<HistoryMatchCount, "yesterday">)
+    : "yesterday";
 }
 
 export function getHistoryQueueOptions(): Array<{

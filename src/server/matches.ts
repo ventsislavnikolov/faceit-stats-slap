@@ -24,6 +24,7 @@ import {
 } from "~/lib/stats-leaderboard";
 import { filterUnsyncedHistoryItems } from "~/lib/history-sync";
 import { createServerSupabase } from "~/lib/supabase.server";
+import { getPreviousCalendarDayRange } from "~/lib/time";
 import type { LiveMatch, PlayerHistoryMatch, StatsLeaderboardResult } from "~/lib/types";
 import { getWebhookLiveMatchMap } from "~/server/faceit-webhooks";
 
@@ -78,6 +79,40 @@ export async function fetchPlayerRecentHistory(
   }
 
   return history.slice(0, n);
+}
+
+async function fetchPlayerHistoryRange(params: {
+  faceitId: string;
+  startUnix: number;
+  endUnix: number;
+  pageSize?: number;
+}): Promise<any[]> {
+  const {
+    faceitId,
+    startUnix,
+    endUnix,
+    pageSize = HISTORY_SYNC_PAGE_SIZE,
+  } = params;
+  const history: any[] = [];
+
+  for (let page = 0; ; page += 1) {
+    const offset = page * pageSize;
+    const pageHistory = await fetchPlayerHistory(faceitId, pageSize, offset);
+    if (pageHistory.length === 0) break;
+
+    for (const item of pageHistory) {
+      const ts = getHistoryTimestamp(item);
+      if (ts == null) continue;
+      if (ts >= startUnix && ts < endUnix) {
+        history.push(item);
+      }
+    }
+
+    const oldest = getHistoryTimestamp(pageHistory[pageHistory.length - 1]);
+    if (pageHistory.length < pageSize || oldest == null || oldest < startUnix) break;
+  }
+
+  return history;
 }
 
 async function syncHistoryItems(history: any[]): Promise<void> {
@@ -576,9 +611,10 @@ async function fetchTargetStatsLeaderboardRows(params: {
   supabase: ReturnType<typeof createServerSupabase>;
   targetPlayerId: string;
   days: 30 | 90 | 180 | 365 | 730;
+  cutoffIso?: string;
 }): Promise<any[]> {
-  const { supabase, targetPlayerId, days } = params;
-  const cutoffIso = new Date(Date.now() - days * DAY_MS).toISOString();
+  const { supabase, targetPlayerId, days, cutoffIso } = params;
+  const effectiveCutoffIso = cutoffIso ?? new Date(Date.now() - days * DAY_MS).toISOString();
   const rows: any[] = [];
 
   for (let from = 0; ; from += STATS_LEADERBOARD_PAGE_SIZE) {
@@ -587,7 +623,7 @@ async function fetchTargetStatsLeaderboardRows(params: {
       .from("match_player_stats")
       .select(STATS_LEADERBOARD_ROW_SELECT)
       .eq("faceit_player_id", targetPlayerId)
-      .gte("played_at", cutoffIso)
+      .gte("played_at", effectiveCutoffIso)
       .order("played_at", { ascending: false })
       .range(from, to);
 
@@ -630,9 +666,10 @@ async function fetchEligibleStatsLeaderboardFriendIds(params: {
 async function fetchRecentStatsLeaderboardRows(params: {
   supabase: ReturnType<typeof createServerSupabase>;
   playerIds: string[];
-  n: 20 | 50 | 100;
+  n?: 20 | 50 | 100;
+  cutoffIso?: string;
 }): Promise<any[]> {
-  const { supabase, playerIds, n } = params;
+  const { supabase, playerIds, n, cutoffIso } = params;
   if (playerIds.length === 0) return [];
 
   const rows: any[] = [];
@@ -640,10 +677,16 @@ async function fetchRecentStatsLeaderboardRows(params: {
 
   for (let from = 0; ; from += STATS_LEADERBOARD_PAGE_SIZE) {
     const to = from + STATS_LEADERBOARD_PAGE_SIZE - 1;
-    const { data: pageRows } = await supabase
+    let query = supabase
       .from("match_player_stats")
       .select(STATS_LEADERBOARD_ROW_SELECT)
-      .in("faceit_player_id", playerIds)
+      .in("faceit_player_id", playerIds);
+
+    if (cutoffIso) {
+      query = query.gte("played_at", cutoffIso);
+    }
+
+    const { data: pageRows } = await query
       .order("played_at", { ascending: false })
       .range(from, to);
 
@@ -654,7 +697,7 @@ async function fetchRecentStatsLeaderboardRows(params: {
       rowCounts.set(row.faceit_player_id, (rowCounts.get(row.faceit_player_id) ?? 0) + 1);
     }
 
-    if (playerIds.every((playerId) => (rowCounts.get(playerId) ?? 0) >= n)) {
+    if (n != null && playerIds.every((playerId) => (rowCounts.get(playerId) ?? 0) >= n)) {
       break;
     }
 
@@ -668,12 +711,13 @@ export const getStatsLeaderboard = createServerFn({ method: "GET" })
   .inputValidator((input: {
     targetPlayerId: string;
     playerIds: string[];
-    n: 20 | 50 | 100;
+    n: "yesterday" | 20 | 50 | 100;
     days: 30 | 90 | 180 | 365 | 730;
     queue?: "all" | "solo" | "party";
   }) => input)
   .handler(async ({ data: { targetPlayerId, playerIds, n, days, queue = "all" } }): Promise<StatsLeaderboardResult> => {
     const supabase = createServerSupabase();
+    const yesterdayRange = n === "yesterday" ? getPreviousCalendarDayRange() : null;
 
     const { data: friendRows } = playerIds.length === 0
       ? { data: [] }
@@ -690,8 +734,14 @@ export const getStatsLeaderboard = createServerFn({ method: "GET" })
       supabase,
       targetPlayerId,
       days,
+      cutoffIso: yesterdayRange?.startIso,
     });
-    const targetMatchIds = [...new Set(targetRows.map((row: any) => row.match_id).filter(Boolean))];
+    const filteredTargetRows = yesterdayRange
+      ? targetRows.filter(
+          (row: any) => typeof row.played_at === "string" && row.played_at < yesterdayRange.endIso
+        )
+      : targetRows;
+    const targetMatchIds = [...new Set(filteredTargetRows.map((row: any) => row.match_id).filter(Boolean))];
     const eligibleFriendIds = await fetchEligibleStatsLeaderboardFriendIds({
       supabase,
       targetMatchIds,
@@ -700,12 +750,18 @@ export const getStatsLeaderboard = createServerFn({ method: "GET" })
     const recentRows = await fetchRecentStatsLeaderboardRows({
       supabase,
       playerIds: targetMatchIds.length > 0 ? [targetPlayerId, ...eligibleFriendIds] : [],
-      n,
+      n: n === "yesterday" ? undefined : n,
+      cutoffIso: yesterdayRange?.startIso,
     });
+    const filteredRecentRows = yesterdayRange
+      ? recentRows.filter(
+          (row: any) => typeof row.played_at === "string" && row.played_at < yesterdayRange.endIso
+        )
+      : recentRows;
 
     const normalizedRows = dedupeStatsLeaderboardRows(
       normalizeStatsLeaderboardRows({
-        rows: [...targetRows, ...recentRows],
+        rows: [...filteredTargetRows, ...filteredRecentRows],
         friendMap,
       })
     );
@@ -727,8 +783,9 @@ export const getStatsLeaderboard = createServerFn({ method: "GET" })
       targetPlayerId,
       friendIds: playerIds,
       eligibleFriendIds,
-      n,
-      days,
+      n: n === "yesterday" ? Number.MAX_SAFE_INTEGER : n,
+      days: yesterdayRange ? 1 : days,
+      now: yesterdayRange?.end,
     });
 
     const targetEntry = result.entries.find((entry) => entry.faceitId === targetPlayerId);
@@ -778,7 +835,7 @@ export const syncAllPlayerHistory = createServerFn({ method: "POST" })
 export const getPlayerStats = createServerFn({ method: "GET" })
   .inputValidator((input: {
     playerId: string;
-    n: number;
+    n: "yesterday" | number;
     queue?: "all" | "solo" | "party";
   }) => input)
   .handler(async ({ data: { playerId, n, queue = "all" } }): Promise<PlayerHistoryMatch[]> => {
@@ -787,10 +844,18 @@ export const getPlayerStats = createServerFn({ method: "GET" })
       .catch(() => null);
 
     const matches: PlayerHistoryMatch[] = [];
-    const pageSize = Math.max(n, 20);
+    const isYesterday = n === "yesterday";
+    const pageSize = typeof n === "number" ? Math.max(n, 20) : 20;
+    const historyForYesterday = isYesterday
+      ? await fetchPlayerHistoryRange({
+          faceitId: playerId,
+          ...getPreviousCalendarDayRange(),
+          pageSize,
+        })
+      : null;
 
-    for (let offset = 0; matches.length < n; offset += pageSize) {
-      const history = await fetchPlayerHistory(playerId, pageSize, offset);
+    for (let offset = 0; isYesterday || matches.length < n; offset += pageSize) {
+      const history = historyForYesterday ?? await fetchPlayerHistory(playerId, pageSize, offset);
       if (history.length === 0) break;
 
       const batchResults: PromiseSettledResult<PlayerHistoryMatch | null>[] = [];
@@ -845,8 +910,8 @@ export const getPlayerStats = createServerFn({ method: "GET" })
           })
       );
 
-      if (history.length < pageSize) break;
+      if (historyForYesterday || history.length < pageSize) break;
     }
 
-    return matches.slice(0, n);
+    return typeof n === "number" ? matches.slice(0, n) : matches;
   });

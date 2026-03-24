@@ -717,6 +717,57 @@ describe("getPlayerStats", () => {
       }),
     ]);
   });
+
+  it("returns only matches from the previous Europe/Sofia calendar day when yesterday is selected", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-03-24T10:00:00.000Z"));
+
+    faceitMocks.fetchPlayerHistory
+      .mockResolvedValueOnce([
+        { match_id: "today-match", started_at: 1774329000, finished_at: 1774332600 },
+        { match_id: "yesterday-late", started_at: 1774292400, finished_at: 1774296000 },
+        ...Array.from({ length: 18 }, (_, index) => ({
+          match_id: `today-filler-${index}`,
+          started_at: 1774320000 - index * 60,
+          finished_at: 1774320300 - index * 60,
+        })),
+      ])
+      .mockResolvedValueOnce([
+        { match_id: "yesterday-early", started_at: 1774225800, finished_at: 1774229400 },
+        { match_id: "older-match", started_at: 1774211400, finished_at: 1774215000 },
+      ]);
+    faceitMocks.fetchMatchStats.mockImplementation(async (matchId: string) => ({
+      rounds: [
+        {
+          round_stats: {
+            Map: `map-${matchId}`,
+            Score: `score-${matchId}`,
+          },
+          teams: [
+            {
+              players: [{ player_id: "target" }],
+            },
+          ],
+        },
+      ],
+    }));
+    faceitMocks.parseMatchStats.mockReturnValue(buildParsedPlayer("target", "Target", 21));
+
+    const result = await runWithStartContext(
+      {
+        contextAfterGlobalMiddlewares: {},
+        request: new Request("http://localhost"),
+      } as any,
+      () =>
+        getPlayerStats({
+          data: { playerId: "target", n: "yesterday" },
+        } as any)
+    );
+
+    expect(result.map((match) => match.matchId)).toEqual(["yesterday-late", "yesterday-early"]);
+    expect(faceitMocks.fetchPlayerHistory).toHaveBeenCalledTimes(2);
+    expect(faceitMocks.fetchMatchStats).toHaveBeenCalledTimes(2);
+  });
 });
 
 describe("syncAllPlayerHistory", () => {

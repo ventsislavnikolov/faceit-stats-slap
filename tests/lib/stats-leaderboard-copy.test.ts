@@ -11,6 +11,33 @@ describe("stats leaderboard copy", () => {
     );
   });
 
+  it("formats the yesterday summary and empty-state copy", () => {
+    expect(getStatsLeaderboardSummaryCopy("soavarice", 9, 30, "yesterday")).toBe(
+      "Showing players you queued with yesterday. Stats are from yesterday's matches only."
+    );
+
+    expect(
+      getStatsLeaderboardEmptyStateCopy({
+        targetNickname: "Target",
+        targetMatchCount: 0,
+        sharedFriendCount: 0,
+        days: 30,
+        n: "yesterday",
+      })
+    ).toBe("No matches for Target yesterday.");
+
+    expect(
+      getStatsLeaderboardEmptyStateCopy({
+        targetNickname: "Target",
+        targetMatchCount: 2,
+        sharedFriendCount: 0,
+        days: 30,
+        n: "yesterday",
+        queue: "party",
+      })
+    ).toBe("No queued friends for Target in party matches yesterday.");
+  });
+
   it("supports the 730-day preset in summary and empty-state copy", () => {
     expect(getStatsLeaderboardSummaryCopy("soavarice", 9, 730, 50)).toBe(
       "Showing players you queued with in the last 730 days. Stats are from each player's own last 50 matches."
@@ -22,6 +49,7 @@ describe("stats leaderboard copy", () => {
         targetMatchCount: 4,
         sharedFriendCount: 0,
         days: 730,
+        n: 50,
       })
     ).toBe("No recently queued friends for Target in the last 730 days.");
   });
@@ -37,6 +65,7 @@ describe("stats leaderboard copy", () => {
         targetMatchCount: 0,
         sharedFriendCount: 0,
         days: 30,
+        n: 20,
         queue: "solo",
       })
     ).toBe("No recent solo matches for Target in the last 30 days.");
@@ -47,6 +76,7 @@ describe("stats leaderboard copy", () => {
         targetMatchCount: 4,
         sharedFriendCount: 0,
         days: 30,
+        n: 20,
         queue: "party",
       })
     ).toBe("No recently queued friends for Target in party matches in the last 30 days.");
@@ -59,6 +89,7 @@ describe("stats leaderboard copy", () => {
         targetMatchCount: 0,
         sharedFriendCount: 0,
         days: 30,
+        n: 20,
       })
     ).toBe("No recent matches for Target in the last 30 days.");
   });
@@ -70,6 +101,7 @@ describe("stats leaderboard copy", () => {
         targetMatchCount: 4,
         sharedFriendCount: 0,
         days: 365,
+        n: 20,
       })
     ).toBe("No recently queued friends for Target in the last 365 days.");
   });
@@ -81,6 +113,7 @@ describe("stats leaderboard copy", () => {
         targetMatchCount: 4,
         sharedFriendCount: 2,
         days: 90,
+        n: 20,
       })
     ).toBeNull();
   });

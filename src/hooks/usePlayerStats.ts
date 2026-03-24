@@ -4,7 +4,7 @@ import type { PlayerHistoryMatch } from "~/lib/types";
 
 export function usePlayerStats(
   playerId: string | null,
-  n = 15,
+  n: "yesterday" | number = 15,
   queue: "all" | "solo" | "party" = "all"
 ) {
   return useQuery<PlayerHistoryMatch[]>({

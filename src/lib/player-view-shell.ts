@@ -26,7 +26,7 @@ export function getPlayerViewHref(view: PlayerView, nickname: string): PlayerVie
         to: "/history",
         search: {
           player: nickname,
-          matches: 20,
+          matches: "yesterday",
           queue: "all",
         },
       };

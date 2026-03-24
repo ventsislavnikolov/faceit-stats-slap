@@ -21,11 +21,12 @@ describe("history page access", () => {
   });
 
   it("normalizes the selected match count to supported presets", () => {
+    expect(normalizeHistoryMatchCount("yesterday")).toBe("yesterday");
     expect(normalizeHistoryMatchCount(20)).toBe(20);
     expect(normalizeHistoryMatchCount("50")).toBe(50);
     expect(normalizeHistoryMatchCount("100")).toBe(100);
-    expect(normalizeHistoryMatchCount("15")).toBe(20);
-    expect(normalizeHistoryMatchCount(undefined)).toBe(20);
+    expect(normalizeHistoryMatchCount("15")).toBe("yesterday");
+    expect(normalizeHistoryMatchCount(undefined)).toBe("yesterday");
   });
 
   it("locks queue filters to all while solo and party are unsupported", () => {
@@ -40,6 +41,11 @@ describe("history page access", () => {
   });
 
   it("exposes the supported match count presets", () => {
-    expect(getHistoryMatchCountOptions()).toEqual([20, 50, 100]);
+    expect(getHistoryMatchCountOptions()).toEqual([
+      { value: "yesterday", label: "Yesterday" },
+      { value: 20, label: "20" },
+      { value: 50, label: "50" },
+      { value: 100, label: "100" },
+    ]);
   });
 });

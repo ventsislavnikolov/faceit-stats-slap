@@ -10,7 +10,11 @@ import {
   getStatsLeaderboardEmptyStateCopy,
   getStatsLeaderboardSummaryCopy,
 } from "~/lib/stats-leaderboard-copy";
-import { getHistoryQueueOptions } from "~/lib/history-page";
+import {
+  getHistoryMatchCountOptions,
+  getHistoryQueueOptions,
+  type HistoryMatchCount,
+} from "~/lib/history-page";
 import {
   buildStatsLeaderboardSyncKey,
   buildStatsLeaderboardSyncPlayerIds,
@@ -99,7 +103,7 @@ function StatsTab({
   targetNickname: string;
   playerIds: string[];
 }) {
-  const [n, setN] = useState<20 | 50 | 100>(20);
+  const [n, setN] = useState<HistoryMatchCount>("yesterday");
   const [days, setDays] = useState<30 | 90 | 180 | 365 | 730>(30);
   const [queue, setQueue] = useState<"all" | "solo" | "party">("all");
   const [sortKey, setSortKey] = useState<SortKey>("avgImpact");
@@ -145,6 +149,7 @@ function StatsTab({
         targetMatchCount: leaderboard.targetMatchCount,
         sharedFriendCount: leaderboard.sharedFriendCount,
         days,
+        n,
         queue,
       })
     : null;
@@ -197,17 +202,17 @@ function StatsTab({
         <div className="flex items-center gap-2">
           <span className="text-text-dim">Last</span>
           <div className="flex gap-1">
-            {([20, 50, 100] as const).map((v) => (
+            {getHistoryMatchCountOptions().map((option) => (
               <button
-                key={v}
-                onClick={() => setN(v)}
+                key={option.value}
+                onClick={() => setN(option.value)}
                 className={`rounded px-3 py-1.5 transition-colors ${
-                  n === v
+                  n === option.value
                     ? "bg-accent font-bold text-bg"
                     : "bg-bg-elevated text-text-muted hover:text-text"
                 }`}
               >
-                {v}
+                {option.label}
               </button>
             ))}
           </div>
