@@ -11,8 +11,12 @@ export function getBetOutcomeLabel(bet: BetWithPool): BetOutcomeLabel {
     return "Refunded";
   }
 
-  if (bet.pool.status !== "RESOLVED" || bet.payout === null) {
+  if (bet.pool.status !== "RESOLVED") {
     return "Pending";
+  }
+
+  if (bet.payout === null) {
+    return "Lost";
   }
 
   return bet.payout > bet.amount ? "Won" : "Lost";

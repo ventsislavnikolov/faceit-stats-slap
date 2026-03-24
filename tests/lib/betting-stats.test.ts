@@ -62,6 +62,18 @@ describe("getBetOutcomeLabel", () => {
     ).toBe("Refunded");
   });
 
+  it("labels resolved losing bets with null payout as lost", () => {
+    expect(
+      getBetOutcomeLabel(
+        makeBet({
+          amount: 100,
+          payout: null,
+          pool: makePool({ status: "RESOLVED", winningTeam: "team2" }),
+        }),
+      ),
+    ).toBe("Lost");
+  });
+
   it("labels unresolved bets as pending", () => {
     expect(getBetOutcomeLabel(makeBet())).toBe("Pending");
   });
