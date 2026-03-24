@@ -1,6 +1,15 @@
 import { createServerFn } from "@tanstack/react-start";
 import { createServerSupabase } from "~/lib/supabase.server";
-import type { BettingPool, Bet, BetWithPool, LeaderboardEntry } from "~/lib/types";
+import {
+  buildBetHistorySummary,
+  sortBettingLeaderboardEntries,
+} from "~/lib/betting-stats";
+import type {
+  BettingPool,
+  Bet,
+  BetWithPool,
+  BettingLeaderboardEntry,
+} from "~/lib/types";
 
 // ── Helpers ──────────────────────────────────────────────────
 // Note: server functions use the service role key (createServerSupabase).
@@ -156,7 +165,7 @@ export const claimDailyAllowance = createServerFn({ method: "POST" })
 // ── getLeaderboard ────────────────────────────────────────────
 
 export const getLeaderboard = createServerFn({ method: "GET" }).handler(
-  async (): Promise<LeaderboardEntry[]> => {
+  async (): Promise<BettingLeaderboardEntry[]> => {
     const supabase = createServerSupabase();
     const { data: profiles } = await supabase
       .from("profiles")
@@ -165,29 +174,55 @@ export const getLeaderboard = createServerFn({ method: "GET" }).handler(
 
     if (!profiles) return [];
 
-    // Enrich with bet counts
-    const { data: betCounts } = await supabase
+    const { data: betRows } = await supabase
       .from("bets")
-      .select("user_id, amount, payout");
+      .select("id, pool_id, user_id, side, amount, payout, created_at, betting_pools(*)");
 
-    const countMap = new Map<string, { placed: number; won: number }>();
-    for (const b of betCounts ?? []) {
-      const curr = countMap.get(b.user_id) ?? { placed: 0, won: 0 };
-      curr.placed++;
-      if (b.payout !== null && b.payout > b.amount) curr.won++;
-      countMap.set(b.user_id, curr);
+    const betsByUser = new Map<string, BetWithPool[]>();
+    for (const [index, row] of (betRows ?? []).entries()) {
+      const userBets = betsByUser.get(row.user_id) ?? [];
+      userBets.push({
+        id: row.id ?? `bet-${index}`,
+        poolId: row.pool_id ?? `pool-${index}`,
+        userId: row.user_id,
+        side: row.side ?? "team1",
+        amount: row.amount,
+        payout: row.payout,
+        createdAt: row.created_at ?? "",
+        pool: rowToPool({
+          id: row.betting_pools?.id ?? `pool-${index}`,
+          faceit_match_id: row.betting_pools?.faceit_match_id ?? `match-${index}`,
+          status: row.betting_pools?.status ?? "OPEN",
+          team1_name: row.betting_pools?.team1_name ?? "Team 1",
+          team2_name: row.betting_pools?.team2_name ?? "Team 2",
+          team1_pool: row.betting_pools?.team1_pool ?? 0,
+          team2_pool: row.betting_pools?.team2_pool ?? 0,
+          winning_team: row.betting_pools?.winning_team ?? null,
+          opens_at: row.betting_pools?.opens_at ?? "",
+          closes_at: row.betting_pools?.closes_at ?? "",
+          resolved_at: row.betting_pools?.resolved_at ?? null,
+        }),
+      });
+      betsByUser.set(row.user_id, userBets);
     }
 
-    return profiles.map((p) => {
-      const counts = countMap.get(p.id) ?? { placed: 0, won: 0 };
+    const entries = profiles.map((p) => {
+      const summary = buildBetHistorySummary(betsByUser.get(p.id) ?? [], p.coins);
       return {
         userId: p.id,
         nickname: p.nickname,
         coins: p.coins,
-        betsPlaced: counts.placed,
-        betsWon: counts.won,
+        betsPlaced: summary.betsPlaced,
+        betsWon: summary.betsWon,
+        resolvedBets: summary.resolvedBets,
+        totalWagered: summary.totalWagered,
+        totalReturned: summary.totalReturned,
+        netProfit: summary.netProfit,
+        winRate: summary.winRate,
       };
     });
+
+    return sortBettingLeaderboardEntries(entries);
   }
 );
 
