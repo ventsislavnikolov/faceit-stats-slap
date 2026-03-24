@@ -24,6 +24,13 @@ export function normalizeHistoryTab(tab: HistoryTab, isSignedIn: boolean): Histo
   return tab;
 }
 
+export function shouldEnableHistoryLookups(
+  tab: HistoryTab,
+  authResolved: boolean,
+): boolean {
+  return authResolved && tab === "matches";
+}
+
 export function getHistoryMatchCountOptions(): Array<{
   value: HistoryMatchCount;
   label: string;

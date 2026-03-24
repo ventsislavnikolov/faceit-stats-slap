@@ -43,7 +43,7 @@ const getClientSession = createIsomorphicFn()
 export const Route = createFileRoute("/_authed/leaderboard")({
   validateSearch: (search: Record<string, unknown>) => ({
     player: (search.player as string) || undefined,
-    tab: normalizeLeaderboardTab(search.tab, true),
+    tab: search.tab === "bets" ? "bets" : "stats",
   }),
   component: LeaderboardPage,
 });
@@ -419,16 +419,20 @@ function LeaderboardPage() {
   const navigate = useNavigate();
   const { player: urlPlayer, tab: selectedTab } = Route.useSearch();
   const [input, setInput] = useState(urlPlayer ?? "");
+  const [authResolved, setAuthResolved] = useState(false);
   const [isSignedIn, setIsSignedIn] = useState(false);
+  const normalizedSelectedTab = authResolved
+    ? normalizeLeaderboardTab(selectedTab, isSignedIn)
+    : selectedTab;
 
   const {
     data: searchResult,
     isLoading: searchLoading,
     isError: searchError,
   } = useQuery({
-    queryKey: ["friends-search", urlPlayer?.toLowerCase()],
+    queryKey: ["friends-search", urlPlayer?.toLowerCase(), selectedTab],
     queryFn: () => searchAndLoadFriends({ data: urlPlayer! }),
-    enabled: !!urlPlayer,
+    enabled: !!urlPlayer && normalizedSelectedTab === "stats",
     staleTime: 5 * 60 * 1000,
     retry: false,
   });
@@ -438,14 +442,31 @@ function LeaderboardPage() {
   }, [urlPlayer]);
 
   useEffect(() => {
-    getClientSession().then((session) => setIsSignedIn(!!session));
+    getClientSession().then((session) => {
+      const signedIn = !!session;
+      setIsSignedIn(signedIn);
+      setAuthResolved(true);
+    });
   }, []);
+
+  useEffect(() => {
+    if (authResolved && !isSignedIn && selectedTab === "bets") {
+      navigate({
+        to: "/leaderboard",
+        search: {
+          player: urlPlayer,
+          tab: "stats",
+        },
+        replace: true,
+      });
+    }
+  }, [authResolved, isSignedIn, navigate, selectedTab, urlPlayer]);
 
   const friendIds = searchResult?.friends.map((f) => f.faceitId) ?? [];
   const targetPlayerId = searchResult?.player.faceitId ?? "";
   const targetNickname = searchResult?.player.nickname ?? "";
-  const normalizedSelectedTab = normalizeLeaderboardTab(selectedTab, isSignedIn);
-  const tabs = getLeaderboardTabs(isSignedIn);
+  const tabs = authResolved ? getLeaderboardTabs(isSignedIn) : ["stats"];
+  const showBetsPlaceholder = normalizedSelectedTab === "bets";
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -506,20 +527,21 @@ function LeaderboardPage() {
                   player: urlPlayer,
                   tab: normalizeLeaderboardTab(nextTab, isSignedIn),
                 },
+                replace: true,
               });
             }}
           />
 
-          {normalizedSelectedTab === "stats" ? (
+          {showBetsPlaceholder ? (
+            <div className="py-12 text-center text-sm text-text-dim">
+              Betting leaderboard is coming next.
+            </div>
+          ) : (
             <StatsTab
               targetPlayerId={targetPlayerId}
               targetNickname={targetNickname}
               playerIds={friendIds}
             />
-          ) : (
-            <div className="py-12 text-center text-sm text-text-dim">
-              Betting leaderboard is coming next.
-            </div>
           )}
         </div>
       </div>

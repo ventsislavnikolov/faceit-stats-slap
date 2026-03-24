@@ -6,6 +6,7 @@ import {
   normalizeHistoryMatchCount,
   normalizeHistoryQueueFilter,
   normalizeHistoryTab,
+  shouldEnableHistoryLookups,
 } from "~/lib/history-page";
 
 describe("history page access", () => {
@@ -48,5 +49,11 @@ describe("history page access", () => {
       { value: 50, label: "50" },
       { value: 100, label: "100" },
     ]);
+  });
+
+  it("disables history lookups until auth resolves and matches is active", () => {
+    expect(shouldEnableHistoryLookups("bets", true)).toBe(false);
+    expect(shouldEnableHistoryLookups("matches", false)).toBe(false);
+    expect(shouldEnableHistoryLookups("matches", true)).toBe(true);
   });
 });

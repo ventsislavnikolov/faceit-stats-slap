@@ -18,3 +18,10 @@ export function normalizeLeaderboardTab(
 
   return normalized;
 }
+
+export function shouldEnableLeaderboardFriendLookup(
+  tab: LeaderboardTab,
+  authResolved: boolean,
+): boolean {
+  return authResolved && tab === "stats";
+}
