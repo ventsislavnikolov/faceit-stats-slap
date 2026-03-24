@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { usePlayerStats } from "~/hooks/usePlayerStats";
 import { HistoryMatchesTable } from "~/components/HistoryMatchesTable";
+import { BetHistoryTab } from "~/components/BetHistoryTab";
 import { PageSectionTabs } from "~/components/PageSectionTabs";
 import { PlayerSearchHeader } from "~/components/PlayerSearchHeader";
 import { resolveFaceitSearchTarget } from "~/lib/faceit-search";
@@ -52,6 +53,7 @@ function HistoryPage() {
   const [input, setInput] = useState(urlPlayer ?? "");
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [authResolved, setAuthResolved] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
   const normalizedSelectedTab = authResolved
     ? normalizeHistoryTab(selectedTab, isSignedIn)
     : selectedTab;
@@ -75,6 +77,7 @@ function HistoryPage() {
   useEffect(() => {
     getClientSession().then((session) => {
       const signedIn = !!session;
+      setUserId(session?.user.id ?? null);
       setIsSignedIn(signedIn);
       setAuthResolved(true);
     });
@@ -108,8 +111,12 @@ function HistoryPage() {
     selectedMatchCount,
     selectedQueue
   );
-  const tabs = authResolved ? getHistoryTabs(isSignedIn) : ["matches"];
-  const showBetsPlaceholder = normalizedSelectedTab === "bets";
+  const showBetsTab = normalizedSelectedTab === "bets";
+  const tabs = authResolved
+    ? getHistoryTabs(isSignedIn)
+    : showBetsTab
+      ? ["bets"]
+      : ["matches"];
 
   const updateSearch = (next: {
     player?: string;
@@ -234,10 +241,14 @@ function HistoryPage() {
             </div>
           )}
 
-          {showBetsPlaceholder ? (
-            <div className="py-12 text-center text-sm text-text-dim">
-              Betting history is coming next.
-            </div>
+          {showBetsTab ? (
+            authResolved && isSignedIn ? (
+              <BetHistoryTab userId={userId} />
+            ) : (
+              <div className="py-12 text-center text-sm text-text-dim">
+                Loading...
+              </div>
+            )
           ) : normalizedSelectedTab === "matches" && (resolving || isLoading) ? (
             <div className="py-8 text-center text-accent animate-pulse">Loading...</div>
           ) : normalizedSelectedTab === "matches" && player ? (

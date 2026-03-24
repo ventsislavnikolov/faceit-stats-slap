@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { createIsomorphicFn } from "@tanstack/react-start";
 import { useStatsLeaderboard } from "~/hooks/useStatsLeaderboard";
 import { useSyncPlayerHistory } from "~/hooks/useSyncPlayerHistory";
+import { BetsLeaderboardTab } from "~/components/BetsLeaderboardTab";
 import { PageSectionTabs } from "~/components/PageSectionTabs";
 import { PlayerSearchHeader } from "~/components/PlayerSearchHeader";
 import { MY_FACEIT_ID } from "~/lib/constants";
@@ -421,6 +422,7 @@ function LeaderboardPage() {
   const [input, setInput] = useState(urlPlayer ?? "");
   const [authResolved, setAuthResolved] = useState(false);
   const [isSignedIn, setIsSignedIn] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
   const normalizedSelectedTab = authResolved
     ? normalizeLeaderboardTab(selectedTab, isSignedIn)
     : selectedTab;
@@ -444,6 +446,7 @@ function LeaderboardPage() {
   useEffect(() => {
     getClientSession().then((session) => {
       const signedIn = !!session;
+      setUserId(session?.user.id ?? null);
       setIsSignedIn(signedIn);
       setAuthResolved(true);
     });
@@ -465,8 +468,12 @@ function LeaderboardPage() {
   const friendIds = searchResult?.friends.map((f) => f.faceitId) ?? [];
   const targetPlayerId = searchResult?.player.faceitId ?? "";
   const targetNickname = searchResult?.player.nickname ?? "";
-  const tabs = authResolved ? getLeaderboardTabs(isSignedIn) : ["stats"];
-  const showBetsPlaceholder = normalizedSelectedTab === "bets";
+  const showBetsTab = normalizedSelectedTab === "bets";
+  const tabs = authResolved
+    ? getLeaderboardTabs(isSignedIn)
+    : showBetsTab
+      ? ["bets"]
+      : ["stats"];
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -532,10 +539,8 @@ function LeaderboardPage() {
             }}
           />
 
-          {showBetsPlaceholder ? (
-            <div className="py-12 text-center text-sm text-text-dim">
-              Betting leaderboard is coming next.
-            </div>
+          {showBetsTab ? (
+            <BetsLeaderboardTab userId={userId} />
           ) : (
             <StatsTab
               targetPlayerId={targetPlayerId}
