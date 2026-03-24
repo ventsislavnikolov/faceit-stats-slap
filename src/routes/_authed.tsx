@@ -1,8 +1,15 @@
-import { createFileRoute, Outlet, Link, useRouter } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Outlet,
+  Link,
+  useRouter,
+  useRouterState,
+} from "@tanstack/react-router";
 import { createIsomorphicFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { CoinBalance } from "~/components/CoinBalance";
 import { initializeAuthSession } from "~/lib/auth";
+import { getPlayerViewHref } from "~/lib/player-view-shell";
 
 const subscribeToAuthSession = createIsomorphicFn()
   .server(() => ({ unsubscribe: () => {} }))
@@ -23,10 +30,51 @@ export const Route = createFileRoute("/_authed")({
   component: AppLayout,
 });
 
-function AppLayout() {
+function getCurrentNickname(pathname: string, search: Record<string, unknown>): string | null {
+  if (pathname === "/history" || pathname === "/leaderboard") {
+    return typeof search.player === "string" && search.player.length > 0
+      ? search.player
+      : null;
+  }
+
+  if (
+    pathname === "/" ||
+    pathname === "/sign-in" ||
+    pathname.startsWith("/match/")
+  ) {
+    return null;
+  }
+
+  const nickname = pathname.slice(1);
+  return nickname ? decodeURIComponent(nickname) : null;
+}
+
+export function AppLayout() {
   const router = useRouter();
+  const location = useRouterState({
+    select: (state) => state.location,
+  });
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const pathname = location.pathname;
+  const currentSearch = location.search as Record<string, unknown>;
+  const currentNickname = getCurrentNickname(pathname, currentSearch);
+  const friendsHref = currentNickname ? getPlayerViewHref("friends", currentNickname) : { to: "/" };
+  const historyHref = currentNickname
+    ? getPlayerViewHref("history", currentNickname)
+    : { to: "/history", search: { player: undefined, matches: 20, queue: "all" } };
+  const leaderboardHref = currentNickname
+    ? getPlayerViewHref("leaderboard", currentNickname)
+    : { to: "/leaderboard", search: { player: undefined } };
+  const pathSegments = pathname.split("/").filter(Boolean);
+  const isFriendsActive =
+    pathSegments.length === 1 &&
+    pathname !== "/history" &&
+    pathname !== "/leaderboard" &&
+    pathname !== "/sign-in";
+  const navLinkBaseClass = "border-b pb-0.5";
+  const navLinkActiveClass = `${navLinkBaseClass} text-accent border-accent`;
+  const navLinkInactiveClass = `${navLinkBaseClass} text-text-muted border-transparent hover:text-accent`;
 
   useEffect(() => {
     let subscription: { unsubscribe: () => void } | undefined;
@@ -56,20 +104,34 @@ function AppLayout() {
           </Link>
           <div className="flex gap-3 text-xs">
             <Link
-              to="/history"
-              search={{ player: undefined, matches: 20, queue: "all" }}
-              activeProps={{ className: "text-accent border-b border-accent pb-0.5" }}
-              inactiveProps={{ className: "text-text-muted hover:text-accent" }}
+              to={friendsHref.to as never}
+              params={friendsHref.params as never}
+              search={friendsHref.search as never}
+              className={
+                isFriendsActive
+                  ? navLinkActiveClass
+                  : navLinkInactiveClass
+              }
             >
-              History
+              Friends
             </Link>
             <Link
-              to="/leaderboard"
-              search={{ player: undefined }}
-              activeProps={{ className: "text-accent border-b border-accent pb-0.5" }}
-              inactiveProps={{ className: "text-text-muted hover:text-accent" }}
+              to={leaderboardHref.to as never}
+              params={leaderboardHref.params as never}
+              search={leaderboardHref.search as never}
+              activeProps={{ className: navLinkActiveClass }}
+              inactiveProps={{ className: navLinkInactiveClass }}
             >
               Leaderboard
+            </Link>
+            <Link
+              to={historyHref.to as never}
+              params={historyHref.params as never}
+              search={historyHref.search as never}
+              activeProps={{ className: navLinkActiveClass }}
+              inactiveProps={{ className: navLinkInactiveClass }}
+            >
+              History
             </Link>
           </div>
         </div>

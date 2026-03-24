@@ -7,7 +7,9 @@ interface HistoryMatchRow {
   matchId: string;
   map: string;
   score: string;
+  kills: number;
   kdRatio: number;
+  krRatio: number;
   adr: number;
   hsPercent: number;
   result: boolean;
@@ -17,6 +19,8 @@ interface HistoryMatchRow {
 interface HistoryMatchesTableProps {
   matches: HistoryMatchRow[];
 }
+
+const HISTORY_MATCHES_GRID_TEMPLATE = "3rem 26.5rem repeat(7, 5rem)";
 
 function getQueueLabel(queueBucket?: MatchQueueBucket) {
   if (queueBucket === "solo") return "SOLO";
@@ -36,15 +40,16 @@ export function HistoryMatchesTable({ matches }: HistoryMatchesTableProps) {
       <div className="overflow-x-auto">
         <div
           className="grid min-w-[50rem] gap-2 px-3 pb-1 text-[10px] uppercase tracking-wider text-text-dim"
-          style={{ gridTemplateColumns: "3.5rem 1fr 5rem 5rem 4rem 4rem 4rem 5rem" }}
+          style={{ gridTemplateColumns: HISTORY_MATCHES_GRID_TEMPLATE }}
         >
           <span>Result</span>
           <span>Map</span>
           <span className="text-right">Score</span>
+          <span className="text-right">Kills</span>
           <span className="text-right">K/D</span>
+          <span className="text-right">K/R</span>
           <span className="text-right">ADR</span>
           <span className="text-right">HS%</span>
-          <span className="text-right">Player</span>
           <span className="text-right">Queue</span>
         </div>
 
@@ -59,7 +64,7 @@ export function HistoryMatchesTable({ matches }: HistoryMatchesTableProps) {
                   ? "border-l-2 border-accent bg-bg-elevated"
                   : "border-l-2 border-error bg-bg-elevated"
               }`}
-              style={{ gridTemplateColumns: "3.5rem 1fr 5rem 5rem 4rem 4rem 4rem 5rem" }}
+              style={{ gridTemplateColumns: HISTORY_MATCHES_GRID_TEMPLATE }}
             >
               <span className={`text-xs font-bold ${match.result ? "text-accent" : "text-error"}`}>
                 {match.result ? "WIN" : "LOSS"}
@@ -68,10 +73,11 @@ export function HistoryMatchesTable({ matches }: HistoryMatchesTableProps) {
                 <MapBadge map={match.map} />
               </span>
               <span className="text-right text-text-muted">{match.score}</span>
+              <span className="text-right text-text-muted">{match.kills}</span>
               <span className="text-right text-text-muted">{match.kdRatio.toFixed(1)}</span>
+              <span className="text-right text-text-muted">{match.krRatio.toFixed(2)}</span>
               <span className="text-right text-text-muted">{match.adr.toFixed(0)}</span>
               <span className="text-right text-text-muted">{match.hsPercent}%</span>
-              <span className="truncate text-right font-bold text-text">{match.nickname}</span>
               <span className="text-right text-xs tracking-wide text-text-muted">
                 {getQueueLabel(match.queueBucket)}
               </span>

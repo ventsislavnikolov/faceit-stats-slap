@@ -6,6 +6,7 @@ interface PlayerSearchHeaderProps {
   onSubmit: (event: React.FormEvent) => void;
   placeholder: string;
   isSearching?: boolean;
+  layout?: "contained" | "full";
   status?: ReactNode;
   error?: ReactNode;
   children?: ReactNode;
@@ -17,13 +18,14 @@ export function PlayerSearchHeader({
   onSubmit,
   placeholder,
   isSearching = false,
+  layout = "contained",
   status,
   error,
   children,
 }: PlayerSearchHeaderProps) {
   return (
     <div className="border-b border-border bg-bg-card">
-      <div className="mx-auto max-w-6xl px-4 py-3">
+      <div className={layout === "full" ? "px-4 py-3" : "mx-auto max-w-6xl px-4 py-3"}>
         <form onSubmit={onSubmit} className="flex gap-2 max-w-md">
           <input
             type="text"

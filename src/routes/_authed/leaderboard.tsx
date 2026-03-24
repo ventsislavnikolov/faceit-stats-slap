@@ -1,12 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { createIsomorphicFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { useLeaderboard } from "~/hooks/useLeaderboard";
 import { useStatsLeaderboard } from "~/hooks/useStatsLeaderboard";
 import { useSyncPlayerHistory } from "~/hooks/useSyncPlayerHistory";
 import { PageSectionTabs } from "~/components/PageSectionTabs";
 import { PlayerSearchHeader } from "~/components/PlayerSearchHeader";
-import { PlayerViewTabs } from "~/components/PlayerViewTabs";
 import { MY_FACEIT_ID } from "~/lib/constants";
 import { resolveFaceitSearchTarget } from "~/lib/faceit-search";
 import {
@@ -23,14 +20,6 @@ import { searchAndLoadFriends } from "~/server/friends";
 import { useEffect, useRef, useState } from "react";
 import type { StatsLeaderboardEntry } from "~/lib/types";
 
-const getCurrentUserId = createIsomorphicFn()
-  .server(() => null)
-  .client(async () => {
-    const { getSupabaseClient } = await import("~/lib/supabase.client");
-    const { data: { session } } = await getSupabaseClient().auth.getSession();
-    return session?.user.id ?? null;
-  });
-
 export const Route = createFileRoute("/_authed/leaderboard")({
   validateSearch: (search: Record<string, unknown>) => ({
     player: (search.player as string) || undefined,
@@ -38,9 +27,21 @@ export const Route = createFileRoute("/_authed/leaderboard")({
   component: LeaderboardPage,
 });
 
-type Tab = "stats" | "bets";
-type SortKey = "avgImpact" | "avgKills" | "avgKd" | "avgAdr" | "winRate" | "avgHsPercent" | "avgKrRatio" | "gamesPlayed"
-  | "avgFirstKills" | "avgClutchKills" | "avgUtilityDamage" | "avgEnemiesFlashed" | "avgEntryRate" | "avgSniperKills";
+type SortKey =
+  | "avgImpact"
+  | "avgKills"
+  | "avgKd"
+  | "avgAdr"
+  | "winRate"
+  | "avgHsPercent"
+  | "avgKrRatio"
+  | "gamesPlayed"
+  | "avgFirstKills"
+  | "avgClutchKills"
+  | "avgUtilityDamage"
+  | "avgEnemiesFlashed"
+  | "avgEntryRate"
+  | "avgSniperKills";
 type SortDir = "asc" | "desc";
 type StatGroup = "combat" | "entry" | "utility";
 
@@ -50,25 +51,28 @@ const STAT_GROUPS: { key: StatGroup; label: string }[] = [
   { key: "utility", label: "Utility & Flash" },
 ];
 
-const STATS_COLS: Record<StatGroup, { key: SortKey; label: string; decimals: number; suffix?: string }[]> = {
+const STATS_COLS: Record<
+  StatGroup,
+  { key: SortKey; label: string; decimals: number; suffix?: string }[]
+> = {
   combat: [
-    { key: "avgImpact",    label: "Impact", decimals: 1 },
-    { key: "avgKills",     label: "Kills", decimals: 2 },
-    { key: "avgKd",        label: "K/D",  decimals: 2 },
-    { key: "avgAdr",       label: "ADR",  decimals: 1 },
-    { key: "winRate",      label: "WIN%", decimals: 0, suffix: "%" },
-    { key: "avgHsPercent", label: "HS%",  decimals: 0, suffix: "%" },
-    { key: "avgKrRatio",   label: "K/R",  decimals: 2 },
+    { key: "avgImpact", label: "Impact", decimals: 1 },
+    { key: "avgKills", label: "Kills", decimals: 2 },
+    { key: "avgKd", label: "K/D", decimals: 2 },
+    { key: "avgAdr", label: "ADR", decimals: 1 },
+    { key: "winRate", label: "WIN%", decimals: 0, suffix: "%" },
+    { key: "avgHsPercent", label: "HS%", decimals: 0, suffix: "%" },
+    { key: "avgKrRatio", label: "K/R", decimals: 2 },
   ],
   entry: [
-    { key: "avgFirstKills",  label: "FK",   decimals: 2 },
-    { key: "avgEntryRate",   label: "ER",   decimals: 2 },
-    { key: "avgClutchKills", label: "CK",   decimals: 2 },
-    { key: "avgSniperKills", label: "AWP",  decimals: 2 },
+    { key: "avgFirstKills", label: "FK", decimals: 2 },
+    { key: "avgEntryRate", label: "ER", decimals: 2 },
+    { key: "avgClutchKills", label: "CK", decimals: 2 },
+    { key: "avgSniperKills", label: "AWP", decimals: 2 },
   ],
   utility: [
-    { key: "avgUtilityDamage",  label: "UD",  decimals: 0 },
-    { key: "avgEnemiesFlashed", label: "EF",  decimals: 1 },
+    { key: "avgUtilityDamage", label: "UD", decimals: 0 },
+    { key: "avgEnemiesFlashed", label: "EF", decimals: 1 },
   ],
 };
 
@@ -79,10 +83,10 @@ function fmt(val: number, decimals: number, suffix = "") {
 function sortEntries(
   entries: StatsLeaderboardEntry[],
   key: SortKey,
-  dir: SortDir
+  dir: SortDir,
 ): StatsLeaderboardEntry[] {
   return [...entries].sort((a, b) =>
-    dir === "desc" ? b[key] - a[key] : a[key] - b[key]
+    dir === "desc" ? b[key] - a[key] : a[key] - b[key],
   );
 }
 
@@ -116,13 +120,24 @@ function StatsTab({
   });
   const manualSync = useSyncPlayerHistory({
     targetPlayerId,
-    playerIds: buildStatsLeaderboardSyncPlayerIds({ mode: "manual", playerIds }),
+    playerIds: buildStatsLeaderboardSyncPlayerIds({
+      mode: "manual",
+      playerIds,
+    }),
   });
 
   const activeCols = STATS_COLS[statGroup];
   const entries = sortEntries(leaderboard?.entries ?? [], sortKey, sortDir);
+  const leaderboardGridTemplate = `3rem 1fr 4rem repeat(${activeCols.length}, 5rem)`;
+  const leaderboardMinWidth = `${48 + 320 + 64 + activeCols.length * 80 + (activeCols.length + 2) * 8 + 24}px`;
   const summaryCopy = leaderboard
-    ? getStatsLeaderboardSummaryCopy(targetNickname, leaderboard.sharedFriendCount, days, n, queue)
+    ? getStatsLeaderboardSummaryCopy(
+        targetNickname,
+        leaderboard.sharedFriendCount,
+        days,
+        n,
+        queue,
+      )
     : null;
   const emptyStateCopy = leaderboard
     ? getStatsLeaderboardEmptyStateCopy({
@@ -135,18 +150,25 @@ function StatsTab({
     : null;
 
   useEffect(() => {
-    if (!shouldAutoSyncStatsLeaderboard({
+    if (
+      !shouldAutoSyncStatsLeaderboard({
+        targetPlayerId,
+        playerIds,
+        n,
+        days,
+        isPending: autoSync.isPending,
+        attemptedKeys: attemptedSyncKeysRef.current,
+      })
+    ) {
+      return;
+    }
+
+    const key = buildStatsLeaderboardSyncKey({
       targetPlayerId,
       playerIds,
       n,
       days,
-      isPending: autoSync.isPending,
-      attemptedKeys: attemptedSyncKeysRef.current,
-    })) {
-      return;
-    }
-
-    const key = buildStatsLeaderboardSyncKey({ targetPlayerId, playerIds, n, days });
+    });
     attemptedSyncKeysRef.current.add(key);
     autoSync.mutate({ n, days });
   }, [autoSync, days, n, playerIds, targetPlayerId]);
@@ -170,72 +192,87 @@ function StatsTab({
           : "text-text-dim";
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-1">
-          <span className="text-text-dim text-xs mr-1">Last</span>
-          {([20, 50, 100] as const).map((v) => (
-            <button
-              key={v}
-              onClick={() => setN(v)}
-              className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-                n === v ? "bg-accent text-black" : "bg-bg-elevated text-text-muted hover:text-text"
-              }`}
-            >
-              {v}
-            </button>
-          ))}
-          <span className="text-text-dim text-xs ml-1">games</span>
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-wrap items-center gap-6 text-xs">
+        <div className="flex items-center gap-2">
+          <span className="text-text-dim">Last</span>
+          <div className="flex gap-1">
+            {([20, 50, 100] as const).map((v) => (
+              <button
+                key={v}
+                onClick={() => setN(v)}
+                className={`rounded px-3 py-1.5 transition-colors ${
+                  n === v
+                    ? "bg-accent font-bold text-bg"
+                    : "bg-bg-elevated text-text-muted hover:text-text"
+                }`}
+              >
+                {v}
+              </button>
+            ))}
+          </div>
+          <span className="text-text-dim">games</span>
         </div>
-        <div className="flex items-center gap-1">
-          <span className="text-text-dim text-xs mr-1">In the last</span>
-          {([30, 90, 180, 365, 730] as const).map((v) => (
-            <button
-              key={v}
-              onClick={() => setDays(v)}
-              className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-                days === v ? "bg-accent text-black" : "bg-bg-elevated text-text-muted hover:text-text"
-              }`}
-            >
-              {v}
-            </button>
-          ))}
-          <span className="text-text-dim text-xs ml-1">days</span>
+        <div className="flex items-center gap-2">
+          <span className="text-text-dim">Queue</span>
+          <div className="flex gap-1">
+            {getHistoryQueueOptions().map((option) => (
+              <button
+                key={option.value}
+                onClick={() => setQueue(option.value)}
+                className={`rounded px-3 py-1.5 transition-colors ${
+                  queue === option.value
+                    ? "bg-accent font-bold text-bg"
+                    : "bg-bg-elevated text-text-muted hover:text-text"
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="flex items-center gap-1">
-          <span className="text-text-dim text-xs mr-1">Queue</span>
-          {getHistoryQueueOptions().map((option) => (
-            <button
-              key={option.value}
-              onClick={() => setQueue(option.value)}
-              className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-                queue === option.value
-                  ? "bg-accent text-black"
-                  : "bg-bg-elevated text-text-muted hover:text-text"
-              }`}
-            >
-              {option.label}
-            </button>
-          ))}
+        <div className="flex items-center gap-2">
+          <span className="text-text-dim">In the last</span>
+          <div className="flex gap-1">
+            {([30, 90, 180, 365, 730] as const).map((v) => (
+              <button
+                key={v}
+                onClick={() => setDays(v)}
+                className={`rounded px-3 py-1.5 transition-colors ${
+                  days === v
+                    ? "bg-accent font-bold text-bg"
+                    : "bg-bg-elevated text-text-muted hover:text-text"
+                }`}
+              >
+                {v}
+              </button>
+            ))}
+          </div>
+          <span className="text-text-dim">days</span>
         </div>
         <button
           onClick={() => manualSync.mutate({ n, days })}
           disabled={manualSync.isPending || !targetPlayerId}
-          className="text-xs px-3 py-1 rounded bg-bg-elevated text-text-muted hover:text-text disabled:opacity-50 transition-colors"
+          className="rounded bg-bg-elevated px-3 py-1.5 text-xs transition-colors text-text-muted hover:text-text disabled:opacity-50"
         >
           {manualSync.isPending ? "Syncing..." : "↻ Refresh"}
         </button>
       </div>
 
+      <div className="text-[10px] text-text-dim">
+        Party means the player plus at least 2 known FACEIT friends in the same
+        match.
+      </div>
+
+      {summaryCopy && (
+        <div className="text-[10px] text-text-dim">{summaryCopy}</div>
+      )}
+
       {autoSync.isPending && !manualSync.isPending && (
-        <div className="text-[10px] text-text-dim px-1">
+        <div className="text-[10px] text-text-dim">
           Syncing older history in the background...
         </div>
       )}
-
-      <div className="text-[10px] text-text-dim px-1">
-        Party means a player plus at least 2 other players from the current leaderboard list in the same match.
-      </div>
 
       <PageSectionTabs
         tabs={STAT_GROUPS.map((group) => ({
@@ -253,17 +290,15 @@ function StatsTab({
 
       {!targetPlayerId ? (
         <div className="text-text-dim text-center py-12">
-          Search a player above to see who they queued with recently and how each friend is performing across their own recent matches
+          Search a player above to see who they queued with recently and how
+          each friend is performing across their own recent matches
         </div>
       ) : isLoading ? (
-        <div className="text-accent animate-pulse text-center py-8">Loading...</div>
+        <div className="text-accent animate-pulse text-center py-8">
+          Loading...
+        </div>
       ) : (
-        <div className="flex flex-col gap-1">
-          {summaryCopy && (
-            <div className="text-xs text-text-dim px-3">
-              {summaryCopy}
-            </div>
-          )}
+        <div className="flex w-full flex-col gap-1">
           {emptyStateCopy && (
             <div className="text-text-dim text-center py-12 text-sm">
               {emptyStateCopy}
@@ -271,10 +306,13 @@ function StatsTab({
           )}
 
           {!emptyStateCopy && (
-            <>
+            <div className="w-full overflow-x-auto">
               <div
                 className="grid gap-2 px-3 pb-1 text-[10px] text-text-dim uppercase tracking-wider"
-                style={{ gridTemplateColumns: `2rem 1fr 3rem repeat(${activeCols.length}, 4rem)` }}
+                style={{
+                  gridTemplateColumns: leaderboardGridTemplate,
+                  minWidth: leaderboardMinWidth,
+                }}
               >
                 <span>#</span>
                 <span>Player</span>
@@ -288,49 +326,66 @@ function StatsTab({
                     }`}
                   >
                     {col.label}
-                    {sortKey === col.key ? (sortDir === "desc" ? " ↓" : " ↑") : ""}
+                    {sortKey === col.key
+                      ? sortDir === "desc"
+                        ? " ↓"
+                        : " ↑"
+                      : ""}
                   </button>
                 ))}
               </div>
 
-              {entries.map((entry, i) => {
-                const isMe = entry.faceitId === MY_FACEIT_ID;
-                return (
-                  <div
-                    key={entry.faceitId}
-                    className={`grid gap-2 items-center px-3 py-2 rounded text-sm ${
-                      isMe
-                        ? "bg-accent/10 border-l-2 border-accent"
-                        : "bg-bg-elevated"
-                    }`}
-                    style={{ gridTemplateColumns: `2rem 1fr 3rem repeat(${activeCols.length}, 4rem)` }}
-                  >
-                    <span className={`text-xs font-bold ${rankColor(i)}`}>{i + 1}</span>
-                    <div className="flex items-baseline gap-1.5 min-w-0">
-                      <span className={`font-bold truncate ${isMe ? "text-accent" : "text-text"}`}>
-                        {isMe ? "You" : entry.nickname}
+              <div
+                className="flex flex-col gap-1"
+                style={{ minWidth: leaderboardMinWidth }}
+              >
+                {entries.map((entry, i) => {
+                  const isMe = entry.faceitId === MY_FACEIT_ID;
+                  return (
+                    <div
+                      key={entry.faceitId}
+                      className={`grid gap-2 items-center rounded px-3 py-2 text-sm ${
+                        isMe
+                          ? "border-l-2 border-accent bg-accent/10"
+                          : "bg-bg-elevated"
+                      }`}
+                      style={{ gridTemplateColumns: leaderboardGridTemplate }}
+                    >
+                      <span className={`text-xs font-bold ${rankColor(i)}`}>
+                        {i + 1}
                       </span>
-                      {entry.elo > 0 && (
-                        <span className="text-text-dim text-[10px] shrink-0">{entry.elo}</span>
-                      )}
+                      <div className="flex min-w-0 items-baseline gap-1.5">
+                        <span
+                          className={`truncate font-bold ${isMe ? "text-accent" : "text-text"}`}
+                        >
+                          {isMe ? "You" : entry.nickname}
+                        </span>
+                        {entry.elo > 0 && (
+                          <span className="shrink-0 text-[10px] text-text-dim">
+                            {entry.elo}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-right text-xs text-text-muted">
+                        {entry.gamesPlayed || "—"}
+                      </span>
+                      {activeCols.map((col) => (
+                        <span
+                          key={col.key}
+                          className={`text-right text-xs ${
+                            sortKey === col.key
+                              ? "font-semibold text-accent"
+                              : "text-text-muted"
+                          }`}
+                        >
+                          {fmt(entry[col.key], col.decimals, col.suffix)}
+                        </span>
+                      ))}
                     </div>
-                    <span className="text-right text-text-muted text-xs">
-                      {entry.gamesPlayed || "—"}
-                    </span>
-                    {activeCols.map((col) => (
-                      <span
-                        key={col.key}
-                        className={`text-right text-xs ${
-                          sortKey === col.key ? "text-accent font-semibold" : "text-text-muted"
-                        }`}
-                      >
-                        {fmt(entry[col.key], col.decimals, col.suffix)}
-                      </span>
-                    ))}
-                  </div>
-                );
-              })}
-            </>
+                  );
+                })}
+              </div>
+            </div>
           )}
         </div>
       )}
@@ -338,77 +393,9 @@ function StatsTab({
   );
 }
 
-function BetsTab() {
-  const { data: entries = [], isLoading } = useLeaderboard();
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-
-  useEffect(() => {
-    getCurrentUserId().then(setCurrentUserId);
-  }, []);
-
-  return (
-    <>
-      {isLoading ? (
-        <div className="text-accent animate-pulse text-center py-8">Loading...</div>
-      ) : (
-        <div className="flex flex-col gap-1">
-          <div className="grid grid-cols-[2rem_1fr_6rem_4rem_4rem_4rem] gap-2 text-[10px] text-text-dim uppercase tracking-wider px-3 pb-1">
-            <span>#</span>
-            <span>Player</span>
-            <span className="text-right">Coins</span>
-            <span className="text-right">Bets</span>
-            <span className="text-right">Won</span>
-            <span className="text-right">Win%</span>
-          </div>
-          {entries.map((entry, i) => {
-            const winRate =
-              entry.betsPlaced > 0
-                ? Math.round((entry.betsWon / entry.betsPlaced) * 100)
-                : 0;
-            const isMe = entry.userId === currentUserId;
-            return (
-              <div
-                key={entry.userId}
-                className={`grid grid-cols-[2rem_1fr_6rem_4rem_4rem_4rem] gap-2 items-center px-3 py-2 rounded text-sm ${
-                  isMe ? "bg-accent/10 border border-accent/30" : "bg-bg-elevated"
-                }`}
-              >
-                <span
-                  className={`text-xs ${i < 3 ? "text-accent font-bold" : "text-text-dim"}`}
-                >
-                  {i + 1}
-                </span>
-                <span className={`truncate font-bold ${isMe ? "text-accent" : "text-text"}`}>
-                  {entry.nickname}
-                </span>
-                <span className="text-right text-accent font-bold">
-                  🪙 {entry.coins.toLocaleString()}
-                </span>
-                <span className="text-right text-text-muted">{entry.betsPlaced}</span>
-                <span className="text-right text-text-muted">{entry.betsWon}</span>
-                <span
-                  className={`text-right ${winRate >= 50 ? "text-accent" : "text-text-muted"}`}
-                >
-                  {entry.betsPlaced > 0 ? `${winRate}%` : "—"}
-                </span>
-              </div>
-            );
-          })}
-          {entries.length === 0 && (
-            <div className="text-text-dim text-center py-12 text-sm">
-              No players yet — place the first bet!
-            </div>
-          )}
-        </div>
-      )}
-    </>
-  );
-}
-
 function LeaderboardPage() {
   const navigate = useNavigate();
   const { player: urlPlayer } = Route.useSearch();
-  const [tab, setTab] = useState<Tab>("stats");
   const [input, setInput] = useState(urlPlayer ?? "");
 
   const {
@@ -457,40 +444,29 @@ function LeaderboardPage() {
         onSubmit={handleSearch}
         placeholder="FACEIT nickname, profile link, player UUID, or match ID..."
         isSearching={searchLoading}
-        status={searchResult ? (
-          <span>
-            Showing leaderboard for{" "}
-            <span className="text-accent">{searchResult.player.nickname}</span>
-          </span>
-        ) : null}
+        status={
+          searchResult ? (
+            <span>
+              Showing leaderboard for{" "}
+              <span className="text-accent">
+                {searchResult.player.nickname}
+              </span>
+            </span>
+          ) : null
+        }
         error={searchError ? "Player not found." : null}
+      />
+
+      <div
+        className="flex-1 overflow-y-auto"
+        style={{ scrollbarGutter: "stable" }}
       >
-        <PlayerViewTabs
-          activeView="leaderboard"
-          nickname={searchResult?.player.nickname ?? urlPlayer ?? null}
-        />
-      </PlayerSearchHeader>
-
-      <div className="flex-1 overflow-y-auto">
-        <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-6">
-          <PageSectionTabs
-            tabs={[
-              { key: "stats", label: "Stats" },
-              { key: "bets", label: "Bets" },
-            ]}
-            activeKey={tab}
-            onChange={(key) => setTab(key as Tab)}
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6">
+          <StatsTab
+            targetPlayerId={targetPlayerId}
+            targetNickname={targetNickname}
+            playerIds={friendIds}
           />
-
-          {tab === "stats" ? (
-            <StatsTab
-              targetPlayerId={targetPlayerId}
-              targetNickname={targetNickname}
-              playerIds={friendIds}
-            />
-          ) : (
-            <BetsTab />
-          )}
         </div>
       </div>
     </div>

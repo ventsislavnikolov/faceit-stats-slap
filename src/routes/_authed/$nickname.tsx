@@ -11,7 +11,6 @@ import { TwitchEmbed } from "~/components/TwitchEmbed";
 import { LiveMatchCard } from "~/components/LiveMatchCard";
 import { RecentMatches } from "~/components/RecentMatches";
 import { PlayerSearchHeader } from "~/components/PlayerSearchHeader";
-import { PlayerViewTabs } from "~/components/PlayerViewTabs";
 import { resolveFaceitSearchTarget } from "~/lib/faceit-search";
 import { getPlayingFriendIds } from "~/lib/friends";
 import { searchAndLoadFriends } from "~/server/friends";
@@ -102,6 +101,7 @@ function PlayerDashboard() {
         onSubmit={handleSearch}
         placeholder="FACEIT nickname, profile link, player UUID, or match ID..."
         isSearching={searchLoading}
+        layout="full"
         status={searchResult ? (
           <span>
             Showing friends of{" "}
@@ -117,12 +117,7 @@ function PlayerDashboard() {
           </span>
         ) : null}
         error={searchError ? "Player not found. Check the nickname/UUID and try again." : null}
-      >
-        <PlayerViewTabs
-          activeView="friends"
-          nickname={searchResult?.player.nickname ?? nickname}
-        />
-      </PlayerSearchHeader>
+      />
 
       {/* Main layout */}
       {searchLoading ? (

@@ -23,7 +23,7 @@ export function PageSectionTabs({
           key={tab.key}
           type="button"
           onClick={() => onChange(tab.key)}
-          className={`rounded px-4 py-2 text-xs font-bold transition-colors ${
+          className={`rounded px-3 py-1.5 text-xs font-bold transition-colors ${
             activeKey === tab.key
               ? "bg-accent text-bg"
               : "bg-bg-elevated text-text-muted hover:text-text"
