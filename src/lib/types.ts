@@ -162,6 +162,32 @@ export interface BetWithPool extends Bet {
   pool: BettingPool;
 }
 
+export interface BettingLeaderboardEntry {
+  userId: string;
+  nickname: string;
+  coins: number;
+  betsPlaced: number;
+  betsWon: number;
+  resolvedBets: number;
+  totalWagered: number;
+  totalReturned: number;
+  netProfit: number;
+  winRate: number;
+}
+
+export interface BetHistorySummary {
+  coins: number;
+  betsPlaced: number;
+  betsWon: number;
+  resolvedBets: number;
+  refundedBets: number;
+  pendingBets: number;
+  totalWagered: number;
+  totalReturned: number;
+  netProfit: number;
+  winRate: number;
+}
+
 export interface StatsLeaderboardEntry {
   faceitId: string;
   nickname: string;
