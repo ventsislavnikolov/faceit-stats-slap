@@ -49,6 +49,14 @@ export const Route = createFileRoute("/_authed/leaderboard")({
   component: LeaderboardPage,
 });
 
+export function shouldRenderLeaderboardBetsTab(params: {
+  authResolved: boolean;
+  isSignedIn: boolean;
+  selectedTab: LeaderboardTab;
+}): boolean {
+  return params.authResolved && params.isSignedIn && params.selectedTab === "bets";
+}
+
 type SortKey =
   | "avgImpact"
   | "avgKills"
@@ -474,6 +482,11 @@ function LeaderboardPage() {
     : showBetsTab
       ? ["bets"]
       : ["stats"];
+  const shouldRenderBetsTab = shouldRenderLeaderboardBetsTab({
+    authResolved,
+    isSignedIn,
+    selectedTab: normalizedSelectedTab,
+  });
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -540,7 +553,13 @@ function LeaderboardPage() {
           />
 
           {showBetsTab ? (
-            <BetsLeaderboardTab userId={userId} />
+            shouldRenderBetsTab ? (
+              <BetsLeaderboardTab userId={userId} />
+            ) : (
+              <div className="py-12 text-center text-accent animate-pulse">
+                Loading...
+              </div>
+            )
           ) : (
             <StatsTab
               targetPlayerId={targetPlayerId}

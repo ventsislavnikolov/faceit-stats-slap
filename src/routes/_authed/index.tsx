@@ -22,12 +22,15 @@ export const Route = createFileRoute("/_authed/")({
 function HomePage() {
   const [input, setInput] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
+  const [authResolved, setAuthResolved] = useState(false);
   const navigate = useNavigate();
-  const { data: userCoins = 0 } = useCoinBalance(userId);
+  const { data: userCoins, isLoading: coinBalanceLoading } = useCoinBalance(userId);
+  const bettingContextReady = authResolved && (!userId || !coinBalanceLoading);
 
   useEffect(() => {
     getClientSession().then((session) => {
       setUserId(session?.user.id ?? null);
+      setAuthResolved(true);
     });
   }, []);
 
@@ -74,7 +77,12 @@ function HomePage() {
           </button>
         </form>
 
-        <HomeLiveMatchesSection userId={userId} userCoins={userCoins} />
+        <HomeLiveMatchesSection
+          authResolved={authResolved}
+          bettingContextReady={bettingContextReady}
+          userId={userId}
+          userCoins={userCoins}
+        />
       </div>
     </div>
   );

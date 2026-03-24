@@ -1,8 +1,21 @@
 import { useLeaderboard } from "~/hooks/useLeaderboard";
 import { sortBettingLeaderboardEntries } from "~/lib/betting-stats";
+import type { BettingLeaderboardEntry } from "~/lib/types";
 
 interface BetsLeaderboardTabProps {
   userId?: string | null;
+}
+
+function hasBettingActivity(entries: BettingLeaderboardEntry[]): boolean {
+  return entries.some(
+    (entry) =>
+      entry.betsPlaced > 0 ||
+      entry.betsWon > 0 ||
+      entry.resolvedBets > 0 ||
+      entry.totalWagered > 0 ||
+      entry.totalReturned > 0 ||
+      entry.netProfit !== 0,
+  );
 }
 
 export function BetsLeaderboardTab({ userId }: BetsLeaderboardTabProps) {
@@ -17,7 +30,7 @@ export function BetsLeaderboardTab({ userId }: BetsLeaderboardTabProps) {
     return <div className="py-12 text-center text-sm text-error">Failed to load betting leaderboard.</div>;
   }
 
-  if (!entries.length) {
+  if (!entries.length || !hasBettingActivity(entries)) {
     return <div className="py-12 text-center text-sm text-text-dim">No resolved bets yet.</div>;
   }
 

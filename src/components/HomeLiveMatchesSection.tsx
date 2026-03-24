@@ -4,11 +4,15 @@ import { LiveMatchCard } from "./LiveMatchCard";
 import { useLiveMatches } from "~/hooks/useLiveMatches";
 
 interface HomeLiveMatchesSectionProps {
+  authResolved: boolean;
+  bettingContextReady: boolean;
   userId?: string | null;
   userCoins?: number;
 }
 
 export function HomeLiveMatchesSection({
+  authResolved,
+  bettingContextReady,
   userId,
   userCoins,
 }: HomeLiveMatchesSectionProps) {
@@ -60,6 +64,8 @@ export function HomeLiveMatchesSection({
           <LiveMatchCard
             key={match.matchId}
             match={match}
+            authResolved={authResolved}
+            bettingContextReady={bettingContextReady}
             userId={userId ?? null}
             userCoins={userCoins ?? 0}
           />
