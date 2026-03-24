@@ -1,6 +1,19 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { createIsomorphicFn } from "@tanstack/react-start";
+import { useEffect, useState } from "react";
 import { resolveFaceitSearchTarget } from "~/lib/faceit-search";
+import { HomeLiveMatchesSection } from "~/components/HomeLiveMatchesSection";
+import { useCoinBalance } from "~/hooks/useCoinBalance";
+
+const getClientSession = createIsomorphicFn()
+  .server(() => null)
+  .client(async () => {
+    const { getSupabaseClient } = await import("~/lib/supabase.client");
+    const {
+      data: { session },
+    } = await getSupabaseClient().auth.getSession();
+    return session;
+  });
 
 export const Route = createFileRoute("/_authed/")({
   component: HomePage,
@@ -8,7 +21,15 @@ export const Route = createFileRoute("/_authed/")({
 
 function HomePage() {
   const [input, setInput] = useState("");
+  const [userId, setUserId] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { data: userCoins = 0 } = useCoinBalance(userId);
+
+  useEffect(() => {
+    getClientSession().then((session) => {
+      setUserId(session?.user.id ?? null);
+    });
+  }, []);
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -24,32 +45,37 @@ function HomePage() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center flex-1 gap-6">
-      <div className="text-center">
-        <p className="text-text-muted text-sm">
-          Enter a FACEIT nickname, profile link, or match ID to open the live dashboard
-        </p>
-        <p className="text-text-dim text-xs mt-1">
-          e.g. get the nickname from{" "}
-          <span className="text-accent">faceit.com/en/players/soavarice</span>
-        </p>
+    <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-8">
+        <div className="text-center">
+          <p className="text-text-muted text-sm">
+            Enter a FACEIT nickname, profile link, or match ID to open the live dashboard
+          </p>
+          <p className="text-text-dim text-xs mt-1">
+            e.g. get the nickname from{" "}
+            <span className="text-accent">faceit.com/en/players/soavarice</span>
+          </p>
+        </div>
+
+        <form onSubmit={handleSearch} className="flex w-full max-w-sm gap-2 self-center">
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="FACEIT nickname, profile link, player UUID, or match ID..."
+            autoFocus
+            className="flex-1 rounded border border-border bg-bg-elevated px-3 py-2 text-sm text-text outline-none focus:border-accent"
+          />
+          <button
+            type="submit"
+            className="rounded bg-accent px-4 py-2 text-sm font-bold text-bg hover:opacity-90"
+          >
+            Search
+          </button>
+        </form>
+
+        <HomeLiveMatchesSection userId={userId} userCoins={userCoins} />
       </div>
-      <form onSubmit={handleSearch} className="flex gap-2 w-full max-w-sm">
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="FACEIT nickname, profile link, player UUID, or match ID..."
-          autoFocus
-          className="flex-1 bg-bg-elevated border border-border rounded px-3 py-2 text-sm text-text focus:border-accent outline-none"
-        />
-        <button
-          type="submit"
-          className="bg-accent text-bg text-sm font-bold px-4 py-2 rounded hover:opacity-90"
-        >
-          Search
-        </button>
-      </form>
     </div>
   );
 }

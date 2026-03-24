@@ -34,8 +34,12 @@ export const TRACKED_WEBHOOK_PLAYERS = {
   },
 } as const;
 
+export function getTrackedWebhookPlayerIds(): string[] {
+  return Object.values(TRACKED_WEBHOOK_PLAYERS).map((player) => player.faceitId);
+}
+
 const TRACKED_PLAYER_IDS = new Set(
-  Object.values(TRACKED_WEBHOOK_PLAYERS).map((player) => player.faceitId)
+  getTrackedWebhookPlayerIds()
 );
 
 const ACTIVE_EVENTS = new Set<FaceitWebhookEvent>([
