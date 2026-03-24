@@ -1,11 +1,17 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { createIsomorphicFn } from "@tanstack/react-start";
 import { useStatsLeaderboard } from "~/hooks/useStatsLeaderboard";
 import { useSyncPlayerHistory } from "~/hooks/useSyncPlayerHistory";
 import { PageSectionTabs } from "~/components/PageSectionTabs";
 import { PlayerSearchHeader } from "~/components/PlayerSearchHeader";
 import { MY_FACEIT_ID } from "~/lib/constants";
 import { resolveFaceitSearchTarget } from "~/lib/faceit-search";
+import {
+  getLeaderboardTabs,
+  normalizeLeaderboardTab,
+  type LeaderboardTab,
+} from "~/lib/leaderboard-page";
 import {
   getStatsLeaderboardEmptyStateCopy,
   getStatsLeaderboardSummaryCopy,
@@ -24,9 +30,20 @@ import { searchAndLoadFriends } from "~/server/friends";
 import { useEffect, useRef, useState } from "react";
 import type { StatsLeaderboardEntry } from "~/lib/types";
 
+const getClientSession = createIsomorphicFn()
+  .server(() => null)
+  .client(async () => {
+    const { getSupabaseClient } = await import("~/lib/supabase.client");
+    const {
+      data: { session },
+    } = await getSupabaseClient().auth.getSession();
+    return session;
+  });
+
 export const Route = createFileRoute("/_authed/leaderboard")({
   validateSearch: (search: Record<string, unknown>) => ({
     player: (search.player as string) || undefined,
+    tab: normalizeLeaderboardTab(search.tab, true),
   }),
   component: LeaderboardPage,
 });
@@ -400,8 +417,9 @@ function StatsTab({
 
 function LeaderboardPage() {
   const navigate = useNavigate();
-  const { player: urlPlayer } = Route.useSearch();
+  const { player: urlPlayer, tab: selectedTab } = Route.useSearch();
   const [input, setInput] = useState(urlPlayer ?? "");
+  const [isSignedIn, setIsSignedIn] = useState(false);
 
   const {
     data: searchResult,
@@ -419,9 +437,15 @@ function LeaderboardPage() {
     setInput(urlPlayer ?? "");
   }, [urlPlayer]);
 
+  useEffect(() => {
+    getClientSession().then((session) => setIsSignedIn(!!session));
+  }, []);
+
   const friendIds = searchResult?.friends.map((f) => f.faceitId) ?? [];
   const targetPlayerId = searchResult?.player.faceitId ?? "";
   const targetNickname = searchResult?.player.nickname ?? "";
+  const normalizedSelectedTab = normalizeLeaderboardTab(selectedTab, isSignedIn);
+  const tabs = getLeaderboardTabs(isSignedIn);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -437,6 +461,7 @@ function LeaderboardPage() {
       to: "/leaderboard",
       search: {
         player: target.value,
+        tab: normalizedSelectedTab,
       },
     });
   };
@@ -467,11 +492,35 @@ function LeaderboardPage() {
         style={{ scrollbarGutter: "stable" }}
       >
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6">
-          <StatsTab
-            targetPlayerId={targetPlayerId}
-            targetNickname={targetNickname}
-            playerIds={friendIds}
+          <PageSectionTabs
+            tabs={tabs.map((tab) => ({
+              key: tab,
+              label: tab === "stats" ? "Stats" : "Bets",
+            }))}
+            activeKey={normalizedSelectedTab}
+            onChange={(tab) => {
+              const nextTab = tab as LeaderboardTab;
+              navigate({
+                to: "/leaderboard",
+                search: {
+                  player: urlPlayer,
+                  tab: normalizeLeaderboardTab(nextTab, isSignedIn),
+                },
+              });
+            }}
           />
+
+          {normalizedSelectedTab === "stats" ? (
+            <StatsTab
+              targetPlayerId={targetPlayerId}
+              targetNickname={targetNickname}
+              playerIds={friendIds}
+            />
+          ) : (
+            <div className="py-12 text-center text-sm text-text-dim">
+              Betting leaderboard is coming next.
+            </div>
+          )}
         </div>
       </div>
     </div>

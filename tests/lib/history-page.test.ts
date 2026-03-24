@@ -17,6 +17,7 @@ describe("history page access", () => {
   it("falls back to the matches tab when bets is unavailable", () => {
     expect(normalizeHistoryTab("bets", false)).toBe("matches");
     expect(normalizeHistoryTab("matches", false)).toBe("matches");
+    expect(normalizeHistoryTab("matches", true)).toBe("matches");
     expect(normalizeHistoryTab("bets", true)).toBe("bets");
   });
 

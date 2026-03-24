@@ -1,24 +1,43 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createIsomorphicFn } from "@tanstack/react-start";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { usePlayerStats } from "~/hooks/usePlayerStats";
 import { HistoryMatchesTable } from "~/components/HistoryMatchesTable";
+import { PageSectionTabs } from "~/components/PageSectionTabs";
 import { PlayerSearchHeader } from "~/components/PlayerSearchHeader";
 import { resolveFaceitSearchTarget } from "~/lib/faceit-search";
 import {
   getHistoryMatchCountOptions,
   getHistoryQueueOptions,
+  getHistoryTabs,
   type HistoryMatchCount,
+  type HistoryTab,
   normalizeHistoryMatchCount,
   normalizeHistoryQueueFilter,
+  normalizeHistoryTab,
 } from "~/lib/history-page";
 import { resolvePlayer } from "~/server/friends";
+
+const getClientSession = createIsomorphicFn()
+  .server(() => null)
+  .client(async () => {
+    const { getSupabaseClient } = await import("~/lib/supabase.client");
+    const {
+      data: { session },
+    } = await getSupabaseClient().auth.getSession();
+    return session;
+  });
 
 export const Route = createFileRoute("/_authed/history")({
   validateSearch: (search: Record<string, unknown>) => ({
     player: typeof search.player === "string" && search.player.length > 0
       ? search.player
       : undefined,
+    tab: normalizeHistoryTab(
+      search.tab === "bets" ? "bets" : "matches",
+      true,
+    ),
     matches: normalizeHistoryMatchCount(search.matches),
     queue: normalizeHistoryQueueFilter(search.queue),
   }),
@@ -27,8 +46,14 @@ export const Route = createFileRoute("/_authed/history")({
 
 function HistoryPage() {
   const navigate = useNavigate();
-  const { player: urlPlayer, matches: selectedMatchCount, queue: selectedQueue } = Route.useSearch();
+  const {
+    player: urlPlayer,
+    matches: selectedMatchCount,
+    queue: selectedQueue,
+    tab: selectedTab,
+  } = Route.useSearch();
   const [input, setInput] = useState(urlPlayer ?? "");
+  const [isSignedIn, setIsSignedIn] = useState(false);
 
   const {
     data: player,
@@ -52,8 +77,15 @@ function HistoryPage() {
     setInput(urlPlayer ?? "");
   }, [urlPlayer]);
 
+  useEffect(() => {
+    getClientSession().then((session) => setIsSignedIn(!!session));
+  }, []);
+
+  const normalizedSelectedTab = normalizeHistoryTab(selectedTab, isSignedIn);
+
   const updateSearch = (next: {
     player?: string;
+    tab?: HistoryTab;
     matches?: HistoryMatchCount;
     queue?: "all" | "solo" | "party";
   }) => {
@@ -61,6 +93,7 @@ function HistoryPage() {
       to: "/history",
       search: {
         player: next.player ?? urlPlayer,
+        tab: normalizeHistoryTab(next.tab ?? selectedTab, isSignedIn),
         matches: next.matches ?? selectedMatchCount,
         queue: next.queue ?? selectedQueue,
       },
@@ -112,7 +145,16 @@ function HistoryPage() {
 
       <div className="flex-1 overflow-y-auto" style={{ scrollbarGutter: "stable" }}>
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6">
-          {urlPlayer && !resolveError && (
+          <PageSectionTabs
+            tabs={getHistoryTabs(isSignedIn).map((tab) => ({
+              key: tab,
+              label: tab === "matches" ? "Matches" : "Bets",
+            }))}
+            activeKey={normalizedSelectedTab}
+            onChange={(tab) => updateSearch({ tab: tab as HistoryTab })}
+          />
+
+          {normalizedSelectedTab === "matches" && urlPlayer && !resolveError && (
             <div className="flex flex-wrap items-center gap-6 text-xs">
               <div className="flex items-center gap-2">
                 <span className="text-text-dim">Last</span>
@@ -157,17 +199,21 @@ function HistoryPage() {
             </div>
           )}
 
-          {urlPlayer && !resolveError && (
+          {normalizedSelectedTab === "matches" && urlPlayer && !resolveError && (
             <div className="text-[10px] text-text-dim">
               Party means the player plus at least 2 known FACEIT friends in the same
               match.
             </div>
           )}
 
-          {resolving || isLoading ? (
+          {normalizedSelectedTab === "matches" && (resolving || isLoading) ? (
             <div className="py-8 text-center text-accent animate-pulse">Loading...</div>
-          ) : player ? (
+          ) : normalizedSelectedTab === "matches" && player ? (
             <HistoryMatchesTable matches={matches} />
+          ) : normalizedSelectedTab === "bets" ? (
+            <div className="py-12 text-center text-sm text-text-dim">
+              Betting history is coming next.
+            </div>
           ) : (
             <div className="py-12 text-center text-text-dim">
               Enter a nickname or UUID to view match history
