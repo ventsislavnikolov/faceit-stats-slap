@@ -16,6 +16,15 @@ const doSignUp = createIsomorphicFn()
     return getSupabaseClient().auth.signUp({ email, password });
   });
 
+const doResetPassword = createIsomorphicFn()
+  .server(async (_email: string) => ({ error: null as any }))
+  .client(async (email: string) => {
+    const { getSupabaseClient } = await import("~/lib/supabase.client");
+    return getSupabaseClient().auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + "/reset-password",
+    });
+  });
+
 export function LoginForm({ redirectTo = "/" }: { redirectTo?: string }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -23,11 +32,26 @@ export function LoginForm({ redirectTo = "/" }: { redirectTo?: string }) {
   const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setSuccessMessage(null);
+
+    if (isForgotPassword) {
+      setLoading(true);
+      const { error: resetError } = await doResetPassword(email);
+      setLoading(false);
+      if (resetError) {
+        setError(resetError.message);
+        return;
+      }
+      setSuccessMessage("Check your email for a reset link.");
+      return;
+    }
 
     if (isSignUp && password !== confirmPassword) {
       setError("Passwords do not match.");
@@ -47,7 +71,7 @@ export function LoginForm({ redirectTo = "/" }: { redirectTo?: string }) {
     }
 
     if (isSignUp) {
-      setError("Check your email for a confirmation link.");
+      setSuccessMessage("Check your email for a confirmation link.");
       return;
     }
 
@@ -64,16 +88,18 @@ export function LoginForm({ redirectTo = "/" }: { redirectTo?: string }) {
         required
         className="bg-bg-elevated border border-border rounded px-3 py-2 text-text focus:border-accent outline-none"
       />
-      <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        required
-        minLength={6}
-        className="bg-bg-elevated border border-border rounded px-3 py-2 text-text focus:border-accent outline-none"
-      />
-      {isSignUp && (
+      {!isForgotPassword && (
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          minLength={6}
+          className="bg-bg-elevated border border-border rounded px-3 py-2 text-text focus:border-accent outline-none"
+        />
+      )}
+      {isSignUp && !isForgotPassword && (
         <input
           type="password"
           placeholder="Confirm Password"
@@ -85,20 +111,42 @@ export function LoginForm({ redirectTo = "/" }: { redirectTo?: string }) {
         />
       )}
       {error && <p className="text-error text-sm">{error}</p>}
+      {successMessage && <p className="text-accent text-sm">{successMessage}</p>}
       <button
         type="submit"
         disabled={loading}
         className="bg-accent text-bg font-bold py-2 rounded hover:opacity-90 disabled:opacity-50"
       >
-        {loading ? "..." : isSignUp ? "Sign Up" : "Sign In"}
+        {loading ? "..." : isForgotPassword ? "Send Reset Link" : isSignUp ? "Sign Up" : "Sign In"}
       </button>
-      <button
-        type="button"
-        onClick={() => { setIsSignUp(!isSignUp); setConfirmPassword(""); setError(null); }}
-        className="text-text-muted text-sm hover:text-accent"
-      >
-        {isSignUp ? "Already have an account? Sign in" : "Need an account? Sign up"}
-      </button>
+      {isForgotPassword ? (
+        <button
+          type="button"
+          onClick={() => { setIsForgotPassword(false); setError(null); setSuccessMessage(null); }}
+          className="text-text-muted text-sm hover:text-accent"
+        >
+          Back to sign in
+        </button>
+      ) : (
+        <>
+          <button
+            type="button"
+            onClick={() => { setIsSignUp(!isSignUp); setConfirmPassword(""); setError(null); setSuccessMessage(null); }}
+            className="text-text-muted text-sm hover:text-accent"
+          >
+            {isSignUp ? "Already have an account? Sign in" : "Need an account? Sign up"}
+          </button>
+          {!isSignUp && (
+            <button
+              type="button"
+              onClick={() => { setIsForgotPassword(true); setPassword(""); setError(null); setSuccessMessage(null); }}
+              className="text-text-muted text-xs hover:text-accent -mt-2"
+            >
+              Forgot password?
+            </button>
+          )}
+        </>
+      )}
     </form>
   );
 }
