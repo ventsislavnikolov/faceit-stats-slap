@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { createIsomorphicFn } from "@tanstack/react-start";
@@ -10,6 +10,8 @@ import { FriendsSidebar } from "~/components/FriendsSidebar";
 import { TwitchEmbed } from "~/components/TwitchEmbed";
 import { LiveMatchCard } from "~/components/LiveMatchCard";
 import { RecentMatches } from "~/components/RecentMatches";
+import { PlayerSearchHeader } from "~/components/PlayerSearchHeader";
+import { PlayerViewTabs } from "~/components/PlayerViewTabs";
 import { resolveFaceitSearchTarget } from "~/lib/faceit-search";
 import { getPlayingFriendIds } from "~/lib/friends";
 import { searchAndLoadFriends } from "~/server/friends";
@@ -94,67 +96,33 @@ function PlayerDashboard() {
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
-      {/* Search bar */}
-      <div className="px-4 py-3 border-b border-border bg-bg-card">
-        <form onSubmit={handleSearch} className="flex gap-2 max-w-md">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="FACEIT nickname, profile link, player UUID, or match ID..."
-            className="flex-1 bg-bg-elevated border border-border rounded px-3 py-1.5 text-sm text-text focus:border-accent outline-none"
-          />
-          <button
-            type="submit"
-            disabled={searchLoading}
-            className="bg-accent text-bg text-sm font-bold px-4 py-1.5 rounded hover:opacity-90 disabled:opacity-50"
-          >
-            {searchLoading ? "..." : "Search"}
-          </button>
-        </form>
-
-        {searchResult && (
-          <div className="mt-1.5 flex items-center gap-3 text-xs text-text-muted">
-            <span>
-              Showing friends of{" "}
-              <span className="text-accent">{searchResult.player.nickname}</span>
-              {" · "}
-              {searchResult.friends.length} loaded
-              {searchResult.limited && (
-                <span className="text-error ml-1">
-                  (capped at 20 — player has {searchResult.totalFriends} friends,
-                  more would exceed FACEIT rate limits)
-                </span>
-              )}
-            </span>
-            <span className="text-border">|</span>
-            <Link
-              to="/history"
-              search={{
-                player: searchResult.player.nickname,
-                matches: 20,
-                queue: "all",
-              }}
-              className="text-accent hover:underline"
-            >
-              History
-            </Link>
-            <Link
-              to="/leaderboard"
-              search={{ player: nickname }}
-              className="text-accent hover:underline"
-            >
-              Leaderboard
-            </Link>
-          </div>
-        )}
-
-        {searchError && (
-          <p className="mt-1.5 text-xs text-error">
-            Player not found. Check the nickname/UUID and try again.
-          </p>
-        )}
-      </div>
+      <PlayerSearchHeader
+        value={input}
+        onValueChange={setInput}
+        onSubmit={handleSearch}
+        placeholder="FACEIT nickname, profile link, player UUID, or match ID..."
+        isSearching={searchLoading}
+        status={searchResult ? (
+          <span>
+            Showing friends of{" "}
+            <span className="text-accent">{searchResult.player.nickname}</span>
+            {" · "}
+            {searchResult.friends.length} loaded
+            {searchResult.limited && (
+              <span className="ml-1 text-error">
+                (capped at 20 — player has {searchResult.totalFriends} friends, more would
+                exceed FACEIT rate limits)
+              </span>
+            )}
+          </span>
+        ) : null}
+        error={searchError ? "Player not found. Check the nickname/UUID and try again." : null}
+      >
+        <PlayerViewTabs
+          activeView="friends"
+          nickname={searchResult?.player.nickname ?? nickname}
+        />
+      </PlayerSearchHeader>
 
       {/* Main layout */}
       {searchLoading ? (

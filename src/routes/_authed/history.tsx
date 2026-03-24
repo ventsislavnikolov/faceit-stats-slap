@@ -4,7 +4,11 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { usePlayerStats } from "~/hooks/usePlayerStats";
 import { useUserBets } from "~/hooks/useUserBets";
-import { RecentMatches } from "~/components/RecentMatches";
+import { HistoryMatchesTable } from "~/components/HistoryMatchesTable";
+import { PageSectionTabs } from "~/components/PageSectionTabs";
+import { PlayerSearchHeader } from "~/components/PlayerSearchHeader";
+import { PlayerViewTabs } from "~/components/PlayerViewTabs";
+import { resolveFaceitSearchTarget } from "~/lib/faceit-search";
 import {
   getHistoryMatchCountOptions,
   getHistoryQueueOptions,
@@ -92,10 +96,15 @@ function HistoryPage() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    const trimmed = input.trim();
-    if (!trimmed) return;
+    const target = resolveFaceitSearchTarget(input);
+    if (!target.value) return;
 
-    updateSearch({ player: trimmed });
+    if (target.kind === "match") {
+      navigate({ to: "/match/$matchId", params: { matchId: target.value } });
+      return;
+    }
+
+    updateSearch({ player: target.value });
   };
 
   const matches = stats.map((m: any) => ({
@@ -112,169 +121,173 @@ function HistoryPage() {
   }));
 
   return (
-    <div className="flex-1 p-6 max-w-4xl mx-auto w-full overflow-y-auto">
-      {/* Tabs */}
-      <div className="flex gap-1 mb-6 bg-bg-elevated rounded p-1 w-fit">
-        {availableTabs.map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`text-xs px-4 py-1.5 rounded transition-colors ${
-              tab === t
-                ? "bg-accent text-bg font-bold"
-                : "text-text-muted hover:text-accent"
-            }`}
-          >
-            {t === "matches" ? "Match History" : "My Bets"}
-          </button>
-        ))}
-      </div>
+    <div className="flex flex-1 flex-col overflow-hidden">
+      <PlayerSearchHeader
+        value={input}
+        onValueChange={setInput}
+        onSubmit={handleSearch}
+        placeholder="FACEIT nickname, profile link, player UUID, or match ID..."
+        status={player ? (
+          <span>
+            Showing history for <span className="text-accent">{player.nickname}</span>
+          </span>
+        ) : null}
+        error={resolveError ? "Player not found." : null}
+      >
+        <PlayerViewTabs
+          activeView="history"
+          nickname={player?.nickname ?? urlPlayer ?? null}
+        />
+      </PlayerSearchHeader>
 
-      {tab === "matches" && (
-        <>
-          <form onSubmit={handleSearch} className="flex gap-2 mb-6">
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="FACEIT nickname or UUID"
-              className="flex-1 bg-bg-elevated text-text text-xs px-3 py-2 rounded border border-border focus:border-accent focus:outline-none"
-            />
-            <button
-              type="submit"
-              className="text-xs px-4 py-2 rounded bg-accent text-bg font-bold hover:opacity-90 transition-opacity"
-            >
-              Search
-            </button>
-          </form>
-          {urlPlayer && !resolveError && (
-            <div className="flex flex-wrap items-center gap-6 mb-6 text-xs">
-              <div className="flex items-center gap-2">
-                <span className="text-text-dim">Last</span>
-                <div className="flex gap-1">
-                  {getHistoryMatchCountOptions().map((count) => (
-                    <button
-                      key={count}
-                      type="button"
-                      onClick={() => updateSearch({ matches: count })}
-                      className={`px-3 py-1.5 rounded transition-colors ${
-                        selectedMatchCount === count
-                          ? "bg-accent text-bg font-bold"
-                          : "bg-bg-elevated text-text-muted hover:text-accent"
-                      }`}
-                    >
-                      {count}
-                    </button>
-                  ))}
-                </div>
-                <span className="text-text-dim">matches</span>
-              </div>
+      <div className="flex-1 overflow-y-auto">
+        <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-6">
+          <PageSectionTabs
+            tabs={availableTabs.map((value) => ({
+              key: value,
+              label: value === "matches" ? "Match History" : "My Bets",
+            }))}
+            activeKey={tab}
+            onChange={(key) => setTab(key as HistoryTab)}
+          />
 
-              <div className="flex items-center gap-2">
-                <span className="text-text-dim">Queue</span>
-                <div className="flex gap-1">
-                  {getHistoryQueueOptions().map((option) => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={() => updateSearch({ queue: option.value })}
-                      className={`px-3 py-1.5 rounded transition-colors ${
-                        selectedQueue === option.value
-                          ? "bg-accent text-bg font-bold"
-                          : "bg-bg-elevated text-text-muted"
-                      } hover:text-accent`}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-          {urlPlayer && !resolveError && (
-            <div className="text-[10px] text-text-dim mb-4">
-              Party means the player plus at least 2 known FACEIT friends in the same match.
-            </div>
-          )}
-          {player && (
-            <div className="text-xs text-text-muted mb-4">
-              Showing history for <span className="text-accent font-bold">{player.nickname}</span>
-            </div>
-          )}
-          {resolveError && (
-            <div className="text-error text-xs text-center py-8">Player not found</div>
-          )}
-          {(resolving || isLoading) ? (
-            <div className="text-accent animate-pulse text-center py-8">Loading...</div>
-          ) : player ? (
-            <RecentMatches matches={matches} />
-          ) : (
-            <div className="text-text-dim text-center py-12">
-              Enter a nickname or UUID to view match history
-            </div>
-          )}
-        </>
-      )}
-
-      {tab === "bets" && (
-        <div>
-          {betsLoading ? (
-            <div className="text-accent animate-pulse text-center py-8">Loading...</div>
-          ) : userBets.length === 0 ? (
-            <div className="text-text-dim text-center py-12">No bets placed yet.</div>
-          ) : (
-            <div className="flex flex-col gap-1">
-              {/* Header */}
-              <div className="grid grid-cols-[1fr_4rem_4rem_5rem_5rem] gap-2 text-[10px] text-text-dim uppercase tracking-wider px-3 pb-1">
-                <span>Match</span>
-                <span>Side</span>
-                <span className="text-right">Bet</span>
-                <span className="text-right">Payout</span>
-                <span className="text-right">Result</span>
-              </div>
-              {userBets.map((bet) => {
-                const statusLabel =
-                  bet.pool.status === "RESOLVED"
-                    ? bet.payout !== null && bet.payout > bet.amount
-                      ? "Won"
-                      : "Lost"
-                    : bet.pool.status === "REFUNDED"
-                    ? "Refunded"
-                    : "Pending";
-                const statusColor =
-                  statusLabel === "Won"
-                    ? "text-accent"
-                    : statusLabel === "Lost"
-                    ? "text-error"
-                    : "text-text-muted";
-                const sideName =
-                  bet.side === "team1" ? bet.pool.team1Name : bet.pool.team2Name;
-                return (
-                  <div
-                    key={bet.id}
-                    className="grid grid-cols-[1fr_4rem_4rem_5rem_5rem] gap-2 items-center px-3 py-2 bg-bg-elevated rounded text-xs"
-                  >
-                    <div className="flex flex-col min-w-0">
-                      <span className="text-text truncate text-[10px]">
-                        {bet.pool.team1Name} vs {bet.pool.team2Name}
-                      </span>
-                      <span className="text-text-dim text-[10px]">
-                        {new Date(bet.createdAt).toLocaleDateString()}
-                      </span>
+          {tab === "matches" && (
+            <>
+              {urlPlayer && !resolveError && (
+                <div className="flex flex-wrap items-center gap-6 text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="text-text-dim">Last</span>
+                    <div className="flex gap-1">
+                      {getHistoryMatchCountOptions().map((count) => (
+                        <button
+                          key={count}
+                          type="button"
+                          onClick={() => updateSearch({ matches: count })}
+                          className={`rounded px-3 py-1.5 transition-colors ${
+                            selectedMatchCount === count
+                              ? "bg-accent font-bold text-bg"
+                              : "bg-bg-elevated text-text-muted hover:text-text"
+                          }`}
+                        >
+                          {count}
+                        </button>
+                      ))}
                     </div>
-                    <span className="text-text truncate">{sideName}</span>
-                    <span className="text-right text-text-muted">{bet.amount}</span>
-                    <span className={`text-right ${bet.payout ? "text-accent" : "text-text-dim"}`}>
-                      {bet.payout ?? "—"}
-                    </span>
-                    <span className={`text-right font-bold ${statusColor}`}>{statusLabel}</span>
+                    <span className="text-text-dim">matches</span>
                   </div>
-                );
-              })}
-            </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className="text-text-dim">Queue</span>
+                    <div className="flex gap-1">
+                      {getHistoryQueueOptions().map((option) => (
+                        <button
+                          key={option.value}
+                          type="button"
+                          onClick={() => updateSearch({ queue: option.value })}
+                          className={`rounded px-3 py-1.5 transition-colors ${
+                            selectedQueue === option.value
+                              ? "bg-accent font-bold text-bg"
+                              : "bg-bg-elevated text-text-muted hover:text-text"
+                          }`}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {urlPlayer && !resolveError && (
+                <div className="text-[10px] text-text-dim">
+                  Party means the player plus at least 2 known FACEIT friends in the same
+                  match.
+                </div>
+              )}
+
+              {resolving || isLoading ? (
+                <div className="py-8 text-center text-accent animate-pulse">Loading...</div>
+              ) : player ? (
+                <HistoryMatchesTable matches={matches} />
+              ) : (
+                <div className="py-12 text-center text-text-dim">
+                  Enter a nickname or UUID to view match history
+                </div>
+              )}
+            </>
+          )}
+
+          {tab === "bets" && (
+            <>
+              {betsLoading ? (
+                <div className="py-8 text-center text-accent animate-pulse">Loading...</div>
+              ) : userBets.length === 0 ? (
+                <div className="py-12 text-center text-text-dim">No bets placed yet.</div>
+              ) : (
+                <div className="flex flex-col gap-1">
+                  <div className="overflow-x-auto">
+                    <div className="grid min-w-[40rem] grid-cols-[1fr_4rem_4rem_5rem_5rem] gap-2 px-3 pb-1 text-[10px] uppercase tracking-wider text-text-dim">
+                      <span>Match</span>
+                      <span>Side</span>
+                      <span className="text-right">Bet</span>
+                      <span className="text-right">Payout</span>
+                      <span className="text-right">Result</span>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      {userBets.map((bet) => {
+                        const statusLabel =
+                          bet.pool.status === "RESOLVED"
+                            ? bet.payout !== null && bet.payout > bet.amount
+                              ? "Won"
+                              : "Lost"
+                            : bet.pool.status === "REFUNDED"
+                              ? "Refunded"
+                              : "Pending";
+                        const statusColor =
+                          statusLabel === "Won"
+                            ? "text-accent"
+                            : statusLabel === "Lost"
+                              ? "text-error"
+                              : "text-text-muted";
+                        const sideName =
+                          bet.side === "team1" ? bet.pool.team1Name : bet.pool.team2Name;
+
+                        return (
+                          <div
+                            key={bet.id}
+                            className="grid min-w-[40rem] grid-cols-[1fr_4rem_4rem_5rem_5rem] items-center gap-2 rounded bg-bg-elevated px-3 py-2 text-xs"
+                          >
+                            <div className="min-w-0">
+                              <div className="truncate text-[10px] text-text">
+                                {bet.pool.team1Name} vs {bet.pool.team2Name}
+                              </div>
+                              <div className="text-[10px] text-text-dim">
+                                {new Date(bet.createdAt).toLocaleDateString()}
+                              </div>
+                            </div>
+                            <span className="truncate text-text">{sideName}</span>
+                            <span className="text-right text-text-muted">{bet.amount}</span>
+                            <span
+                              className={`text-right ${
+                                bet.payout ? "text-accent" : "text-text-dim"
+                              }`}
+                            >
+                              {bet.payout ?? "—"}
+                            </span>
+                            <span className={`text-right font-bold ${statusColor}`}>
+                              {statusLabel}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
-      )}
+      </div>
     </div>
   );
 }

@@ -1,10 +1,14 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { createIsomorphicFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useLeaderboard } from "~/hooks/useLeaderboard";
 import { useStatsLeaderboard } from "~/hooks/useStatsLeaderboard";
 import { useSyncPlayerHistory } from "~/hooks/useSyncPlayerHistory";
+import { PageSectionTabs } from "~/components/PageSectionTabs";
+import { PlayerSearchHeader } from "~/components/PlayerSearchHeader";
+import { PlayerViewTabs } from "~/components/PlayerViewTabs";
 import { MY_FACEIT_ID } from "~/lib/constants";
+import { resolveFaceitSearchTarget } from "~/lib/faceit-search";
 import {
   getStatsLeaderboardEmptyStateCopy,
   getStatsLeaderboardSummaryCopy,
@@ -233,23 +237,19 @@ function StatsTab({
         Party means a player plus at least 2 other players from the current leaderboard list in the same match.
       </div>
 
-      <div className="flex items-center gap-1">
-        {STAT_GROUPS.map((g) => (
-          <button
-            key={g.key}
-            onClick={() => {
-              setStatGroup(g.key);
-              setSortKey(STATS_COLS[g.key][0].key);
-              setSortDir("desc");
-            }}
-            className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-              statGroup === g.key ? "bg-accent text-black" : "bg-bg-elevated text-text-muted hover:text-text"
-            }`}
-          >
-            {g.label}
-          </button>
-        ))}
-      </div>
+      <PageSectionTabs
+        tabs={STAT_GROUPS.map((group) => ({
+          key: group.key,
+          label: group.label,
+        }))}
+        activeKey={statGroup}
+        onChange={(key) => {
+          const group = key as StatGroup;
+          setStatGroup(group);
+          setSortKey(STATS_COLS[group][0].key);
+          setSortDir("desc");
+        }}
+      />
 
       {!targetPlayerId ? (
         <div className="text-text-dim text-center py-12">
@@ -406,22 +406,26 @@ function BetsTab() {
 }
 
 function LeaderboardPage() {
+  const navigate = useNavigate();
   const { player: urlPlayer } = Route.useSearch();
   const [tab, setTab] = useState<Tab>("stats");
   const [input, setInput] = useState(urlPlayer ?? "");
-  const [search, setSearch] = useState<string | null>(urlPlayer ?? null);
 
   const {
     data: searchResult,
     isLoading: searchLoading,
     isError: searchError,
   } = useQuery({
-    queryKey: ["friends-search", search?.toLowerCase()],
-    queryFn: () => searchAndLoadFriends({ data: search! }),
-    enabled: !!search,
+    queryKey: ["friends-search", urlPlayer?.toLowerCase()],
+    queryFn: () => searchAndLoadFriends({ data: urlPlayer! }),
+    enabled: !!urlPlayer,
     staleTime: 5 * 60 * 1000,
     retry: false,
   });
+
+  useEffect(() => {
+    setInput(urlPlayer ?? "");
+  }, [urlPlayer]);
 
   const friendIds = searchResult?.friends.map((f) => f.faceitId) ?? [];
   const targetPlayerId = searchResult?.player.faceitId ?? "";
@@ -429,65 +433,66 @@ function LeaderboardPage() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    const trimmed = input.trim();
-    if (trimmed) setSearch(trimmed);
+    const target = resolveFaceitSearchTarget(input);
+    if (!target.value) return;
+
+    if (target.kind === "match") {
+      navigate({ to: "/match/$matchId", params: { matchId: target.value } });
+      return;
+    }
+
+    navigate({
+      to: "/leaderboard",
+      search: {
+        player: target.value,
+      },
+    });
   };
 
   return (
-    <div className="flex-1 p-6 max-w-6xl mx-auto w-full overflow-y-auto">
-      <h2 className="text-lg font-bold mb-4">Leaderboard</h2>
-
-      <form onSubmit={handleSearch} className="flex gap-2 mb-4">
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="FACEIT nickname or UUID"
-          className="flex-1 bg-bg-elevated text-text text-xs px-3 py-2 rounded border border-border focus:border-accent focus:outline-none"
+    <div className="flex flex-1 flex-col overflow-hidden">
+      <PlayerSearchHeader
+        value={input}
+        onValueChange={setInput}
+        onSubmit={handleSearch}
+        placeholder="FACEIT nickname, profile link, player UUID, or match ID..."
+        isSearching={searchLoading}
+        status={searchResult ? (
+          <span>
+            Showing leaderboard for{" "}
+            <span className="text-accent">{searchResult.player.nickname}</span>
+          </span>
+        ) : null}
+        error={searchError ? "Player not found." : null}
+      >
+        <PlayerViewTabs
+          activeView="leaderboard"
+          nickname={searchResult?.player.nickname ?? urlPlayer ?? null}
         />
-        <button
-          type="submit"
-          disabled={searchLoading}
-          className="text-xs px-4 py-2 rounded bg-accent text-bg font-bold hover:opacity-90 disabled:opacity-50 transition-opacity"
-        >
-          {searchLoading ? "..." : "Search"}
-        </button>
-      </form>
+      </PlayerSearchHeader>
 
-      {searchResult && (
-        <div className="text-xs text-text-muted mb-4">
-          Showing leaderboard for <span className="text-accent font-bold">{searchResult.player.nickname}</span>
+      <div className="flex-1 overflow-y-auto">
+        <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-6">
+          <PageSectionTabs
+            tabs={[
+              { key: "stats", label: "Stats" },
+              { key: "bets", label: "Bets" },
+            ]}
+            activeKey={tab}
+            onChange={(key) => setTab(key as Tab)}
+          />
+
+          {tab === "stats" ? (
+            <StatsTab
+              targetPlayerId={targetPlayerId}
+              targetNickname={targetNickname}
+              playerIds={friendIds}
+            />
+          ) : (
+            <BetsTab />
+          )}
         </div>
-      )}
-      {searchError && (
-        <div className="text-error text-xs mb-4">Player not found</div>
-      )}
-
-      <div className="flex border-b border-border mb-6">
-        {(["stats", "bets"] as Tab[]).map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`px-4 py-2 text-sm font-medium capitalize transition-colors border-b-2 -mb-px ${
-              tab === t
-                ? "border-accent text-accent"
-                : "border-transparent text-text-muted hover:text-text"
-            }`}
-          >
-            {t === "stats" ? "Stats" : "Bets"}
-          </button>
-        ))}
       </div>
-
-      {tab === "stats" ? (
-        <StatsTab
-          targetPlayerId={targetPlayerId}
-          targetNickname={targetNickname}
-          playerIds={friendIds}
-        />
-      ) : (
-        <BetsTab />
-      )}
     </div>
   );
 }
