@@ -1,6 +1,25 @@
 export type MatchStatus = "ONGOING" | "READY" | "VOTING" | "CONFIGURING" | "FINISHED" | "CANCELLED";
 export type MatchQueueBucket = "solo" | "party" | "unknown";
 
+export const DEMO_INGESTION_STATUS_VALUES = [
+  "queued",
+  "parsing",
+  "parsed",
+  "failed",
+  "source_unavailable",
+] as const;
+export type DemoIngestionStatus = (typeof DEMO_INGESTION_STATUS_VALUES)[number];
+
+export const DEMO_ANALYTICS_SOURCE_TYPE_VALUES = [
+  "faceit_demo_url",
+  "manual_upload",
+] as const;
+export type DemoAnalyticsSourceType = (typeof DEMO_ANALYTICS_SOURCE_TYPE_VALUES)[number];
+
+export const DEMO_ANALYTICS_AVAILABILITY_VALUES = ["available", "unavailable"] as const;
+export type DemoAnalyticsAvailability = (typeof DEMO_ANALYTICS_AVAILABILITY_VALUES)[number];
+export type DemoTeamKey = "team1" | "team2";
+
 export interface FaceitPlayer {
   faceitId: string;
   nickname: string;
@@ -120,6 +139,86 @@ export interface MatchDetail {
   rounds: number;
   region: string;
   competitionName: string;
+}
+
+export interface DemoPlayerAnalytics {
+  nickname: string;
+  teamKey: DemoTeamKey;
+  tradeKills: number;
+  tradedDeaths: number;
+  untradedDeaths: number;
+  rws: number;
+  playerId?: string;
+  steamId?: string;
+  kills?: number;
+  deaths?: number;
+  assists?: number;
+  headshots?: number;
+  adr?: number;
+  hsPercent?: number;
+  damage?: number;
+  entryKills?: number;
+  entryDeaths?: number;
+  openingDuelAttempts?: number;
+  openingDuelWins?: number;
+  exitKills?: number;
+  clutchAttempts?: number;
+  clutchWins?: number;
+  lastAliveRounds?: number;
+  bombPlants?: number;
+  bombDefuses?: number;
+  utilityDamage?: number;
+  flashAssists?: number;
+  enemiesFlashed?: number;
+  kastPercent?: number;
+  rating?: number;
+  multiKills?: { threeK: number; fourK: number; ace: number };
+  killTimings?: { early: number; mid: number; late: number };
+}
+
+export interface DemoTeamAnalytics {
+  teamKey: DemoTeamKey;
+  name: string;
+  side: "CT" | "T" | "unknown";
+  roundsWon: number;
+  roundsLost: number;
+  tradeKills: number;
+  untradedDeaths: number;
+  rws: number;
+}
+
+export interface DemoRoundAnalytics {
+  roundNumber: number;
+  winnerTeamKey: DemoTeamKey | null;
+  winnerSide: "CT" | "T" | null;
+  isPistolRound: boolean;
+  isBombRound: boolean;
+  scoreAfterRound: Record<DemoTeamKey, number>;
+  tTeamKey?: DemoTeamKey;
+  ctTeamKey?: DemoTeamKey;
+  tBuyType?: string;
+  ctBuyType?: string;
+  endReason?: string | null;
+  bombPlanted?: boolean;
+  bombDefused?: boolean;
+  planterSteamId?: string | null;
+  defuserSteamId?: string | null;
+}
+
+export interface DemoMatchAnalytics {
+  matchId: string;
+  sourceType: DemoAnalyticsSourceType;
+  availability: DemoAnalyticsAvailability;
+  ingestionStatus: DemoIngestionStatus;
+  mapName: string;
+  totalRounds: number;
+  rounds: DemoRoundAnalytics[];
+  teams: DemoTeamAnalytics[];
+  players: DemoPlayerAnalytics[];
+}
+
+export interface MatchDetailWithDemoAnalytics extends MatchDetail {
+  demoAnalytics: DemoMatchAnalytics | null;
 }
 
 export interface TwitchStream {
