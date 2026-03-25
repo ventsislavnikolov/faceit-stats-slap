@@ -62,7 +62,7 @@ export function AppLayout() {
   const friendsHref = currentNickname ? getPlayerViewHref("friends", currentNickname) : { to: "/" };
   const historyHref = currentNickname
     ? getPlayerViewHref("history", currentNickname)
-    : { to: "/history", search: { player: undefined, matches: 20, queue: "all" } };
+    : { to: "/history", search: { player: undefined, matches: 20, queue: "party" } };
   const leaderboardHref = currentNickname
     ? getPlayerViewHref("leaderboard", currentNickname)
     : { to: "/leaderboard", search: { player: undefined } };

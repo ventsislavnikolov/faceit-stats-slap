@@ -1,5 +1,5 @@
 export function getStatsLeaderboardSummaryCopy(
-  _targetNickname: string,
+  targetNickname: string,
   _sharedFriendCount: number,
   days: 30 | 90 | 180 | 365 | 730,
   n: "yesterday" | 20 | 50 | 100,
@@ -7,11 +7,13 @@ export function getStatsLeaderboardSummaryCopy(
 ): string {
   const subject =
     queue === "all"
-      ? "Showing players you queued with"
-      : `Showing players from ${queue} matches`;
+      ? `Showing friends of ${targetNickname}`
+      : `Showing friends of ${targetNickname} from ${queue} matches`;
 
   if (n === "yesterday") {
-    return `${subject} yesterday. Stats are from yesterday's matches only.`;
+    return queue === "all"
+      ? `${subject} who played yesterday. Stats are from yesterday's matches only.`
+      : `${subject} yesterday. Stats are from yesterday's matches only.`;
   }
 
   return `${subject} in the last ${days} days. Stats are from each player's own last ${n} matches.`;
@@ -33,31 +35,19 @@ export function getStatsLeaderboardEmptyStateCopy({
   queue?: "all" | "solo" | "party";
 }): string | null {
   if (n === "yesterday") {
-    if (targetMatchCount === 0) {
-      return queue === "all"
-        ? `No matches for ${targetNickname} yesterday.`
-        : `No ${queue} matches for ${targetNickname} yesterday.`;
-    }
-
     if (sharedFriendCount === 0) {
       return queue === "all"
-        ? `No queued friends for ${targetNickname} yesterday.`
-        : `No queued friends for ${targetNickname} in ${queue} matches yesterday.`;
+        ? `No friends of ${targetNickname} played yesterday.`
+        : `No friends of ${targetNickname} played ${queue} matches yesterday.`;
     }
 
     return null;
   }
 
-  if (targetMatchCount === 0) {
-    return queue === "all"
-      ? `No recent matches for ${targetNickname} in the last ${days} days.`
-      : `No recent ${queue} matches for ${targetNickname} in the last ${days} days.`;
-  }
-
   if (sharedFriendCount === 0) {
     return queue === "all"
-      ? `No recently queued friends for ${targetNickname} in the last ${days} days.`
-      : `No recently queued friends for ${targetNickname} in ${queue} matches in the last ${days} days.`;
+      ? `No friends of ${targetNickname} played in the last ${days} days.`
+      : `No friends of ${targetNickname} played ${queue} matches in the last ${days} days.`;
   }
 
   return null;

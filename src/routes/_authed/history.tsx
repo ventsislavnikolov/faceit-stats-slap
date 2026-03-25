@@ -1,24 +1,44 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createIsomorphicFn } from "@tanstack/react-start";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { usePlayerStats } from "~/hooks/usePlayerStats";
 import { HistoryMatchesTable } from "~/components/HistoryMatchesTable";
+import { BetHistoryTab } from "~/components/BetHistoryTab";
+import {
+  PageSectionTabs,
+  shouldRenderPageSectionTabs,
+} from "~/components/PageSectionTabs";
 import { PlayerSearchHeader } from "~/components/PlayerSearchHeader";
 import { resolveFaceitSearchTarget } from "~/lib/faceit-search";
 import {
   getHistoryMatchCountOptions,
   getHistoryQueueOptions,
+  getHistoryTabs,
   type HistoryMatchCount,
+  type HistoryTab,
   normalizeHistoryMatchCount,
   normalizeHistoryQueueFilter,
+  normalizeHistoryTab,
 } from "~/lib/history-page";
 import { resolvePlayer } from "~/server/friends";
+
+const getClientSession = createIsomorphicFn()
+  .server(() => null)
+  .client(async () => {
+    const { getSupabaseClient } = await import("~/lib/supabase.client");
+    const {
+      data: { session },
+    } = await getSupabaseClient().auth.getSession();
+    return session;
+  });
 
 export const Route = createFileRoute("/_authed/history")({
   validateSearch: (search: Record<string, unknown>) => ({
     player: typeof search.player === "string" && search.player.length > 0
       ? search.player
       : undefined,
+    tab: search.tab === "bets" ? "bets" : "matches",
     matches: normalizeHistoryMatchCount(search.matches),
     queue: normalizeHistoryQueueFilter(search.queue),
   }),
@@ -27,33 +47,87 @@ export const Route = createFileRoute("/_authed/history")({
 
 function HistoryPage() {
   const navigate = useNavigate();
-  const { player: urlPlayer, matches: selectedMatchCount, queue: selectedQueue } = Route.useSearch();
+  const {
+    player: urlPlayer,
+    matches: selectedMatchCount,
+    queue: selectedQueue,
+    tab: selectedTab,
+  } = Route.useSearch();
   const [input, setInput] = useState(urlPlayer ?? "");
+  const [isSignedIn, setIsSignedIn] = useState(false);
+  const [authResolved, setAuthResolved] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+  const normalizedSelectedTab = authResolved
+    ? normalizeHistoryTab(selectedTab, isSignedIn)
+    : selectedTab;
 
   const {
     data: player,
     isLoading: resolving,
     isError: resolveError,
   } = useQuery({
-    queryKey: ["resolve-player", urlPlayer],
+    queryKey: ["resolve-player", urlPlayer, selectedTab],
     queryFn: () => resolvePlayer({ data: urlPlayer! }),
-    enabled: !!urlPlayer,
+    enabled: !!urlPlayer && normalizedSelectedTab === "matches",
     staleTime: 5 * 60 * 1000,
     retry: false,
   });
-
-  const { data: stats = [], isLoading } = usePlayerStats(
-    player?.faceitId ?? null,
-    selectedMatchCount,
-    selectedQueue
-  );
 
   useEffect(() => {
     setInput(urlPlayer ?? "");
   }, [urlPlayer]);
 
+  useEffect(() => {
+    getClientSession().then((session) => {
+      const signedIn = !!session;
+      setUserId(session?.user.id ?? null);
+      setIsSignedIn(signedIn);
+      setAuthResolved(true);
+    });
+  }, [navigate, selectedMatchCount, selectedQueue, selectedTab, urlPlayer]);
+
+  useEffect(() => {
+    if (authResolved && !isSignedIn && selectedTab === "bets") {
+      navigate({
+        to: "/history",
+        search: {
+          player: urlPlayer,
+          tab: "matches",
+          matches: selectedMatchCount,
+          queue: selectedQueue,
+        },
+        replace: true,
+      });
+    }
+  }, [
+    authResolved,
+    isSignedIn,
+    navigate,
+    selectedMatchCount,
+    selectedQueue,
+    selectedTab,
+    urlPlayer,
+  ]);
+
+  const { data: stats = [], isLoading } = usePlayerStats(
+    normalizedSelectedTab === "matches" ? player?.faceitId ?? null : null,
+    selectedMatchCount,
+    selectedQueue
+  );
+  const showBetsTab = normalizedSelectedTab === "bets";
+  const tabs = authResolved
+    ? getHistoryTabs(isSignedIn)
+    : showBetsTab
+      ? ["bets"]
+      : ["matches"];
+  const sectionTabs = tabs.map((tab) => ({
+    key: tab,
+    label: tab === "matches" ? "Matches" : "Bets",
+  }));
+
   const updateSearch = (next: {
     player?: string;
+    tab?: HistoryTab;
     matches?: HistoryMatchCount;
     queue?: "all" | "solo" | "party";
   }) => {
@@ -61,6 +135,7 @@ function HistoryPage() {
       to: "/history",
       search: {
         player: next.player ?? urlPlayer,
+        tab: normalizeHistoryTab(next.tab ?? normalizedSelectedTab, isSignedIn),
         matches: next.matches ?? selectedMatchCount,
         queue: next.queue ?? selectedQueue,
       },
@@ -102,17 +177,20 @@ function HistoryPage() {
         onValueChange={setInput}
         onSubmit={handleSearch}
         placeholder="FACEIT nickname, profile link, player UUID, or match ID..."
-        status={player ? (
-          <span>
-            Showing history for <span className="text-accent">{player.nickname}</span>
-          </span>
-        ) : null}
         error={resolveError ? "Player not found." : null}
       />
 
       <div className="flex-1 overflow-y-auto" style={{ scrollbarGutter: "stable" }}>
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6">
-          {urlPlayer && !resolveError && (
+          {shouldRenderPageSectionTabs(sectionTabs) ? (
+            <PageSectionTabs
+              tabs={sectionTabs}
+              activeKey={normalizedSelectedTab}
+              onChange={(tab) => updateSearch({ tab: tab as HistoryTab })}
+            />
+          ) : null}
+
+          {normalizedSelectedTab === "matches" && urlPlayer && !resolveError && (
             <div className="flex flex-wrap items-center gap-6 text-xs">
               <div className="flex items-center gap-2">
                 <span className="text-text-dim">Last</span>
@@ -157,16 +235,24 @@ function HistoryPage() {
             </div>
           )}
 
-          {urlPlayer && !resolveError && (
+          {normalizedSelectedTab === "matches" && urlPlayer && !resolveError && (
             <div className="text-[10px] text-text-dim">
               Party means the player plus at least 2 known FACEIT friends in the same
               match.
             </div>
           )}
 
-          {resolving || isLoading ? (
+          {showBetsTab ? (
+            authResolved && isSignedIn ? (
+              <BetHistoryTab userId={userId} />
+            ) : (
+              <div className="py-12 text-center text-sm text-text-dim">
+                Loading...
+              </div>
+            )
+          ) : normalizedSelectedTab === "matches" && (resolving || isLoading) ? (
             <div className="py-8 text-center text-accent animate-pulse">Loading...</div>
-          ) : player ? (
+          ) : normalizedSelectedTab === "matches" && player ? (
             <HistoryMatchesTable matches={matches} />
           ) : (
             <div className="py-12 text-center text-text-dim">

@@ -148,6 +148,21 @@ export interface BettingPool {
   resolvedAt: string | null;
 }
 
+export interface BetAuditEvent {
+  id: string;
+  betId: string;
+  poolId: string;
+  faceitMatchId: string;
+  userId: string;
+  side: BetSide;
+  amount: number;
+  betCreatedAt: string;
+  matchStartedAt: string | null;
+  secondsSinceMatchStart: number | null;
+  capturedPoolStatus: BettingPoolStatus;
+  createdAt: string;
+}
+
 export interface Bet {
   id: string;
   poolId: string;
@@ -160,6 +175,33 @@ export interface Bet {
 
 export interface BetWithPool extends Bet {
   pool: BettingPool;
+  audit?: BetAuditEvent | null;
+}
+
+export interface BettingLeaderboardEntry {
+  userId: string;
+  nickname: string;
+  coins: number;
+  betsPlaced: number;
+  betsWon: number;
+  resolvedBets: number;
+  totalWagered: number;
+  totalReturned: number;
+  netProfit: number;
+  winRate: number;
+}
+
+export interface BetHistorySummary {
+  coins: number;
+  betsPlaced: number;
+  betsWon: number;
+  resolvedBets: number;
+  refundedBets: number;
+  pendingBets: number;
+  totalWagered: number;
+  totalReturned: number;
+  netProfit: number;
+  winRate: number;
 }
 
 export interface StatsLeaderboardEntry {

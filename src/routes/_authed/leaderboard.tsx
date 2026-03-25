@@ -1,11 +1,21 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { createIsomorphicFn } from "@tanstack/react-start";
 import { useStatsLeaderboard } from "~/hooks/useStatsLeaderboard";
 import { useSyncPlayerHistory } from "~/hooks/useSyncPlayerHistory";
-import { PageSectionTabs } from "~/components/PageSectionTabs";
+import { BetsLeaderboardTab } from "~/components/BetsLeaderboardTab";
+import {
+  PageSectionTabs,
+  shouldRenderPageSectionTabs,
+} from "~/components/PageSectionTabs";
 import { PlayerSearchHeader } from "~/components/PlayerSearchHeader";
 import { MY_FACEIT_ID } from "~/lib/constants";
 import { resolveFaceitSearchTarget } from "~/lib/faceit-search";
+import {
+  getLeaderboardTabs,
+  normalizeLeaderboardTab,
+  type LeaderboardTab,
+} from "~/lib/leaderboard-page";
 import {
   getStatsLeaderboardEmptyStateCopy,
   getStatsLeaderboardSummaryCopy,
@@ -24,12 +34,31 @@ import { searchAndLoadFriends } from "~/server/friends";
 import { useEffect, useRef, useState } from "react";
 import type { StatsLeaderboardEntry } from "~/lib/types";
 
+const getClientSession = createIsomorphicFn()
+  .server(() => null)
+  .client(async () => {
+    const { getSupabaseClient } = await import("~/lib/supabase.client");
+    const {
+      data: { session },
+    } = await getSupabaseClient().auth.getSession();
+    return session;
+  });
+
 export const Route = createFileRoute("/_authed/leaderboard")({
   validateSearch: (search: Record<string, unknown>) => ({
     player: (search.player as string) || undefined,
+    tab: search.tab === "bets" ? "bets" : "stats",
   }),
   component: LeaderboardPage,
 });
+
+export function shouldRenderLeaderboardBetsTab(params: {
+  authResolved: boolean;
+  isSignedIn: boolean;
+  selectedTab: LeaderboardTab;
+}): boolean {
+  return params.authResolved && params.isSignedIn && params.selectedTab === "bets";
+}
 
 type SortKey =
   | "avgImpact"
@@ -98,14 +127,18 @@ function StatsTab({
   targetPlayerId,
   targetNickname,
   playerIds,
+  hasSearchTarget,
+  isResolvingTarget,
 }: {
   targetPlayerId: string;
   targetNickname: string;
   playerIds: string[];
+  hasSearchTarget: boolean;
+  isResolvingTarget: boolean;
 }) {
   const [n, setN] = useState<HistoryMatchCount>("yesterday");
   const [days, setDays] = useState<30 | 90 | 180 | 365 | 730>(30);
-  const [queue, setQueue] = useState<"all" | "solo" | "party">("all");
+  const [queue, setQueue] = useState<"all" | "solo" | "party">("party");
   const [sortKey, setSortKey] = useState<SortKey>("avgImpact");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [statGroup, setStatGroup] = useState<StatGroup>("combat");
@@ -293,10 +326,14 @@ function StatsTab({
         }}
       />
 
-      {!targetPlayerId ? (
+      {isResolvingTarget ? (
+        <div className="text-accent animate-pulse text-center py-8">
+          Loading...
+        </div>
+      ) : !targetPlayerId && !hasSearchTarget ? (
         <div className="text-text-dim text-center py-12">
-          Search a player above to see who they queued with recently and how
-          each friend is performing across their own recent matches
+          Search a player above to see how their friends are performing across
+          their own recent matches
         </div>
       ) : isLoading ? (
         <div className="text-accent animate-pulse text-center py-8">
@@ -400,17 +437,23 @@ function StatsTab({
 
 function LeaderboardPage() {
   const navigate = useNavigate();
-  const { player: urlPlayer } = Route.useSearch();
+  const { player: urlPlayer, tab: selectedTab } = Route.useSearch();
   const [input, setInput] = useState(urlPlayer ?? "");
+  const [authResolved, setAuthResolved] = useState(false);
+  const [isSignedIn, setIsSignedIn] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+  const normalizedSelectedTab = authResolved
+    ? normalizeLeaderboardTab(selectedTab, isSignedIn)
+    : selectedTab;
 
   const {
     data: searchResult,
     isLoading: searchLoading,
     isError: searchError,
   } = useQuery({
-    queryKey: ["friends-search", urlPlayer?.toLowerCase()],
+    queryKey: ["friends-search", urlPlayer?.toLowerCase(), selectedTab],
     queryFn: () => searchAndLoadFriends({ data: urlPlayer! }),
-    enabled: !!urlPlayer,
+    enabled: !!urlPlayer && normalizedSelectedTab === "stats",
     staleTime: 5 * 60 * 1000,
     retry: false,
   });
@@ -419,9 +462,53 @@ function LeaderboardPage() {
     setInput(urlPlayer ?? "");
   }, [urlPlayer]);
 
+  useEffect(() => {
+    getClientSession().then((session) => {
+      const signedIn = !!session;
+      setUserId(session?.user.id ?? null);
+      setIsSignedIn(signedIn);
+      setAuthResolved(true);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (authResolved && !isSignedIn && selectedTab === "bets") {
+      navigate({
+        to: "/leaderboard",
+        search: {
+          player: urlPlayer,
+          tab: "stats",
+        },
+        replace: true,
+      });
+    }
+  }, [authResolved, isSignedIn, navigate, selectedTab, urlPlayer]);
+
   const friendIds = searchResult?.friends.map((f) => f.faceitId) ?? [];
   const targetPlayerId = searchResult?.player.faceitId ?? "";
   const targetNickname = searchResult?.player.nickname ?? "";
+  const hasSearchTarget = Boolean(urlPlayer);
+  const isResolvingTarget =
+    normalizedSelectedTab === "stats" &&
+    hasSearchTarget &&
+    searchLoading &&
+    !searchError &&
+    !targetPlayerId;
+  const showBetsTab = normalizedSelectedTab === "bets";
+  const tabs = authResolved
+    ? getLeaderboardTabs(isSignedIn)
+    : showBetsTab
+      ? ["bets"]
+      : ["stats"];
+  const sectionTabs = tabs.map((tab) => ({
+    key: tab,
+    label: tab === "stats" ? "Stats" : "Bets",
+  }));
+  const shouldRenderBetsTab = shouldRenderLeaderboardBetsTab({
+    authResolved,
+    isSignedIn,
+    selectedTab: normalizedSelectedTab,
+  });
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -437,6 +524,7 @@ function LeaderboardPage() {
       to: "/leaderboard",
       search: {
         player: target.value,
+        tab: normalizedSelectedTab,
       },
     });
   };
@@ -449,16 +537,6 @@ function LeaderboardPage() {
         onSubmit={handleSearch}
         placeholder="FACEIT nickname, profile link, player UUID, or match ID..."
         isSearching={searchLoading}
-        status={
-          searchResult ? (
-            <span>
-              Showing leaderboard for{" "}
-              <span className="text-accent">
-                {searchResult.player.nickname}
-              </span>
-            </span>
-          ) : null
-        }
         error={searchError ? "Player not found." : null}
       />
 
@@ -467,11 +545,41 @@ function LeaderboardPage() {
         style={{ scrollbarGutter: "stable" }}
       >
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6">
-          <StatsTab
-            targetPlayerId={targetPlayerId}
-            targetNickname={targetNickname}
-            playerIds={friendIds}
-          />
+          {shouldRenderPageSectionTabs(sectionTabs) ? (
+            <PageSectionTabs
+              tabs={sectionTabs}
+              activeKey={normalizedSelectedTab}
+              onChange={(tab) => {
+                const nextTab = tab as LeaderboardTab;
+                navigate({
+                  to: "/leaderboard",
+                  search: {
+                    player: urlPlayer,
+                    tab: normalizeLeaderboardTab(nextTab, isSignedIn),
+                  },
+                  replace: true,
+                });
+              }}
+            />
+          ) : null}
+
+          {showBetsTab ? (
+            shouldRenderBetsTab ? (
+              <BetsLeaderboardTab userId={userId} />
+            ) : (
+              <div className="py-12 text-center text-accent animate-pulse">
+                Loading...
+              </div>
+            )
+          ) : (
+            <StatsTab
+              targetPlayerId={targetPlayerId}
+              targetNickname={targetNickname}
+              playerIds={friendIds}
+              hasSearchTarget={hasSearchTarget}
+              isResolvingTarget={isResolvingTarget}
+            />
+          )}
         </div>
       </div>
     </div>

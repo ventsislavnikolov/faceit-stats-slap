@@ -173,49 +173,40 @@ export function buildPersonalFormLeaderboard({
 }: BuildSharedStatsLeaderboardInput): StatsLeaderboardResult {
   const cutoff = toTimestamp(now) - days * DAY_MS;
   const friendSet = new Set(friendIds.filter((id) => id !== targetPlayerId));
-  const rowsByMatch = new Map<string, ValidSharedStatsLeaderboardRow[]>();
   const targetMatchIds = new Set<string>();
-
-  for (const row of rows) {
-    const validRow = normalizeRow(row);
-    if (!validRow) continue;
-
-    if (!rowsByMatch.has(validRow.matchId)) rowsByMatch.set(validRow.matchId, []);
-    rowsByMatch.get(validRow.matchId)!.push(validRow);
-
-    if (validRow.faceitId === targetPlayerId && validRow.playedAtMs >= cutoff) {
-      targetMatchIds.add(row.matchId);
-    }
-  }
-
-  const eligibleFriendIds = precomputedEligibleFriendIds?.length
+  const activeFriendIds = precomputedEligibleFriendIds?.length
     ? new Set(
         precomputedEligibleFriendIds.filter(
           (faceitId) => faceitId !== targetPlayerId && friendSet.has(faceitId)
         )
       )
     : new Set<string>();
+  const recentRows: ValidSharedStatsLeaderboardRow[] = [];
 
-  if (!precomputedEligibleFriendIds?.length) {
-    for (const matchId of targetMatchIds) {
-      const matchRows = rowsByMatch.get(matchId) ?? [];
-      for (const row of matchRows) {
-        if (friendSet.has(row.faceitId)) {
-          eligibleFriendIds.add(row.faceitId);
-        }
-      }
+  for (const row of rows) {
+    const validRow = normalizeRow(row);
+    if (!validRow) continue;
+
+    if (validRow.playedAtMs < cutoff) continue;
+    recentRows.push(validRow);
+
+    if (validRow.faceitId === targetPlayerId) {
+      targetMatchIds.add(validRow.matchId);
+    }
+
+    if (!precomputedEligibleFriendIds?.length && friendSet.has(validRow.faceitId)) {
+      activeFriendIds.add(validRow.faceitId);
     }
   }
 
-  const includedPlayerIds = new Set(eligibleFriendIds);
+  const includedPlayerIds = new Set(activeFriendIds);
   if (targetMatchIds.size > 0) {
     includedPlayerIds.add(targetPlayerId);
   }
 
   const perFriendRows = new Map<string, ValidSharedStatsLeaderboardRow[]>();
-  for (const row of rows) {
-    const validRow = normalizeRow(row);
-    if (!validRow || !includedPlayerIds.has(validRow.faceitId)) continue;
+  for (const validRow of recentRows) {
+    if (!includedPlayerIds.has(validRow.faceitId)) continue;
 
     if (!perFriendRows.has(validRow.faceitId)) perFriendRows.set(validRow.faceitId, []);
     perFriendRows.get(validRow.faceitId)!.push(validRow);
@@ -263,7 +254,7 @@ export function buildPersonalFormLeaderboard({
   return {
     entries,
     targetMatchCount: targetMatchIds.size,
-    sharedFriendCount: eligibleFriendIds.size,
+    sharedFriendCount: activeFriendIds.size,
   };
 }
 

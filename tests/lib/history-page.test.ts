@@ -6,6 +6,7 @@ import {
   normalizeHistoryMatchCount,
   normalizeHistoryQueueFilter,
   normalizeHistoryTab,
+  shouldEnableHistoryLookups,
 } from "~/lib/history-page";
 
 describe("history page access", () => {
@@ -17,6 +18,7 @@ describe("history page access", () => {
   it("falls back to the matches tab when bets is unavailable", () => {
     expect(normalizeHistoryTab("bets", false)).toBe("matches");
     expect(normalizeHistoryTab("matches", false)).toBe("matches");
+    expect(normalizeHistoryTab("matches", true)).toBe("matches");
     expect(normalizeHistoryTab("bets", true)).toBe("bets");
   });
 
@@ -29,14 +31,15 @@ describe("history page access", () => {
     expect(normalizeHistoryMatchCount(undefined)).toBe("yesterday");
   });
 
-  it("locks queue filters to all while solo and party are unsupported", () => {
+  it("defaults queue filters to party and lists party first", () => {
     expect(normalizeHistoryQueueFilter("all")).toBe("all");
     expect(normalizeHistoryQueueFilter("solo")).toBe("solo");
     expect(normalizeHistoryQueueFilter("party")).toBe("party");
+    expect(normalizeHistoryQueueFilter(undefined)).toBe("party");
     expect(getHistoryQueueOptions()).toEqual([
-      { value: "all", label: "All" },
-      { value: "solo", label: "Solo" },
       { value: "party", label: "Party" },
+      { value: "solo", label: "Solo" },
+      { value: "all", label: "All" },
     ]);
   });
 
@@ -47,5 +50,11 @@ describe("history page access", () => {
       { value: 50, label: "50" },
       { value: 100, label: "100" },
     ]);
+  });
+
+  it("disables history lookups until auth resolves and matches is active", () => {
+    expect(shouldEnableHistoryLookups("bets", true)).toBe(false);
+    expect(shouldEnableHistoryLookups("matches", false)).toBe(false);
+    expect(shouldEnableHistoryLookups("matches", true)).toBe(true);
   });
 });

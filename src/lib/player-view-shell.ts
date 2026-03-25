@@ -27,7 +27,7 @@ export function getPlayerViewHref(view: PlayerView, nickname: string): PlayerVie
         search: {
           player: nickname,
           matches: "yesterday",
-          queue: "all",
+          queue: "party",
         },
       };
     case "leaderboard":

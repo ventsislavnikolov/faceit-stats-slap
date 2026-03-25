@@ -10,11 +10,19 @@ import { getLiveMatchDisplayScore, getLiveMatchTeamLabels } from "~/lib/live-mat
 
 interface LiveMatchCardProps {
   match: LiveMatch;
+  authResolved?: boolean;
+  bettingContextReady?: boolean;
   userId?: string | null;
   userCoins?: number;
 }
 
-export function LiveMatchCard({ match, userId, userCoins }: LiveMatchCardProps) {
+export function LiveMatchCard({
+  match,
+  authResolved = true,
+  bettingContextReady = true,
+  userId,
+  userCoins,
+}: LiveMatchCardProps) {
   const { data: betData } = useBettingPool(match.matchId, userId ?? null);
   const isFinished = match.status === "FINISHED";
   const isLive = match.status === "ONGOING";
@@ -140,7 +148,7 @@ export function LiveMatchCard({ match, userId, userCoins }: LiveMatchCardProps) 
       )}
 
       {/* Betting panel */}
-      {betData?.pool && (
+      {authResolved && bettingContextReady && betData?.pool && (
         <BettingPanel
           pool={betData.pool}
           userBet={betData.userBet}
