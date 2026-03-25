@@ -1,6 +1,25 @@
 export type MatchStatus = "ONGOING" | "READY" | "VOTING" | "CONFIGURING" | "FINISHED" | "CANCELLED";
 export type MatchQueueBucket = "solo" | "party" | "unknown";
 
+export const DEMO_INGESTION_STATUS_VALUES = [
+  "queued",
+  "parsing",
+  "parsed",
+  "failed",
+  "source_unavailable",
+] as const;
+export type DemoIngestionStatus = (typeof DEMO_INGESTION_STATUS_VALUES)[number];
+
+export const DEMO_ANALYTICS_SOURCE_TYPE_VALUES = [
+  "faceit_demo_url",
+  "manual_upload",
+] as const;
+export type DemoAnalyticsSourceType = (typeof DEMO_ANALYTICS_SOURCE_TYPE_VALUES)[number];
+
+export const DEMO_ANALYTICS_AVAILABILITY_VALUES = ["available", "unavailable"] as const;
+export type DemoAnalyticsAvailability = (typeof DEMO_ANALYTICS_AVAILABILITY_VALUES)[number];
+export type DemoTeamKey = "team1" | "team2";
+
 export interface FaceitPlayer {
   faceitId: string;
   nickname: string;
@@ -120,6 +139,56 @@ export interface MatchDetail {
   rounds: number;
   region: string;
   competitionName: string;
+}
+
+export interface DemoPlayerAnalytics {
+  nickname: string;
+  teamKey: DemoTeamKey;
+  tradeKills: number;
+  untradedDeaths: number;
+  rws: number;
+  playerId?: string;
+  kills?: number;
+  deaths?: number;
+  assists?: number;
+  adr?: number;
+  damage?: number;
+}
+
+export interface DemoTeamAnalytics {
+  teamKey: DemoTeamKey;
+  name: string;
+  side: "CT" | "T" | "unknown";
+  roundsWon: number;
+  roundsLost: number;
+  tradeKills: number;
+  untradedDeaths: number;
+  rws: number;
+}
+
+export interface DemoRoundAnalytics {
+  roundNumber: number;
+  winnerTeamKey: DemoTeamKey | null;
+  winnerSide: "CT" | "T" | null;
+  isPistolRound: boolean;
+  isBombRound: boolean;
+  scoreAfterRound: Record<DemoTeamKey, number>;
+}
+
+export interface DemoMatchAnalytics {
+  matchId: string;
+  sourceType: DemoAnalyticsSourceType;
+  availability: DemoAnalyticsAvailability;
+  ingestionStatus: DemoIngestionStatus;
+  mapName: string;
+  totalRounds: number;
+  rounds: DemoRoundAnalytics[];
+  teams: DemoTeamAnalytics[];
+  players: DemoPlayerAnalytics[];
+}
+
+export interface MatchDetailWithDemoAnalytics extends MatchDetail {
+  demoAnalytics: DemoMatchAnalytics | null;
 }
 
 export interface TwitchStream {
