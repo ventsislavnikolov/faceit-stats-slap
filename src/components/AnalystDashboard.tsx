@@ -199,6 +199,47 @@ function OverviewTab({
         />
       </Card>
 
+      {/* Utility Usage by Player */}
+      <Card title="Utility Thrown">
+        <ResponsiveContainer width="100%" height={200}>
+          <BarChart data={demoAnalytics.players.map(p => ({
+            name: p.nickname.slice(0, 8),
+            Smokes: p.smokesThrown ?? 0,
+            Flashes: p.flashesThrown ?? 0,
+            HEs: p.hesThrown ?? 0,
+            Molotovs: p.molotovsThrown ?? 0,
+          }))}>
+            <XAxis dataKey="name" tick={{ fill: TEXT_MUTED, fontSize: 9 }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fill: TEXT_DIM, fontSize: 9 }} axisLine={false} tickLine={false} />
+            <Tooltip contentStyle={tooltipStyle} />
+            <Bar dataKey="Smokes" stackId="util" fill="#6b7280" />
+            <Bar dataKey="Flashes" stackId="util" fill="#facc15" />
+            <Bar dataKey="HEs" stackId="util" fill="#ef4444" />
+            <Bar dataKey="Molotovs" stackId="util" fill="#f97316" />
+          </BarChart>
+        </ResponsiveContainer>
+      </Card>
+
+      {/* Economy Efficiency */}
+      <Card title="Economy Efficiency (DMG per $1000)">
+        <ResponsiveContainer width="100%" height={160}>
+          <BarChart data={[...demoAnalytics.players].map(p => ({
+            name: p.nickname.slice(0, 8),
+            efficiency: p.economyEfficiency ?? 0,
+            team: p.teamKey,
+          })).sort((a, b) => b.efficiency - a.efficiency)} barSize={28}>
+            <XAxis dataKey="name" tick={{ fill: TEXT_MUTED, fontSize: 9 }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fill: TEXT_DIM, fontSize: 9 }} axisLine={false} tickLine={false} />
+            <Tooltip contentStyle={tooltipStyle} />
+            <Bar dataKey="efficiency" radius={[4, 4, 0, 0]}>
+              {[...demoAnalytics.players].sort((a, b) => (b.economyEfficiency ?? 0) - (a.economyEfficiency ?? 0)).map((p) => (
+                <Cell key={p.nickname} fill={p.teamKey === "team1" ? TEAM1_COLOR : TEAM2_COLOR} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </Card>
+
       {/* Player detail */}
       {selectedDemo && selectedFaceit && (
         <PlayerDetailCard demo={selectedDemo} faceit={selectedFaceit} totalRounds={demoAnalytics.totalRounds} />
@@ -314,6 +355,9 @@ function CompareTab({ demoAnalytics }: { demoAnalytics: DemoMatchAnalytics }) {
     { label: "Utility DMG", a: String(sum(t1, (p) => p.utilityDamage ?? 0)), b: String(sum(t2, (p) => p.utilityDamage ?? 0)) },
     { label: "Flash Assists", a: String(sum(t1, (p) => p.flashAssists ?? 0)), b: String(sum(t2, (p) => p.flashAssists ?? 0)) },
     { label: "Exit Kills", a: String(sum(t1, (p) => p.exitKills ?? 0)), b: String(sum(t2, (p) => p.exitKills ?? 0)), invert: true },
+    { label: "Utility Thrown", a: String(sum(t1, (p) => (p.smokesThrown ?? 0) + (p.flashesThrown ?? 0) + (p.hesThrown ?? 0) + (p.molotovsThrown ?? 0))), b: String(sum(t2, (p) => (p.smokesThrown ?? 0) + (p.flashesThrown ?? 0) + (p.hesThrown ?? 0) + (p.molotovsThrown ?? 0))) },
+    { label: "Team Flashes", a: String(sum(t1, (p) => p.teamFlashes ?? 0)), b: String(sum(t2, (p) => p.teamFlashes ?? 0)), invert: true },
+    { label: "Total Spend", a: `$${sum(t1, (p) => p.totalSpend ?? 0).toLocaleString()}`, b: `$${sum(t2, (p) => p.totalSpend ?? 0).toLocaleString()}` },
   ];
 
   // ADR by player chart data
