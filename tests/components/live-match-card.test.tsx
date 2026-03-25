@@ -58,7 +58,7 @@ describe("LiveMatchCard", () => {
     } as any);
 
     const html = renderToStaticMarkup(
-      <LiveMatchCard match={match} authResolved={false} />,
+      <LiveMatchCard authResolved={false} match={match} />
     );
 
     expect(html).toContain("LIVE");
@@ -93,12 +93,12 @@ describe("LiveMatchCard", () => {
 
     const html = renderToStaticMarkup(
       <LiveMatchCard
-        match={match}
         authResolved={true}
         bettingContextReady={false}
-        userId="user-1"
+        match={match}
         userCoins={0}
-      />,
+        userId="user-1"
+      />
     );
 
     expect(html).toContain("LIVE");
@@ -132,12 +132,12 @@ describe("LiveMatchCard", () => {
 
     const html = renderToStaticMarkup(
       <LiveMatchCard
-        match={match}
         authResolved={true}
         bettingContextReady={true}
-        userId="user-1"
+        match={match}
         userCoins={1234}
-      />,
+        userId="user-1"
+      />
     );
 
     expect(html).toContain("LIVE");

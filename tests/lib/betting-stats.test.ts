@@ -1,10 +1,14 @@
 import { describe, expect, it } from "vitest";
-import type { BetWithPool, BettingPool, BettingLeaderboardEntry } from "~/lib/types";
 import {
   buildBetHistorySummary,
   getBetOutcomeLabel,
   sortBettingLeaderboardEntries,
 } from "~/lib/betting-stats";
+import type {
+  BettingLeaderboardEntry,
+  BettingPool,
+  BetWithPool,
+} from "~/lib/types";
 
 function makePool(overrides: Partial<BettingPool> = {}): BettingPool {
   return {
@@ -45,8 +49,8 @@ describe("getBetOutcomeLabel", () => {
           amount: 100,
           payout: 180,
           pool: makePool({ status: "RESOLVED", winningTeam: "team1" }),
-        }),
-      ),
+        })
+      )
     ).toBe("Won");
   });
 
@@ -57,8 +61,8 @@ describe("getBetOutcomeLabel", () => {
           amount: 100,
           payout: 100,
           pool: makePool({ status: "REFUNDED" }),
-        }),
-      ),
+        })
+      )
     ).toBe("Refunded");
   });
 
@@ -69,8 +73,8 @@ describe("getBetOutcomeLabel", () => {
           amount: 100,
           payout: null,
           pool: makePool({ status: "RESOLVED", winningTeam: "team2" }),
-        }),
-      ),
+        })
+      )
     ).toBe("Lost");
   });
 
@@ -92,7 +96,11 @@ describe("buildBetHistorySummary", () => {
           id: "bet-2",
           amount: 75,
           payout: 0,
-          pool: makePool({ id: "pool-2", status: "RESOLVED", winningTeam: "team2" }),
+          pool: makePool({
+            id: "pool-2",
+            status: "RESOLVED",
+            winningTeam: "team2",
+          }),
         }),
         makeBet({
           id: "bet-3",
@@ -107,7 +115,7 @@ describe("buildBetHistorySummary", () => {
           pool: makePool({ id: "pool-4", status: "OPEN" }),
         }),
       ],
-      1240,
+      1240
     );
 
     expect(summary).toMatchObject({
@@ -166,10 +174,8 @@ describe("sortBettingLeaderboardEntries", () => {
       },
     ];
 
-    expect(sortBettingLeaderboardEntries(entries).map((entry) => entry.userId)).toEqual([
-      "user-2",
-      "user-1",
-      "user-3",
-    ]);
+    expect(
+      sortBettingLeaderboardEntries(entries).map((entry) => entry.userId)
+    ).toEqual(["user-2", "user-1", "user-3"]);
   });
 });

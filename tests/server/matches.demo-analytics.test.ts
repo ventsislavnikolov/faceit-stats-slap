@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { runWithStartContext } from "../../node_modules/.pnpm/@tanstack+start-storage-context@1.166.15/node_modules/@tanstack/start-storage-context/dist/esm/index.js";
 import { getMatchDetails } from "~/server/matches";
+import { runWithStartContext } from "../../node_modules/.pnpm/@tanstack+start-storage-context@1.166.15/node_modules/@tanstack/start-storage-context/dist/esm/index.js";
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -23,7 +23,10 @@ const webhookMocks = vi.hoisted(() => ({
 
 const supabaseState = vi.hoisted(() => {
   const matchesUpsert = vi.fn(async () => ({ data: null, error: null }));
-  const matchPlayerStatsUpsert = vi.fn(async () => ({ data: null, error: null }));
+  const matchPlayerStatsUpsert = vi.fn(async () => ({
+    data: null,
+    error: null,
+  }));
 
   let matchRow: { id: string } | null = { id: "db-match-1" };
 
@@ -55,7 +58,9 @@ const supabaseState = vi.hoisted(() => {
           eq: vi.fn(() => ({
             single: vi.fn(async () => ({
               data: demoMatchAnalyticsRow,
-              error: demoMatchAnalyticsRow ? null : { message: "not found", code: "PGRST116" },
+              error: demoMatchAnalyticsRow
+                ? null
+                : { message: "not found", code: "PGRST116" },
             })),
           })),
         })),
@@ -101,7 +106,9 @@ const supabaseState = vi.hoisted(() => {
               limit: vi.fn(() => ({
                 single: vi.fn(async () => ({
                   data: demoIngestionRow,
-                  error: demoIngestionRow ? null : { message: "not found", code: "PGRST116" },
+                  error: demoIngestionRow
+                    ? null
+                    : { message: "not found", code: "PGRST116" },
                 })),
               })),
             })),
@@ -111,7 +118,11 @@ const supabaseState = vi.hoisted(() => {
     }
     // Fallback for betting_pools etc
     return {
-      insert: vi.fn(() => ({ onConflict: vi.fn(() => ({ ignore: vi.fn(async () => ({ data: null, error: null })) })) })),
+      insert: vi.fn(() => ({
+        onConflict: vi.fn(() => ({
+          ignore: vi.fn(async () => ({ data: null, error: null })),
+        })),
+      })),
       select: vi.fn(() => ({ in: vi.fn(async () => ({ data: [] })) })),
     };
   });
@@ -121,12 +132,24 @@ const supabaseState = vi.hoisted(() => {
     from,
     matchesUpsert,
     matchPlayerStatsUpsert,
-    setMatchRow(v: { id: string } | null) { matchRow = v; },
-    setDemoMatchAnalytics(v: Record<string, unknown> | null) { demoMatchAnalyticsRow = v; },
-    setDemoTeamAnalytics(v: Record<string, unknown>[]) { demoTeamAnalyticsRows = v; },
-    setDemoPlayerAnalytics(v: Record<string, unknown>[]) { demoPlayerAnalyticsRows = v; },
-    setDemoRoundAnalytics(v: Record<string, unknown>[]) { demoRoundAnalyticsRows = v; },
-    setDemoIngestion(v: Record<string, unknown> | null) { demoIngestionRow = v; },
+    setMatchRow(v: { id: string } | null) {
+      matchRow = v;
+    },
+    setDemoMatchAnalytics(v: Record<string, unknown> | null) {
+      demoMatchAnalyticsRow = v;
+    },
+    setDemoTeamAnalytics(v: Record<string, unknown>[]) {
+      demoTeamAnalyticsRows = v;
+    },
+    setDemoPlayerAnalytics(v: Record<string, unknown>[]) {
+      demoPlayerAnalyticsRows = v;
+    },
+    setDemoRoundAnalytics(v: Record<string, unknown>[]) {
+      demoRoundAnalyticsRows = v;
+    },
+    setDemoIngestion(v: Record<string, unknown> | null) {
+      demoIngestionRow = v;
+    },
     reset() {
       matchRow = { id: "db-match-1" };
       demoMatchAnalyticsRow = null;
@@ -142,7 +165,8 @@ const supabaseState = vi.hoisted(() => {
 });
 
 vi.mock("~/lib/faceit", async () => {
-  const actual = await vi.importActual<typeof import("~/lib/faceit")>("~/lib/faceit");
+  const actual =
+    await vi.importActual<typeof import("~/lib/faceit")>("~/lib/faceit");
   return {
     ...actual,
     fetchPlayer: faceitMocks.fetchPlayer,
@@ -207,8 +231,8 @@ function setupFinishedMatch() {
   faceitMocks.fetchMatch.mockResolvedValue({
     match_id: "match-1",
     status: "FINISHED",
-    started_at: 1710000000,
-    finished_at: 1710000900,
+    started_at: 1_710_000_000,
+    finished_at: 1_710_000_900,
     demo_url: ["https://demo.test/demo.dem.zst"],
     teams: { faction1: { name: "Alpha" }, faction2: { name: "Bravo" } },
     voting: { map: { pick: ["de_inferno"] } },
@@ -218,7 +242,12 @@ function setupFinishedMatch() {
   faceitMocks.fetchMatchStats.mockResolvedValue({
     rounds: [
       {
-        round_stats: { Map: "de_inferno", Score: "13 / 7", Rounds: "20", Region: "EU" },
+        round_stats: {
+          Map: "de_inferno",
+          Score: "13 / 7",
+          Rounds: "20",
+          Region: "EU",
+        },
         teams: [
           { team_stats: { Team: "Alpha" }, players: [{ player_id: "p1" }] },
           { team_stats: { Team: "Bravo" }, players: [{ player_id: "p2" }] },
@@ -229,14 +258,19 @@ function setupFinishedMatch() {
   faceitMocks.parseMatchStats
     .mockReturnValueOnce(buildParsedPlayer("p1", "Player1"))
     .mockReturnValueOnce(buildParsedPlayer("p2", "Player2"));
-  faceitMocks.parseMatchTeamScore.mockReturnValueOnce(13).mockReturnValueOnce(7);
+  faceitMocks.parseMatchTeamScore
+    .mockReturnValueOnce(13)
+    .mockReturnValueOnce(7);
   faceitMocks.buildMatchScoreString.mockReturnValue("13 / 7");
 }
 
 function callGetMatchDetails(matchId = "match-1") {
   return runWithStartContext(
-    { contextAfterGlobalMiddlewares: {}, request: new Request("http://localhost") } as any,
-    () => getMatchDetails({ data: matchId } as any),
+    {
+      contextAfterGlobalMiddlewares: {},
+      request: new Request("http://localhost"),
+    } as any,
+    () => getMatchDetails({ data: matchId } as any)
   );
 }
 

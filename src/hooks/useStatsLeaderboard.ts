@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { getStatsLeaderboard } from "~/server/matches";
 import type { StatsLeaderboardResult } from "~/lib/types";
+import { getStatsLeaderboard } from "~/server/matches";
 
 export function useStatsLeaderboard(params: {
   targetPlayerId: string;

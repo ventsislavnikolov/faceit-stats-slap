@@ -35,12 +35,12 @@ export const TRACKED_WEBHOOK_PLAYERS = {
 } as const;
 
 export function getTrackedWebhookPlayerIds(): string[] {
-  return Object.values(TRACKED_WEBHOOK_PLAYERS).map((player) => player.faceitId);
+  return Object.values(TRACKED_WEBHOOK_PLAYERS).map(
+    (player) => player.faceitId
+  );
 }
 
-const TRACKED_PLAYER_IDS = new Set(
-  getTrackedWebhookPlayerIds()
-);
+const TRACKED_PLAYER_IDS = new Set(getTrackedWebhookPlayerIds());
 
 const ACTIVE_EVENTS = new Set<FaceitWebhookEvent>([
   "match_object_created",
@@ -55,15 +55,24 @@ const CLEAR_EVENTS = new Set<FaceitWebhookEvent>([
 ]);
 
 function getObjectValues(input: unknown): unknown[] {
-  if (!input || typeof input !== "object") return [];
+  if (!input || typeof input !== "object") {
+    return [];
+  }
   return Array.isArray(input) ? input : Object.values(input);
 }
 
-function collectTrackedPlayerIds(input: unknown, found = new Set<string>()): Set<string> {
-  if (!input || typeof input !== "object") return found;
+function collectTrackedPlayerIds(
+  input: unknown,
+  found = new Set<string>()
+): Set<string> {
+  if (!input || typeof input !== "object") {
+    return found;
+  }
 
   if (Array.isArray(input)) {
-    for (const item of input) collectTrackedPlayerIds(item, found);
+    for (const item of input) {
+      collectTrackedPlayerIds(item, found);
+    }
     return found;
   }
 
@@ -89,15 +98,12 @@ function collectTrackedPlayerIds(input: unknown, found = new Set<string>()): Set
 }
 
 function extractEventName(input: Record<string, unknown>): string {
-  const candidates = [
-    input.event,
-    input.event_type,
-    input.type,
-    input.name,
-  ];
+  const candidates = [input.event, input.event_type, input.type, input.name];
 
   for (const candidate of candidates) {
-    if (typeof candidate === "string" && candidate.length > 0) return candidate;
+    if (typeof candidate === "string" && candidate.length > 0) {
+      return candidate;
+    }
   }
 
   const payload = input.payload;
@@ -106,18 +112,30 @@ function extractEventName(input: Record<string, unknown>): string {
     const state = typeof record.state === "string" ? record.state : null;
     const status = typeof record.status === "string" ? record.status : null;
 
-    if (status === "LIVE" || state === "ONGOING") return "match_status_ready";
-    if (state === "CONFIGURING") return "match_status_configuring";
-    if (state === "FINISHED") return "match_status_finished";
-    if (state === "CANCELLED") return "match_status_cancelled";
-    if (state === "ABORTED") return "match_status_aborted";
+    if (status === "LIVE" || state === "ONGOING") {
+      return "match_status_ready";
+    }
+    if (state === "CONFIGURING") {
+      return "match_status_configuring";
+    }
+    if (state === "FINISHED") {
+      return "match_status_finished";
+    }
+    if (state === "CANCELLED") {
+      return "match_status_cancelled";
+    }
+    if (state === "ABORTED") {
+      return "match_status_aborted";
+    }
   }
 
   return "unknown";
 }
 
 function looksLikeMatchObject(record: Record<string, unknown>): boolean {
-  if (typeof record.match_id === "string") return true;
+  if (typeof record.match_id === "string") {
+    return true;
+  }
 
   const hasMatchShape =
     typeof record.status === "string" ||
@@ -130,12 +148,16 @@ function looksLikeMatchObject(record: Record<string, unknown>): boolean {
 }
 
 function extractMatchId(input: unknown): string | null {
-  if (!input || typeof input !== "object") return null;
+  if (!input || typeof input !== "object") {
+    return null;
+  }
 
   if (Array.isArray(input)) {
     for (const item of input) {
       const matchId = extractMatchId(item);
-      if (matchId) return matchId;
+      if (matchId) {
+        return matchId;
+      }
     }
     return null;
   }
@@ -148,7 +170,9 @@ function extractMatchId(input: unknown): string | null {
   ];
 
   for (const candidate of directCandidates) {
-    if (typeof candidate === "string" && candidate.length > 0) return candidate;
+    if (typeof candidate === "string" && candidate.length > 0) {
+      return candidate;
+    }
   }
 
   if (looksLikeMatchObject(record)) {
@@ -158,7 +182,9 @@ function extractMatchId(input: unknown): string | null {
   for (const key of ["match", "payload", "data", "event_data", "object"]) {
     const nested = record[key];
     const matchId = extractMatchId(nested);
-    if (matchId) return matchId;
+    if (matchId) {
+      return matchId;
+    }
   }
 
   return null;
@@ -186,7 +212,9 @@ export function groupWebhookStateByMatch(
   const byMatch = new Map<string, string[]>();
 
   for (const row of rows) {
-    if (!row.current_match_id) continue;
+    if (!row.current_match_id) {
+      continue;
+    }
     if (!byMatch.has(row.current_match_id)) {
       byMatch.set(row.current_match_id, []);
     }

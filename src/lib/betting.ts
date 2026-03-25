@@ -1,4 +1,4 @@
-import { BettingPoolStatus } from "~/lib/types";
+import type { BettingPoolStatus } from "~/lib/types";
 
 /**
  * Calculates pari-mutuel payout for a winning bet.
@@ -10,8 +10,12 @@ export function calculatePayout(
   winningSideTotal: number,
   losingSideTotal: number
 ): number {
-  if (losingSideTotal === 0 || winningSideTotal === 0) return betAmount;
-  return Math.floor((betAmount / winningSideTotal) * losingSideTotal) + betAmount;
+  if (losingSideTotal === 0 || winningSideTotal === 0) {
+    return betAmount;
+  }
+  return (
+    Math.floor((betAmount / winningSideTotal) * losingSideTotal) + betAmount
+  );
 }
 
 export function calculateReturnPct(
@@ -20,16 +24,25 @@ export function calculateReturnPct(
   losingSideTotal: number
 ): number {
   const payout = calculatePayout(betAmount, winningSideTotal, losingSideTotal);
-  if (payout === betAmount) return 0;
+  if (payout === betAmount) {
+    return 0;
+  }
   return Math.floor(((payout - betAmount) / betAmount) * 100);
 }
 
-export function isBettingOpen(status: BettingPoolStatus, closesAt: string): boolean {
+export function isBettingOpen(
+  status: BettingPoolStatus,
+  closesAt: string
+): boolean {
   return status === "OPEN" && new Date(closesAt) > new Date();
 }
 
-export function formatBetTiming(secondsSinceMatchStart: number | null | undefined): string | null {
-  if (secondsSinceMatchStart == null || secondsSinceMatchStart < 0) return null;
+export function formatBetTiming(
+  secondsSinceMatchStart: number | null | undefined
+): string | null {
+  if (secondsSinceMatchStart == null || secondsSinceMatchStart < 0) {
+    return null;
+  }
 
   if (secondsSinceMatchStart < 60) {
     return `Placed ${secondsSinceMatchStart}s after match start`;

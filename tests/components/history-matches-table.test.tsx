@@ -56,6 +56,8 @@ describe("HistoryMatchesTable", () => {
       />
     );
 
-    expect(html).toContain("grid-template-columns:3rem 26.5rem repeat(7, 5rem)");
+    expect(html).toContain(
+      "grid-template-columns:3rem 24rem 2.5rem repeat(7, 5rem)"
+    );
   });
 });

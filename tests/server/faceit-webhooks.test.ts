@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { TRACKED_WEBHOOK_PLAYERS } from "~/lib/faceit-webhooks";
 import {
   getWebhookLiveMatchMap,
   persistFaceitWebhook,
 } from "~/server/faceit-webhooks";
-import { TRACKED_WEBHOOK_PLAYERS } from "~/lib/faceit-webhooks";
 
 const mockSupabase = vi.hoisted(() => {
   const stateRows = [
@@ -136,9 +136,7 @@ describe("persistFaceitWebhook", () => {
       event: "match_status_finished",
       payload: {
         match_id: "match-42",
-        players: [
-          { player_id: TRACKED_WEBHOOK_PLAYERS.soavarice.faceitId },
-        ],
+        players: [{ player_id: TRACKED_WEBHOOK_PLAYERS.soavarice.faceitId }],
       },
     };
 
@@ -241,11 +239,14 @@ describe("getWebhookLiveMatchMap", () => {
       TRACKED_WEBHOOK_PLAYERS.f1aw1esss.faceitId,
     ]);
 
-    expect(mockSupabase.selectChain.in).toHaveBeenCalledWith("player_faceit_id", [
-      TRACKED_WEBHOOK_PLAYERS.soavarice.faceitId,
-      TRACKED_WEBHOOK_PLAYERS.tibabg.faceitId,
-      TRACKED_WEBHOOK_PLAYERS.f1aw1esss.faceitId,
-    ]);
+    expect(mockSupabase.selectChain.in).toHaveBeenCalledWith(
+      "player_faceit_id",
+      [
+        TRACKED_WEBHOOK_PLAYERS.soavarice.faceitId,
+        TRACKED_WEBHOOK_PLAYERS.tibabg.faceitId,
+        TRACKED_WEBHOOK_PLAYERS.f1aw1esss.faceitId,
+      ]
+    );
     expect(result).toEqual(
       new Map([
         [

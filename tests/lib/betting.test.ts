@@ -1,5 +1,9 @@
-import { describe, it, expect } from "vitest";
-import { calculatePayout, calculateReturnPct, isBettingOpen } from "~/lib/betting";
+import { describe, expect, it } from "vitest";
+import {
+  calculatePayout,
+  calculateReturnPct,
+  isBettingOpen,
+} from "~/lib/betting";
 
 describe("calculatePayout", () => {
   it("splits losing pool proportionally", () => {

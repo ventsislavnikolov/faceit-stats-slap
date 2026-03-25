@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { getTwitchStreams } from "~/server/twitch";
 import type { TwitchStream } from "~/lib/types";
+import { getTwitchStreams } from "~/server/twitch";
 
 export function useTwitchLive() {
   return useQuery<TwitchStream[]>({

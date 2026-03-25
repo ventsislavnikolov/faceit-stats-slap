@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
   getDemoIngestionForMatch,
   queueFaceitDemoParse,
@@ -41,7 +41,10 @@ function createSupabaseMock(options?: {
           });
           return promise;
         },
-        upsert(rows: Record<string, unknown>[], opts?: Record<string, unknown>) {
+        upsert(
+          rows: Record<string, unknown>[],
+          opts?: Record<string, unknown>
+        ) {
           calls.push({ table, method: "upsert", rows });
           return Promise.resolve({ data: null, error: null });
         },
@@ -67,13 +70,17 @@ function createSupabaseMock(options?: {
                 limit: () => ({
                   single: async () => ({
                     data: existing,
-                    error: existing ? null : { message: "not found", code: "PGRST116" },
+                    error: existing
+                      ? null
+                      : { message: "not found", code: "PGRST116" },
                   }),
                 }),
               }),
               single: async () => ({
                 data: existing,
-                error: existing ? null : { message: "not found", code: "PGRST116" },
+                error: existing
+                  ? null
+                  : { message: "not found", code: "PGRST116" },
               }),
             }),
           };
@@ -98,7 +105,9 @@ describe("queueFaceitDemoParse", () => {
 
     expect(result).toEqual({ id: "new-ingestion-id", alreadyExists: false });
 
-    const call = sb.calls.find((c) => c.table === "demo_ingestions" && c.method === "insert");
+    const call = sb.calls.find(
+      (c) => c.table === "demo_ingestions" && c.method === "insert"
+    );
     expect(call).toBeDefined();
     expect(call!.rows![0]).toMatchObject({
       faceit_match_id: "match-1",
@@ -116,10 +125,16 @@ describe("queueFaceitDemoParse", () => {
       demoUrl: null,
     });
 
-    expect(result).toEqual({ id: null, alreadyExists: false, sourceUnavailable: true });
+    expect(result).toEqual({
+      id: null,
+      alreadyExists: false,
+      sourceUnavailable: true,
+    });
 
     // Should insert a source_unavailable ingestion row
-    const call = sb.calls.find((c) => c.table === "demo_ingestions" && c.method === "insert");
+    const call = sb.calls.find(
+      (c) => c.table === "demo_ingestions" && c.method === "insert"
+    );
     expect(call).toBeDefined();
     expect(call!.rows![0]).toMatchObject({
       faceit_match_id: "match-1",
@@ -147,7 +162,7 @@ describe("queueFaceitDemoParse", () => {
 
     // Should NOT have inserted a new row
     const insertCalls = sb.calls.filter(
-      (c) => c.table === "demo_ingestions" && c.method === "insert",
+      (c) => c.table === "demo_ingestions" && c.method === "insert"
     );
     expect(insertCalls).toHaveLength(0);
   });
@@ -184,19 +199,21 @@ describe("queueManualDemoParse", () => {
       faceitMatchId: "match-1",
       fileName: "demo.dem.zst",
       fileSha256: "sha-abc",
-      fileSizeBytes: 50000,
+      fileSizeBytes: 50_000,
     });
 
     expect(result).toEqual({ id: "new-ingestion-id", alreadyExists: false });
 
-    const call = sb.calls.find((c) => c.table === "demo_ingestions" && c.method === "insert");
+    const call = sb.calls.find(
+      (c) => c.table === "demo_ingestions" && c.method === "insert"
+    );
     expect(call).toBeDefined();
     expect(call!.rows![0]).toMatchObject({
       faceit_match_id: "match-1",
       source_type: "manual_upload",
       file_name: "demo.dem.zst",
       file_sha256: "sha-abc",
-      file_size_bytes: 50000,
+      file_size_bytes: 50_000,
       status: "queued",
     });
   });

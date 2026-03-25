@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
-  DEFAULT_TRADE_WINDOW_SECONDS,
-  RWS_BOMB_BONUS_POINTS,
   buildRoundScoreProgression,
   buildWinLossStreaks,
   classifyExitKill,
   classifyTradeKill,
   computeRwsForRound,
+  DEFAULT_TRADE_WINDOW_SECONDS,
+  RWS_BOMB_BONUS_POINTS,
 } from "~/lib/demo-analytics";
 
 describe("demo analytics helpers", () => {
@@ -17,7 +17,7 @@ describe("demo analytics helpers", () => {
         victimTeamKey: "team2",
         killAtSeconds: 16,
         victimDeathAtSeconds: 12,
-      }),
+      })
     ).toBe(true);
 
     expect(
@@ -26,7 +26,7 @@ describe("demo analytics helpers", () => {
         victimTeamKey: "team2",
         killAtSeconds: 12 + DEFAULT_TRADE_WINDOW_SECONDS + 1,
         victimDeathAtSeconds: 12,
-      }),
+      })
     ).toBe(false);
   });
 
@@ -38,7 +38,7 @@ describe("demo analytics helpers", () => {
         killAtSeconds: 42,
         bombPlantedAtSeconds: 30,
         roundEndedAtSeconds: 45,
-      }),
+      })
     ).toBe(true);
 
     expect(
@@ -48,7 +48,7 @@ describe("demo analytics helpers", () => {
         killAtSeconds: 28,
         bombPlantedAtSeconds: 30,
         roundEndedAtSeconds: 45,
-      }),
+      })
     ).toBe(false);
   });
 
@@ -169,9 +169,9 @@ describe("demo analytics helpers", () => {
     });
 
     expect(rws).toEqual({
-      a: 33.333333333333336,
-      b: 33.333333333333336,
-      c: 33.333333333333336,
+      a: 33.333_333_333_333_336,
+      b: 33.333_333_333_333_336,
+      c: 33.333_333_333_333_336,
     });
   });
 

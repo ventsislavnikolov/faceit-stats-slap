@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { getLeaderboard } from "~/server/betting";
 import type { BettingLeaderboardEntry } from "~/lib/types";
+import { getLeaderboard } from "~/server/betting";
 
 export function useLeaderboard() {
   return useQuery<BettingLeaderboardEntry[]>({

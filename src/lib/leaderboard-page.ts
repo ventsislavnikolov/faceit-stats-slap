@@ -8,7 +8,7 @@ export function getLeaderboardTabs(isSignedIn: boolean): LeaderboardTab[] {
 
 export function normalizeLeaderboardTab(
   tab: unknown,
-  isSignedIn: boolean,
+  isSignedIn: boolean
 ): LeaderboardTab {
   const normalized = tab === "bets" ? "bets" : "stats";
 
@@ -21,7 +21,7 @@ export function normalizeLeaderboardTab(
 
 export function shouldEnableLeaderboardFriendLookup(
   tab: LeaderboardTab,
-  authResolved: boolean,
+  authResolved: boolean
 ): boolean {
   return authResolved && tab === "stats";
 }

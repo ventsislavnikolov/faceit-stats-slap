@@ -1,6 +1,6 @@
-import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { createIsomorphicFn } from "@tanstack/react-start";
+import { useState } from "react";
 
 const doResetPassword = createIsomorphicFn()
   .server(async (_email: string) => ({ error: null as any }))
@@ -17,7 +17,8 @@ export function ForgotPasswordForm() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const inputClass = "bg-bg-elevated border border-border rounded px-3 py-2 text-text focus:border-accent outline-none";
+  const inputClass =
+    "bg-bg-elevated border border-border rounded px-3 py-2 text-text focus:border-accent outline-none";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -37,25 +38,30 @@ export function ForgotPasswordForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full max-w-sm">
+    <form
+      className="flex w-full max-w-sm flex-col gap-4"
+      onSubmit={handleSubmit}
+    >
       <input
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        required
         className={inputClass}
+        onChange={(e) => setEmail(e.target.value)}
+        placeholder="Email"
+        required
+        type="email"
+        value={email}
       />
       {error && <p className="text-error text-sm">{error}</p>}
-      {successMessage && <p className="text-accent text-sm">{successMessage}</p>}
+      {successMessage && (
+        <p className="text-accent text-sm">{successMessage}</p>
+      )}
       <button
-        type="submit"
+        className="rounded bg-accent py-2 font-bold text-bg hover:opacity-90 disabled:opacity-50"
         disabled={loading}
-        className="bg-accent text-bg font-bold py-2 rounded hover:opacity-90 disabled:opacity-50"
+        type="submit"
       >
         {loading ? "..." : "Send Reset Link"}
       </button>
-      <Link to="/sign-in" className="text-text-muted text-sm hover:text-accent">
+      <Link className="text-sm text-text-muted hover:text-accent" to="/sign-in">
         Back to sign in
       </Link>
     </form>

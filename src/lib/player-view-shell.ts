@@ -1,20 +1,23 @@
 export type PlayerView = "friends" | "history" | "leaderboard";
 
 export interface PlayerViewHref {
-  to: string;
   params?: Record<string, string>;
   search?: Record<string, string | number>;
+  to: string;
 }
 
 export interface PlayerViewTab {
-  view: PlayerView;
-  label: string;
+  href: PlayerViewHref | null;
   isActive: boolean;
   isDisabled: boolean;
-  href: PlayerViewHref | null;
+  label: string;
+  view: PlayerView;
 }
 
-export function getPlayerViewHref(view: PlayerView, nickname: string): PlayerViewHref {
+export function getPlayerViewHref(
+  view: PlayerView,
+  nickname: string
+): PlayerViewHref {
   switch (view) {
     case "friends":
       return {

@@ -1,5 +1,5 @@
-import type { MatchPlayerStats } from "~/lib/types";
 import { getFriendScoreboardPlayers } from "~/lib/live-match";
+import type { MatchPlayerStats } from "~/lib/types";
 
 interface LiveScoreboardProps {
   friendIds: string[];
@@ -9,15 +9,17 @@ interface LiveScoreboardProps {
 export function LiveScoreboard({ friendIds, players }: LiveScoreboardProps) {
   const friendStats = getFriendScoreboardPlayers(players, friendIds);
 
-  if (friendStats.length === 0) return null;
+  if (friendStats.length === 0) {
+    return null;
+  }
 
   return (
-    <div className="border-t border-border mt-3 pt-3">
-      <div className="text-[10px] text-text-dim uppercase tracking-wider mb-2">
+    <div className="mt-3 border-border border-t pt-3">
+      <div className="mb-2 text-[10px] text-text-dim uppercase tracking-wider">
         Live Squad Stats
       </div>
 
-      <div className="grid grid-cols-[1fr_32px_32px_32px_40px_36px] gap-1 text-[9px] text-text-dim mb-1 px-1">
+      <div className="mb-1 grid grid-cols-[1fr_32px_32px_32px_40px_36px] gap-1 px-1 text-[9px] text-text-dim">
         <span>Player</span>
         <span className="text-center">K</span>
         <span className="text-center">D</span>
@@ -28,12 +30,14 @@ export function LiveScoreboard({ friendIds, players }: LiveScoreboardProps) {
 
       {friendStats.map((player, index) => (
         <div
-          key={player.playerId}
-          className={`grid grid-cols-[1fr_32px_32px_32px_40px_36px] gap-1 text-[11px] px-1 py-1.5 rounded mb-0.5 items-center ${
+          className={`mb-0.5 grid grid-cols-[1fr_32px_32px_32px_40px_36px] items-center gap-1 rounded px-1 py-1.5 text-[11px] ${
             index === 0 ? "bg-accent/8" : "bg-bg-elevated"
           }`}
+          key={player.playerId}
         >
-          <span className={index === 0 ? "text-accent font-semibold" : "text-text"}>
+          <span
+            className={index === 0 ? "font-semibold text-accent" : "text-text"}
+          >
             {player.nickname}
           </span>
           <span className="text-center text-text">{player.kills}</span>

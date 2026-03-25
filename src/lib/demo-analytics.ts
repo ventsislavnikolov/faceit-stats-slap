@@ -66,7 +66,9 @@ export function classifyExitKill(input: ExitKillInput): boolean {
   );
 }
 
-export function buildRoundScoreProgression(roundWinners: readonly RoundWinner[]) {
+export function buildRoundScoreProgression(
+  roundWinners: readonly RoundWinner[]
+) {
   let team1Score = 0;
   let team2Score = 0;
 
@@ -90,7 +92,7 @@ export function buildRoundScoreProgression(roundWinners: readonly RoundWinner[])
 
 function buildStreakSummaryForTeam(
   roundWinners: readonly RoundWinner[],
-  teamKey: DemoTeamKey,
+  teamKey: DemoTeamKey
 ): StreakSummary {
   let longestWinStreak = 0;
   let longestLossStreak = 0;
@@ -141,21 +143,21 @@ export function computeRwsForRound(input: ComputeRwsForRoundInput) {
   }
 
   const winningPlayers = input.players.filter(
-    (player) => player.teamKey === input.winningTeamKey,
+    (player) => player.teamKey === input.winningTeamKey
   );
   const aliveWinningPlayers = winningPlayers.filter((player) => player.alive);
   const totalWinningDamage = winningPlayers.reduce(
     (sum, player) => sum + player.damage,
-    0,
+    0
   );
   const hasBombBonusPlayer =
     input.bombBonusPlayerId !== undefined &&
     input.bombBonusPlayerId !== null &&
-    winningPlayers.some((player) => player.playerId === input.bombBonusPlayerId);
+    winningPlayers.some(
+      (player) => player.playerId === input.bombBonusPlayerId
+    );
 
-  const roundValue = hasBombBonusPlayer
-    ? 100 - RWS_BOMB_BONUS_POINTS
-    : 100;
+  const roundValue = hasBombBonusPlayer ? 100 - RWS_BOMB_BONUS_POINTS : 100;
 
   // Eligibility rule:
   // - Dead winners are ineligible for RWS, so their final value stays 0.

@@ -18,7 +18,9 @@ function isAuthorized(request: Request): boolean {
     checks.push(url.searchParams.get(queryName) === queryValue);
   }
 
-  if (checks.length === 0) return true;
+  if (checks.length === 0) {
+    return true;
+  }
   return checks.every(Boolean);
 }
 

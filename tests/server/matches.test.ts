@@ -1,9 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fetchPlayerHistoryWindow } from "~/server/matches";
 import { fetchPlayerHistory } from "~/lib/faceit";
+import { fetchPlayerHistoryWindow } from "~/server/matches";
 
 vi.mock("~/lib/faceit", async () => {
-  const actual = await vi.importActual<typeof import("~/lib/faceit")>("~/lib/faceit");
+  const actual =
+    await vi.importActual<typeof import("~/lib/faceit")>("~/lib/faceit");
   return {
     ...actual,
     fetchPlayerHistory: vi.fn(),
@@ -23,25 +24,43 @@ describe("fetchPlayerHistoryWindow", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-03-22T12:00:00.000Z"));
 
-    const ts = (daysAgo: number) => Math.floor((Date.now() - daysAgo * DAY_MS) / 1000);
+    const ts = (daysAgo: number) =>
+      Math.floor((Date.now() - daysAgo * DAY_MS) / 1000);
 
-    mockedFetchPlayerHistory.mockImplementation(async (_playerId, _limit, offset = 0) => {
-      const page = offset / 2;
-      if (page < 7) {
-        return [
-          { match_id: `m-${page * 2 + 1}`, started_at: ts(5) },
-          { match_id: `m-${page * 2 + 2}`, started_at: ts(10) },
-        ];
+    mockedFetchPlayerHistory.mockImplementation(
+      async (_playerId, _limit, offset = 0) => {
+        const page = offset / 2;
+        if (page < 7) {
+          return [
+            { match_id: `m-${page * 2 + 1}`, started_at: ts(5) },
+            { match_id: `m-${page * 2 + 2}`, started_at: ts(10) },
+          ];
+        }
+
+        return [];
       }
-
-      return [];
-    });
+    );
 
     const rows = await fetchPlayerHistoryWindow("player-1", 365, 2);
 
-    expect(mockedFetchPlayerHistory).toHaveBeenNthCalledWith(1, "player-1", 2, 0);
-    expect(mockedFetchPlayerHistory).toHaveBeenNthCalledWith(7, "player-1", 2, 12);
-    expect(mockedFetchPlayerHistory).toHaveBeenNthCalledWith(8, "player-1", 2, 14);
+    expect(mockedFetchPlayerHistory).toHaveBeenNthCalledWith(
+      1,
+      "player-1",
+      2,
+      0
+    );
+    expect(mockedFetchPlayerHistory).toHaveBeenNthCalledWith(
+      7,
+      "player-1",
+      2,
+      12
+    );
+    expect(mockedFetchPlayerHistory).toHaveBeenNthCalledWith(
+      8,
+      "player-1",
+      2,
+      14
+    );
     expect(mockedFetchPlayerHistory).toHaveBeenCalledTimes(8);
     expect(rows).toHaveLength(14);
     expect(rows[0]?.match_id).toBe("m-1");

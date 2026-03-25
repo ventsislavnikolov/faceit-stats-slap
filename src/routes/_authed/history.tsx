@@ -1,15 +1,15 @@
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { createIsomorphicFn } from "@tanstack/react-start";
-import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { usePlayerStats } from "~/hooks/usePlayerStats";
-import { HistoryMatchesTable } from "~/components/HistoryMatchesTable";
+import { useEffect, useState } from "react";
 import { BetHistoryTab } from "~/components/BetHistoryTab";
+import { HistoryMatchesTable } from "~/components/HistoryMatchesTable";
 import {
   PageSectionTabs,
   shouldRenderPageSectionTabs,
 } from "~/components/PageSectionTabs";
 import { PlayerSearchHeader } from "~/components/PlayerSearchHeader";
+import { usePlayerStats } from "~/hooks/usePlayerStats";
 import { resolveFaceitSearchTarget } from "~/lib/faceit-search";
 import {
   getHistoryMatchCountOptions,
@@ -35,9 +35,10 @@ const getClientSession = createIsomorphicFn()
 
 export const Route = createFileRoute("/_authed/history")({
   validateSearch: (search: Record<string, unknown>) => ({
-    player: typeof search.player === "string" && search.player.length > 0
-      ? search.player
-      : undefined,
+    player:
+      typeof search.player === "string" && search.player.length > 0
+        ? search.player
+        : undefined,
     tab: search.tab === "bets" ? "bets" : "matches",
     matches: normalizeHistoryMatchCount(search.matches),
     queue: normalizeHistoryQueueFilter(search.queue),
@@ -110,7 +111,7 @@ function HistoryPage() {
   ]);
 
   const { data: stats = [], isLoading } = usePlayerStats(
-    normalizedSelectedTab === "matches" ? player?.faceitId ?? null : null,
+    normalizedSelectedTab === "matches" ? (player?.faceitId ?? null) : null,
     selectedMatchCount,
     selectedQueue
   );
@@ -145,7 +146,9 @@ function HistoryPage() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const target = resolveFaceitSearchTarget(input);
-    if (!target.value) return;
+    if (!target.value) {
+      return;
+    }
 
     if (target.kind === "match") {
       navigate({ to: "/match/$matchId", params: { matchId: target.value } });
@@ -174,74 +177,81 @@ function HistoryPage() {
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
       <PlayerSearchHeader
-        value={input}
-        onValueChange={setInput}
-        onSubmit={handleSearch}
-        placeholder="FACEIT nickname, profile link, player UUID, or match ID..."
         error={resolveError ? "Player not found." : null}
+        onSubmit={handleSearch}
+        onValueChange={setInput}
+        placeholder="FACEIT nickname, profile link, player UUID, or match ID..."
+        value={input}
       />
 
-      <div className="flex-1 overflow-y-auto" style={{ scrollbarGutter: "stable" }}>
+      <div
+        className="flex-1 overflow-y-auto"
+        style={{ scrollbarGutter: "stable" }}
+      >
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6">
           {shouldRenderPageSectionTabs(sectionTabs) ? (
             <PageSectionTabs
-              tabs={sectionTabs}
               activeKey={normalizedSelectedTab}
               onChange={(tab) => updateSearch({ tab: tab as HistoryTab })}
+              tabs={sectionTabs}
             />
           ) : null}
 
-          {normalizedSelectedTab === "matches" && urlPlayer && !resolveError && (
-            <div className="flex flex-wrap items-center gap-6 text-xs">
-              <div className="flex items-center gap-2">
-                <span className="text-text-dim">Last</span>
-                <div className="flex gap-1">
-                  {getHistoryMatchCountOptions().map((option) => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={() => updateSearch({ matches: option.value })}
-                      className={`rounded px-3 py-1.5 transition-colors ${
-                        selectedMatchCount === option.value
-                          ? "bg-accent font-bold text-bg"
-                          : "bg-bg-elevated text-text-muted hover:text-text"
-                      }`}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
+          {normalizedSelectedTab === "matches" &&
+            urlPlayer &&
+            !resolveError && (
+              <div className="flex flex-wrap items-center gap-6 text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="text-text-dim">Last</span>
+                  <div className="flex gap-1">
+                    {getHistoryMatchCountOptions().map((option) => (
+                      <button
+                        className={`rounded px-3 py-1.5 transition-colors ${
+                          selectedMatchCount === option.value
+                            ? "bg-accent font-bold text-bg"
+                            : "bg-bg-elevated text-text-muted hover:text-text"
+                        }`}
+                        key={option.value}
+                        onClick={() => updateSearch({ matches: option.value })}
+                        type="button"
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                  <span className="text-text-dim">games</span>
                 </div>
-                <span className="text-text-dim">games</span>
-              </div>
 
-              <div className="flex items-center gap-2">
-                <span className="text-text-dim">Queue</span>
-                <div className="flex gap-1">
-                  {getHistoryQueueOptions().map((option) => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={() => updateSearch({ queue: option.value })}
-                      className={`rounded px-3 py-1.5 transition-colors ${
-                        selectedQueue === option.value
-                          ? "bg-accent font-bold text-bg"
-                          : "bg-bg-elevated text-text-muted hover:text-text"
-                      }`}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
+                <div className="flex items-center gap-2">
+                  <span className="text-text-dim">Queue</span>
+                  <div className="flex gap-1">
+                    {getHistoryQueueOptions().map((option) => (
+                      <button
+                        className={`rounded px-3 py-1.5 transition-colors ${
+                          selectedQueue === option.value
+                            ? "bg-accent font-bold text-bg"
+                            : "bg-bg-elevated text-text-muted hover:text-text"
+                        }`}
+                        key={option.value}
+                        onClick={() => updateSearch({ queue: option.value })}
+                        type="button"
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {normalizedSelectedTab === "matches" && urlPlayer && !resolveError && (
-            <div className="text-[10px] text-text-dim">
-              Party means the player plus at least 2 known FACEIT friends in the same
-              match.
-            </div>
-          )}
+          {normalizedSelectedTab === "matches" &&
+            urlPlayer &&
+            !resolveError && (
+              <div className="text-[10px] text-text-dim">
+                Party means the player plus at least 2 known FACEIT friends in
+                the same match.
+              </div>
+            )}
 
           {showBetsTab ? (
             authResolved && isSignedIn ? (
@@ -251,8 +261,11 @@ function HistoryPage() {
                 Loading...
               </div>
             )
-          ) : normalizedSelectedTab === "matches" && (resolving || isLoading) ? (
-            <div className="py-8 text-center text-accent animate-pulse">Loading...</div>
+          ) : normalizedSelectedTab === "matches" &&
+            (resolving || isLoading) ? (
+            <div className="animate-pulse py-8 text-center text-accent">
+              Loading...
+            </div>
           ) : normalizedSelectedTab === "matches" && player ? (
             <HistoryMatchesTable matches={matches} />
           ) : (

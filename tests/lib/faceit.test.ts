@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, afterEach } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   buildMatchScoreString,
   faceitFetch,
@@ -8,11 +8,11 @@ import {
   fetchPlayerByNickname,
   fetchPlayerHistory,
   fetchPlayerLifetimeStats,
-  pickRelevantHistoryMatch,
+  parseLifetimeStats,
   parseMatchStats,
   parseMatchTeamScore,
-  parseLifetimeStats,
   parsePlayerProfile,
+  pickRelevantHistoryMatch,
 } from "~/lib/faceit";
 
 afterEach(() => {
@@ -62,9 +62,9 @@ describe("parseLifetimeStats", () => {
       lifetime: {
         "Average K/D Ratio": "1.32",
         "Average Headshots %": "58",
-        "ADR": "98",
+        ADR: "98",
         "Win Rate %": "54",
-        "Matches": "910",
+        Matches: "910",
         "Recent Results": ["1", "1", "0", "1", "0"],
       },
     };
@@ -173,31 +173,27 @@ describe("parseMatchTeamScore", () => {
 
 describe("buildMatchScoreString", () => {
   it("builds a score string from team stats when round stats score is missing", () => {
-    const result = buildMatchScoreString(
-      {},
-      [
-        { team_stats: { "Current Score": "9" } },
-        { team_stats: { "Current Score": "6" } },
-      ]
-    );
+    const result = buildMatchScoreString({}, [
+      { team_stats: { "Current Score": "9" } },
+      { team_stats: { "Current Score": "6" } },
+    ]);
 
     expect(result).toBe("9 / 6");
   });
 
   it("prefers the score already present in round stats", () => {
-    const result = buildMatchScoreString(
-      { Score: "13 / 10" },
-      [
-        { team_stats: { "Final Score": "13" } },
-        { team_stats: { "Final Score": "10" } },
-      ]
-    );
+    const result = buildMatchScoreString({ Score: "13 / 10" }, [
+      { team_stats: { "Final Score": "13" } },
+      { team_stats: { "Final Score": "10" } },
+    ]);
 
     expect(result).toBe("13 / 10");
   });
 
   it("returns an empty string when no scores are available anywhere", () => {
-    expect(buildMatchScoreString({}, [{ team_stats: {} }, { team_stats: {} }])).toBe("");
+    expect(
+      buildMatchScoreString({}, [{ team_stats: {} }, { team_stats: {} }])
+    ).toBe("");
   });
 });
 
@@ -299,19 +295,19 @@ describe("fetchPlayerHistory", () => {
   it("passes offset through to the history endpoint", async () => {
     process.env.FACEIT_SERVER_SIDE_API_KEY = "test-key";
 
-    const fetchMock = vi
-      .spyOn(global, "fetch")
-      .mockResolvedValueOnce(
-        new Response(JSON.stringify({ items: [] }), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        })
-      );
+    const fetchMock = vi.spyOn(global, "fetch").mockResolvedValueOnce(
+      new Response(JSON.stringify({ items: [] }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      })
+    );
 
     await fetchPlayerHistory("player-123", 25, 75);
 
     expect(fetchMock).toHaveBeenCalledWith(
-      expect.stringContaining("/players/player-123/history?game=cs2&offset=75&limit=25"),
+      expect.stringContaining(
+        "/players/player-123/history?game=cs2&offset=75&limit=25"
+      ),
       expect.objectContaining({
         headers: expect.objectContaining({
           Authorization: "Bearer test-key",
@@ -434,10 +430,13 @@ describe("FACEIT endpoint helpers", () => {
         })
       )
       .mockResolvedValueOnce(
-        new Response(JSON.stringify({ rounds: [{ round_stats: { Map: "de_nuke" } }] }), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        })
+        new Response(
+          JSON.stringify({ rounds: [{ round_stats: { Map: "de_nuke" } }] }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          }
+        )
       );
 
     await expect(fetchMatch("match-1")).resolves.toEqual({

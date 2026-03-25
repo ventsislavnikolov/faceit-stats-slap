@@ -7,15 +7,26 @@ vi.mock("~/components/CoinBalance", () => ({
 }));
 
 vi.mock("@tanstack/react-router", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@tanstack/react-router")>();
+  const actual =
+    await importOriginal<typeof import("@tanstack/react-router")>();
   const currentPathname = "/leaderboard";
 
   return {
     ...actual,
     createFileRoute: () => () => ({}),
-    Link: ({ children, to, className, activeProps, inactiveProps, ...props }: any) => {
+    Link: ({
+      children,
+      to,
+      className,
+      activeProps,
+      inactiveProps,
+      ...props
+    }: any) => {
       const isActive = to === currentPathname;
-      const resolvedClassName = [className, isActive ? activeProps?.className : inactiveProps?.className]
+      const resolvedClassName = [
+        className,
+        isActive ? activeProps?.className : inactiveProps?.className,
+      ]
         .filter(Boolean)
         .join(" ");
 
@@ -55,6 +66,8 @@ describe("AppLayout", () => {
   it("reserves the underline space for inactive nav items", () => {
     const html = renderToStaticMarkup(<AppLayout />);
 
-    expect(html).toContain("border-b pb-0.5 text-text-muted border-transparent");
+    expect(html).toContain(
+      "border-b pb-0.5 text-text-muted border-transparent"
+    );
   });
 });

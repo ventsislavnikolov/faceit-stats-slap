@@ -7,8 +7,8 @@ export const Route = createFileRoute("/_authed/sign-in")({
 
 function SignInPage() {
   return (
-    <div className="flex flex-col items-center justify-center flex-1 gap-6">
-      <p className="text-text-muted text-sm">Sign in to access match history</p>
+    <div className="flex flex-1 flex-col items-center justify-center gap-6">
+      <p className="text-sm text-text-muted">Sign in to access match history</p>
       <LoginForm redirectTo="/history" />
     </div>
   );

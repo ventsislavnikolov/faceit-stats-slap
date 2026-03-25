@@ -24,7 +24,7 @@ describe("RoundTimeline", () => {
         rounds={buildRounds(20)}
         team1Name="Alpha"
         team2Name="Bravo"
-      />,
+      />
     );
     // Each round should have a round number marker
     for (let i = 1; i <= 20; i++) {
@@ -38,7 +38,7 @@ describe("RoundTimeline", () => {
         rounds={buildRounds(20)}
         team1Name="Alpha"
         team2Name="Bravo"
-      />,
+      />
     );
     // Pistol rounds (1 and 13) should have a visual marker
     expect(html).toContain("pistol");
@@ -50,7 +50,7 @@ describe("RoundTimeline", () => {
         rounds={buildRounds(20)}
         team1Name="Alpha"
         team2Name="Bravo"
-      />,
+      />
     );
     expect(html).toContain("Alpha");
     expect(html).toContain("Bravo");
@@ -62,7 +62,7 @@ describe("RoundTimeline", () => {
         rounds={buildRounds(20)}
         team1Name="Alpha"
         team2Name="Bravo"
-      />,
+      />
     );
     // team1 wins should use accent color, team2 should use a different one
     expect(html).toContain("bg-accent");
@@ -75,7 +75,7 @@ describe("RoundTimeline", () => {
         rounds={buildRounds(20)}
         team1Name="Alpha"
         team2Name="Bravo"
-      />,
+      />
     );
     // Final score should be visible
     expect(html).toContain("13");
@@ -87,14 +87,14 @@ describe("RoundTimeline", () => {
         rounds={buildRounds(20)}
         team1Name="Alpha"
         team2Name="Bravo"
-      />,
+      />
     );
     expect(html).toContain("half");
   });
 
   it("handles empty rounds gracefully", () => {
     const html = renderToStaticMarkup(
-      <RoundTimeline rounds={[]} team1Name="Alpha" team2Name="Bravo" />,
+      <RoundTimeline rounds={[]} team1Name="Alpha" team2Name="Bravo" />
     );
     expect(html).toContain("No rounds");
   });

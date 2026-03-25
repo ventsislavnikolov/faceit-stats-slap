@@ -13,7 +13,7 @@ export function useMatchStats(matchId: string, options: UseMatchStatsOptions) {
     queryKey: ["match-stats", matchId],
     queryFn: () => getMatchDetails({ data: matchId }),
     enabled,
-    staleTime: live ? 0 : Infinity,
+    staleTime: live ? 0 : Number.POSITIVE_INFINITY,
     refetchInterval: live ? 10_000 : false,
   });
 }

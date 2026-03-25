@@ -1,23 +1,25 @@
 import { createHash } from "node:crypto";
 import { readFileSync, statSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
-import { parseDemoFile } from "~/server/demo-parser";
 import { buildRichDemoAnalytics } from "~/server/demo-analytics-builder";
 import {
-  upsertDemoIngestion,
-  markDemoIngestionParsing,
-  markDemoIngestionParsed,
   markDemoIngestionFailed,
+  markDemoIngestionParsed,
+  markDemoIngestionParsing,
   saveDemoAnalytics,
+  upsertDemoIngestion,
 } from "~/server/demo-analytics-store";
+import { parseDemoFile } from "~/server/demo-parser";
 
 const MATCH_ID = process.argv[2] || "1-a53ffc73-83d0-4e0a-9515-831cbfbd1e24";
-const DEMO_PATH = process.argv[3] || "/Users/ventsislav.nikolov/Downloads/1-a53ffc73-83d0-4e0a-9515-831cbfbd1e24-1-1.dem.zst";
+const DEMO_PATH =
+  process.argv[3] ||
+  "/Users/ventsislav.nikolov/Downloads/1-a53ffc73-83d0-4e0a-9515-831cbfbd1e24-1-1.dem.zst";
 
 async function main() {
   const supabase = createClient(
     process.env.SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_KEY!,
+    process.env.SUPABASE_SERVICE_KEY!
   );
 
   console.log("1. Computing file hash...");
@@ -43,16 +45,28 @@ async function main() {
   try {
     console.log("4. Parsing demo file...");
     const parsed = await parseDemoFile(DEMO_PATH);
-    console.log(`   ${parsed.kills.length} kills, ${parsed.hurts.length} hurts, ${parsed.bombEvents.length} bomb events, ${parsed.rounds.length} rounds`);
+    console.log(
+      `   ${parsed.kills.length} kills, ${parsed.hurts.length} hurts, ${parsed.bombEvents.length} bomb events, ${parsed.rounds.length} rounds`
+    );
 
     console.log("5. Building rich analytics...");
     const analytics = buildRichDemoAnalytics(MATCH_ID, "manual_upload", parsed);
-    console.log(`   Map: ${analytics.mapName} | Rounds: ${analytics.totalRounds}`);
-    console.log(`   Team1: ${analytics.teams[0]?.name?.slice(0, 30)} (${analytics.teams[0]?.side}) ${analytics.teams[0]?.roundsWon}W`);
-    console.log(`   Team2: ${analytics.teams[1]?.name?.slice(0, 30)} (${analytics.teams[1]?.side}) ${analytics.teams[1]?.roundsWon}W`);
+    console.log(
+      `   Map: ${analytics.mapName} | Rounds: ${analytics.totalRounds}`
+    );
+    console.log(
+      `   Team1: ${analytics.teams[0]?.name?.slice(0, 30)} (${analytics.teams[0]?.side}) ${analytics.teams[0]?.roundsWon}W`
+    );
+    console.log(
+      `   Team2: ${analytics.teams[1]?.name?.slice(0, 30)} (${analytics.teams[1]?.side}) ${analytics.teams[1]?.roundsWon}W`
+    );
 
     console.log("6. Saving to Supabase...");
-    const { demoMatchId } = await saveDemoAnalytics(supabase as any, ingestionId, analytics);
+    const { demoMatchId } = await saveDemoAnalytics(
+      supabase as any,
+      ingestionId,
+      analytics
+    );
     console.log(`   Demo match ID: ${demoMatchId}`);
 
     console.log("7. Marking as parsed...");
@@ -64,7 +78,7 @@ async function main() {
     await markDemoIngestionFailed(
       supabase as any,
       ingestionId,
-      error instanceof Error ? error.message : String(error),
+      error instanceof Error ? error.message : String(error)
     );
     process.exit(1);
   }

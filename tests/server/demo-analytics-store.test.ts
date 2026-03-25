@@ -33,13 +33,18 @@ function createSupabaseMock(generatedId = "mock-uuid") {
           const result = { data: null, error: null };
           const promise = Promise.resolve(result) as ReturnType<
             ReturnType<typeof createSupabaseMock>["from"]
-          >["insert"] extends (...args: never[]) => infer R ? R : never;
+          >["insert"] extends (...args: never[]) => infer R
+            ? R
+            : never;
           (promise as Record<string, unknown>).select = () => ({
             single: async () => ({ data: { id: generatedId }, error: null }),
           });
           return promise;
         },
-        upsert(rows: Record<string, unknown>[], opts?: Record<string, unknown>) {
+        upsert(
+          rows: Record<string, unknown>[],
+          opts?: Record<string, unknown>
+        ) {
           calls.push({ table, method: "upsert", rows, options: opts });
           return Promise.resolve({ data: null, error: null });
         },
@@ -133,7 +138,7 @@ describe("upsertDemoIngestion", () => {
       sourceType: "faceit_demo_url",
       sourceUrl: "https://faceit.example/demo",
       fileName: "match.dem.zst",
-      fileSizeBytes: 12345,
+      fileSizeBytes: 12_345,
       fileSha256: "sha-123",
       compression: "zst",
       parserVersion: "demo-parser@1",
@@ -150,7 +155,7 @@ describe("upsertDemoIngestion", () => {
       source_type: "faceit_demo_url",
       source_url: "https://faceit.example/demo",
       file_name: "match.dem.zst",
-      file_size_bytes: 12345,
+      file_size_bytes: 12_345,
       file_sha256: "sha-123",
       compression: "zst",
       status: "queued",
@@ -164,10 +169,19 @@ describe("upsertDemoIngestion", () => {
 describe("markDemoIngestionParsing", () => {
   it("updates status to parsing by ingestion id", async () => {
     const sb = createSupabaseMock();
-    await markDemoIngestionParsing(sb as never, "ing-1", "2026-03-25T10:00:00Z");
+    await markDemoIngestionParsing(
+      sb as never,
+      "ing-1",
+      "2026-03-25T10:00:00Z"
+    );
 
-    const call = sb.calls.find((c) => c.table === "demo_ingestions" && c.method === "update");
-    expect(call!.update).toMatchObject({ status: "parsing", started_at: "2026-03-25T10:00:00Z" });
+    const call = sb.calls.find(
+      (c) => c.table === "demo_ingestions" && c.method === "update"
+    );
+    expect(call!.update).toMatchObject({
+      status: "parsing",
+      started_at: "2026-03-25T10:00:00Z",
+    });
     expect(call!.eqArgs).toEqual(["id", "ing-1"]);
   });
 });
@@ -175,9 +189,16 @@ describe("markDemoIngestionParsing", () => {
 describe("markDemoIngestionFailed", () => {
   it("updates status to failed with error message by ingestion id", async () => {
     const sb = createSupabaseMock();
-    await markDemoIngestionFailed(sb as never, "ing-1", "parser exploded", "2026-03-25T10:05:00Z");
+    await markDemoIngestionFailed(
+      sb as never,
+      "ing-1",
+      "parser exploded",
+      "2026-03-25T10:05:00Z"
+    );
 
-    const call = sb.calls.find((c) => c.table === "demo_ingestions" && c.method === "update");
+    const call = sb.calls.find(
+      (c) => c.table === "demo_ingestions" && c.method === "update"
+    );
     expect(call!.update).toMatchObject({
       status: "failed",
       error_message: "parser exploded",
@@ -192,8 +213,13 @@ describe("markDemoIngestionParsed", () => {
     const sb = createSupabaseMock();
     await markDemoIngestionParsed(sb as never, "ing-1", "2026-03-25T10:10:00Z");
 
-    const call = sb.calls.find((c) => c.table === "demo_ingestions" && c.method === "update");
-    expect(call!.update).toMatchObject({ status: "parsed", finished_at: "2026-03-25T10:10:00Z" });
+    const call = sb.calls.find(
+      (c) => c.table === "demo_ingestions" && c.method === "update"
+    );
+    expect(call!.update).toMatchObject({
+      status: "parsed",
+      finished_at: "2026-03-25T10:10:00Z",
+    });
     expect(call!.eqArgs).toEqual(["id", "ing-1"]);
   });
 });
@@ -207,7 +233,9 @@ describe("saveDemoAnalytics", () => {
     const sb = createSupabaseMock("demo-match-uuid");
     await saveDemoAnalytics(sb as never, "ing-1", buildDemoAnalytics());
 
-    const call = sb.calls.find((c) => c.table === "demo_match_analytics" && c.method === "insert");
+    const call = sb.calls.find(
+      (c) => c.table === "demo_match_analytics" && c.method === "insert"
+    );
     expect(call).toBeDefined();
     const row = call!.rows![0];
     expect(row).toMatchObject({
@@ -262,7 +290,9 @@ describe("saveDemoAnalytics", () => {
     const sb = createSupabaseMock("demo-match-uuid");
     await saveDemoAnalytics(sb as never, "ing-1", buildDemoAnalytics());
 
-    const call = sb.calls.find((c) => c.table === "demo_player_analytics" && c.method === "insert");
+    const call = sb.calls.find(
+      (c) => c.table === "demo_player_analytics" && c.method === "insert"
+    );
     expect(call).toBeDefined();
     expect(call!.rows).toHaveLength(10);
 
@@ -304,7 +334,9 @@ describe("saveDemoAnalytics", () => {
     const sb = createSupabaseMock("demo-match-uuid");
     await saveDemoAnalytics(sb as never, "ing-1", buildDemoAnalytics());
 
-    const call = sb.calls.find((c) => c.table === "demo_round_analytics" && c.method === "insert");
+    const call = sb.calls.find(
+      (c) => c.table === "demo_round_analytics" && c.method === "insert"
+    );
     expect(call).toBeDefined();
     expect(call!.rows).toHaveLength(20);
 
@@ -347,9 +379,9 @@ describe("saveDemoAnalytics", () => {
       }),
     };
 
-    await expect(saveDemoAnalytics(sb as never, "ing-1", buildDemoAnalytics())).rejects.toThrow(
-      /match insert failed/,
-    );
+    await expect(
+      saveDemoAnalytics(sb as never, "ing-1", buildDemoAnalytics())
+    ).rejects.toThrow(/match insert failed/);
   });
 });
 
@@ -437,13 +469,21 @@ describe("ingestParsedDemoFile handoff", () => {
         parseDemoFile: async () => {
           throw new Error("parse failed");
         },
-      }),
+      })
     ).rejects.toThrow("parse failed");
 
-    expect(order).toEqual(["upsertDemoIngestion", "markDemoIngestionParsing", "markDemoIngestionFailed"]);
+    expect(order).toEqual([
+      "upsertDemoIngestion",
+      "markDemoIngestionParsing",
+      "markDemoIngestionFailed",
+    ]);
     expect(store.saveDemoAnalytics).not.toHaveBeenCalled();
     expect(store.markDemoIngestionParsed).not.toHaveBeenCalled();
 
-    expect(store.markDemoIngestionFailed).toHaveBeenCalledWith("ing-1", "parse failed", expect.any(String));
+    expect(store.markDemoIngestionFailed).toHaveBeenCalledWith(
+      "ing-1",
+      "parse failed",
+      expect.any(String)
+    );
   });
 });

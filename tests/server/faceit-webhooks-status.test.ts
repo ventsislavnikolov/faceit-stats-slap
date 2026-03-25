@@ -6,7 +6,10 @@ const extractionMocks = vi.hoisted(() => ({
 
 const supabaseMocks = vi.hoisted(() => {
   const upsert = vi.fn(async () => ({ data: null, error: null }));
-  let selectData: Array<{ player_faceit_id: string; current_match_id: string | null }> | null = [];
+  let selectData: Array<{
+    player_faceit_id: string;
+    current_match_id: string | null;
+  }> | null = [];
 
   return {
     supabase: {
@@ -23,7 +26,12 @@ const supabaseMocks = vi.hoisted(() => {
       })),
     },
     upsert,
-    setSelectData(value: Array<{ player_faceit_id: string; current_match_id: string | null }> | null) {
+    setSelectData(
+      value: Array<{
+        player_faceit_id: string;
+        current_match_id: string | null;
+      }> | null
+    ) {
       selectData = value;
     },
   };
@@ -35,7 +43,8 @@ vi.mock("~/lib/faceit-webhooks", async () => {
   );
   return {
     ...actual,
-    extractFaceitWebhookMatchUpdate: extractionMocks.extractFaceitWebhookMatchUpdate,
+    extractFaceitWebhookMatchUpdate:
+      extractionMocks.extractFaceitWebhookMatchUpdate,
   };
 });
 
@@ -43,8 +52,11 @@ vi.mock("~/lib/supabase.server", () => ({
   createServerSupabase: () => supabaseMocks.supabase,
 }));
 
-import { getWebhookLiveMatchMap, persistFaceitWebhook } from "~/server/faceit-webhooks";
 import { TRACKED_WEBHOOK_PLAYERS } from "~/lib/faceit-webhooks";
+import {
+  getWebhookLiveMatchMap,
+  persistFaceitWebhook,
+} from "~/server/faceit-webhooks";
 
 afterEach(() => {
   vi.clearAllMocks();
@@ -114,6 +126,8 @@ describe("persistFaceitWebhook status mapping", () => {
   it("treats null database rows as an empty webhook live match map", async () => {
     supabaseMocks.setSelectData(null);
 
-    await expect(getWebhookLiveMatchMap(["player-1"])).resolves.toEqual(new Map());
+    await expect(getWebhookLiveMatchMap(["player-1"])).resolves.toEqual(
+      new Map()
+    );
   });
 });

@@ -12,14 +12,19 @@ export async function buildMatchDashboardData(
 
   const getFocusScore = (roster: any[]) =>
     roster.reduce((score: number, player: any) => {
-      if (player.player_id === MY_FACEIT_ID) return score + 100;
-      if (getTwitchChannel(player.player_id)) return score + 10;
+      if (player.player_id === MY_FACEIT_ID) {
+        return score + 100;
+      }
+      if (getTwitchChannel(player.player_id)) {
+        return score + 10;
+      }
       return score;
     }, 0);
 
-  const focusFaction = getFocusScore(faction2Roster) > getFocusScore(faction1Roster)
-    ? "faction2"
-    : "faction1";
+  const focusFaction =
+    getFocusScore(faction2Roster) > getFocusScore(faction1Roster)
+      ? "faction2"
+      : "faction1";
 
   const liveMatch: LiveMatch = {
     matchId: match.match_id,
@@ -50,7 +55,9 @@ export async function buildMatchDashboardData(
       },
     },
     friendFaction: focusFaction,
-    friendIds: (match.teams?.[focusFaction]?.roster || []).map((p: any) => p.player_id),
+    friendIds: (match.teams?.[focusFaction]?.roster || []).map(
+      (p: any) => p.player_id
+    ),
   };
 
   const players: FriendWithStats[] = buildMatchDashboardFriends(

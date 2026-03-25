@@ -15,17 +15,30 @@ function getTrackedNickname(faceitId: string): string {
 }
 
 function getPersistedStatus(event: string): string {
-  if (event === "match_object_created" || event === "match_status_configuring") {
+  if (
+    event === "match_object_created" ||
+    event === "match_status_configuring"
+  ) {
     return "CONFIGURING";
   }
-  if (event === "match_status_ready") return "READY";
-  if (event === "match_status_finished") return "FINISHED";
-  if (event === "match_status_cancelled") return "CANCELLED";
-  if (event === "match_status_aborted") return "CANCELLED";
+  if (event === "match_status_ready") {
+    return "READY";
+  }
+  if (event === "match_status_finished") {
+    return "FINISHED";
+  }
+  if (event === "match_status_cancelled") {
+    return "CANCELLED";
+  }
+  if (event === "match_status_aborted") {
+    return "CANCELLED";
+  }
   return "UNKNOWN";
 }
 
-export async function persistFaceitWebhook(body: FaceitWebhookBody): Promise<void> {
+export async function persistFaceitWebhook(
+  body: FaceitWebhookBody
+): Promise<void> {
   const update = extractFaceitWebhookMatchUpdate(body);
   const supabase = createServerSupabase();
 
@@ -63,16 +76,14 @@ export async function persistFaceitWebhook(body: FaceitWebhookBody): Promise<voi
     }
 
     if (update.playerIds.length > 0) {
-      await supabase
-        .from("faceit_webhook_live_state")
-        .upsert(
-          update.playerIds.map((playerId) => ({
-            player_faceit_id: playerId,
-            player_nickname: getTrackedNickname(playerId),
-            ...clearPayload,
-          })),
-          { onConflict: "player_faceit_id" }
-        );
+      await supabase.from("faceit_webhook_live_state").upsert(
+        update.playerIds.map((playerId) => ({
+          player_faceit_id: playerId,
+          player_nickname: getTrackedNickname(playerId),
+          ...clearPayload,
+        })),
+        { onConflict: "player_faceit_id" }
+      );
     }
   }
 }
@@ -80,7 +91,9 @@ export async function persistFaceitWebhook(body: FaceitWebhookBody): Promise<voi
 export async function getWebhookLiveMatchMap(
   playerIds: string[]
 ): Promise<Map<string, string[]>> {
-  if (playerIds.length === 0) return new Map();
+  if (playerIds.length === 0) {
+    return new Map();
+  }
 
   const supabase = createServerSupabase();
   const { data } = await supabase
@@ -90,6 +103,9 @@ export async function getWebhookLiveMatchMap(
     .not("current_match_id", "is", null);
 
   return groupWebhookStateByMatch(
-    (data ?? []) as { player_faceit_id: string; current_match_id: string | null }[]
+    (data ?? []) as {
+      player_faceit_id: string;
+      current_match_id: string | null;
+    }[]
   );
 }

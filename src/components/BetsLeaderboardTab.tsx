@@ -14,7 +14,7 @@ function hasBettingActivity(entries: BettingLeaderboardEntry[]): boolean {
       entry.resolvedBets > 0 ||
       entry.totalWagered > 0 ||
       entry.totalReturned > 0 ||
-      entry.netProfit !== 0,
+      entry.netProfit !== 0
   );
 }
 
@@ -23,21 +23,33 @@ export function BetsLeaderboardTab({ userId }: BetsLeaderboardTabProps) {
   const entries = sortBettingLeaderboardEntries(data);
 
   if (isLoading) {
-    return <div className="py-8 text-center text-accent animate-pulse">Loading...</div>;
+    return (
+      <div className="animate-pulse py-8 text-center text-accent">
+        Loading...
+      </div>
+    );
   }
 
   if (isError) {
-    return <div className="py-12 text-center text-sm text-error">Failed to load betting leaderboard.</div>;
+    return (
+      <div className="py-12 text-center text-error text-sm">
+        Failed to load betting leaderboard.
+      </div>
+    );
   }
 
-  if (!entries.length || !hasBettingActivity(entries)) {
-    return <div className="py-12 text-center text-sm text-text-dim">No resolved bets yet.</div>;
+  if (!(entries.length && hasBettingActivity(entries))) {
+    return (
+      <div className="py-12 text-center text-sm text-text-dim">
+        No resolved bets yet.
+      </div>
+    );
   }
 
   return (
     <div className="flex flex-col gap-1">
       <div
-        className="grid gap-2 px-3 pb-1 text-[10px] uppercase tracking-wider text-text-dim"
+        className="grid gap-2 px-3 pb-1 text-[10px] text-text-dim uppercase tracking-wider"
         style={{ gridTemplateColumns: "3rem 1fr 5rem 5rem 5rem 5rem 5rem" }}
       >
         <span>#</span>
@@ -53,18 +65,22 @@ export function BetsLeaderboardTab({ userId }: BetsLeaderboardTabProps) {
         const isCurrentUser = !!userId && entry.userId === userId;
         return (
           <div
-            key={entry.userId}
             className={`grid gap-2 rounded px-3 py-2 text-sm ${
-              isCurrentUser ? "border-l-2 border-accent bg-accent/10" : "bg-bg-elevated"
+              isCurrentUser
+                ? "border-accent border-l-2 bg-accent/10"
+                : "bg-bg-elevated"
             }`}
+            key={entry.userId}
             style={{ gridTemplateColumns: "3rem 1fr 5rem 5rem 5rem 5rem 5rem" }}
           >
-            <span className="text-xs font-bold text-text-dim">{index + 1}</span>
-            <span className={`truncate font-bold ${isCurrentUser ? "text-accent" : "text-text"}`}>
+            <span className="font-bold text-text-dim text-xs">{index + 1}</span>
+            <span
+              className={`truncate font-bold ${isCurrentUser ? "text-accent" : "text-text"}`}
+            >
               {isCurrentUser ? "You" : entry.nickname}
             </span>
             <span
-              className={`text-right text-xs font-semibold ${
+              className={`text-right font-semibold text-xs ${
                 entry.netProfit > 0
                   ? "text-accent"
                   : entry.netProfit < 0
@@ -75,10 +91,18 @@ export function BetsLeaderboardTab({ userId }: BetsLeaderboardTabProps) {
               {entry.netProfit > 0 ? "+" : ""}
               {entry.netProfit}
             </span>
-            <span className="text-right text-xs text-text-muted">{entry.coins}</span>
-            <span className="text-right text-xs text-text-muted">{entry.betsPlaced}</span>
-            <span className="text-right text-xs text-text-muted">{entry.betsWon}</span>
-            <span className="text-right text-xs text-text-muted">{entry.winRate}%</span>
+            <span className="text-right text-text-muted text-xs">
+              {entry.coins}
+            </span>
+            <span className="text-right text-text-muted text-xs">
+              {entry.betsPlaced}
+            </span>
+            <span className="text-right text-text-muted text-xs">
+              {entry.betsWon}
+            </span>
+            <span className="text-right text-text-muted text-xs">
+              {entry.winRate}%
+            </span>
           </div>
         );
       })}

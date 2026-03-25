@@ -19,7 +19,9 @@ describe("resolveFaceitSearchTarget", () => {
   });
 
   it("keeps player uuids on the player dashboard flow", () => {
-    expect(resolveFaceitSearchTarget("15844c99-d26e-419e-bd14-30908f502c03")).toEqual({
+    expect(
+      resolveFaceitSearchTarget("15844c99-d26e-419e-bd14-30908f502c03")
+    ).toEqual({
       kind: "player",
       value: "15844c99-d26e-419e-bd14-30908f502c03",
     });
@@ -36,7 +38,9 @@ describe("resolveFaceitSearchTarget", () => {
 
   it("extracts the nickname from a FACEIT profile url with extra path details", () => {
     expect(
-      resolveFaceitSearchTarget(" https://www.faceit.com/en/players/soavarice/stats/cs2 ")
+      resolveFaceitSearchTarget(
+        " https://www.faceit.com/en/players/soavarice/stats/cs2 "
+      )
     ).toEqual({
       kind: "player",
       value: "soavarice",
@@ -44,7 +48,9 @@ describe("resolveFaceitSearchTarget", () => {
   });
 
   it("extracts nicknames from FACEIT profile urls without an explicit protocol", () => {
-    expect(resolveFaceitSearchTarget("faceit.com/en/players/soavarice")).toEqual({
+    expect(
+      resolveFaceitSearchTarget("faceit.com/en/players/soavarice")
+    ).toEqual({
       kind: "player",
       value: "soavarice",
     });
@@ -69,16 +75,20 @@ describe("resolveFaceitSearchTarget", () => {
   });
 
   it("keeps incomplete FACEIT profile urls on the player dashboard flow", () => {
-    expect(resolveFaceitSearchTarget("https://www.faceit.com/en/players")).toEqual({
+    expect(
+      resolveFaceitSearchTarget("https://www.faceit.com/en/players")
+    ).toEqual({
       kind: "player",
       value: "https://www.faceit.com/en/players",
     });
   });
 
   it("keeps FACEIT urls without a player segment on the player dashboard flow", () => {
-    expect(resolveFaceitSearchTarget("https://www.faceit.com/en/home")).toEqual({
-      kind: "player",
-      value: "https://www.faceit.com/en/home",
-    });
+    expect(resolveFaceitSearchTarget("https://www.faceit.com/en/home")).toEqual(
+      {
+        kind: "player",
+        value: "https://www.faceit.com/en/home",
+      }
+    );
   });
 });

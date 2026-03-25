@@ -1,4 +1,10 @@
-export type MatchStatus = "ONGOING" | "READY" | "VOTING" | "CONFIGURING" | "FINISHED" | "CANCELLED";
+export type MatchStatus =
+  | "ONGOING"
+  | "READY"
+  | "VOTING"
+  | "CONFIGURING"
+  | "FINISHED"
+  | "CANCELLED";
 export type MatchQueueBucket = "solo" | "party" | "unknown";
 
 export const DEMO_INGESTION_STATUS_VALUES = [
@@ -14,238 +20,243 @@ export const DEMO_ANALYTICS_SOURCE_TYPE_VALUES = [
   "faceit_demo_url",
   "manual_upload",
 ] as const;
-export type DemoAnalyticsSourceType = (typeof DEMO_ANALYTICS_SOURCE_TYPE_VALUES)[number];
+export type DemoAnalyticsSourceType =
+  (typeof DEMO_ANALYTICS_SOURCE_TYPE_VALUES)[number];
 
-export const DEMO_ANALYTICS_AVAILABILITY_VALUES = ["available", "unavailable"] as const;
-export type DemoAnalyticsAvailability = (typeof DEMO_ANALYTICS_AVAILABILITY_VALUES)[number];
+export const DEMO_ANALYTICS_AVAILABILITY_VALUES = [
+  "available",
+  "unavailable",
+] as const;
+export type DemoAnalyticsAvailability =
+  (typeof DEMO_ANALYTICS_AVAILABILITY_VALUES)[number];
 export type DemoTeamKey = "team1" | "team2";
 
 export interface FaceitPlayer {
+  avatar: string;
+  country: string;
+  elo: number;
   faceitId: string;
   nickname: string;
-  avatar: string;
-  elo: number;
   skillLevel: number;
-  country: string;
 }
 
 export interface FriendWithStats extends FaceitPlayer {
-  lifetimeKd: number;
-  lifetimeHs: number;
-  lifetimeAdr: number;
-  winRate: number;
-  totalMatches: number;
-  recentResults: boolean[]; // true = win, false = loss (last 5)
-  twitchChannel: string | null;
-  isPlaying: boolean;
   currentMatchId: string | null;
+  isPlaying: boolean;
+  lifetimeAdr: number;
+  lifetimeHs: number;
+  lifetimeKd: number;
+  recentResults: boolean[]; // true = win, false = loss (last 5)
+  totalMatches: number;
+  twitchChannel: string | null;
+  winRate: number;
 }
 
 export interface LiveMatch {
-  matchId: string;
-  status: MatchStatus;
+  friendFaction: "faction1" | "faction2";
+  friendIds: string[];
   map: string;
+  matchId: string;
   score: { faction1: number; faction2: number };
   startedAt: number;
+  status: MatchStatus;
   teams: {
     faction1: MatchTeam;
     faction2: MatchTeam;
   };
-  friendFaction: "faction1" | "faction2";
-  friendIds: string[];
 }
 
 export interface MatchTeam {
-  teamId: string;
   name: string;
   roster: MatchPlayer[];
+  teamId: string;
 }
 
 export interface MatchPlayer {
-  playerId: string;
-  nickname: string;
   avatar: string;
+  nickname: string;
+  playerId: string;
   skillLevel: number;
 }
 
 export interface MatchPlayerStats {
-  playerId: string;
-  nickname: string;
-  kills: number;
-  deaths: number;
-  assists: number;
-  headshots: number;
-  mvps: number;
-  kdRatio: number;
   adr: number;
-  hsPercent: number;
-  krRatio: number;
-  tripleKills: number;
-  quadroKills: number;
-  pentaKills: number;
-  result: boolean; // win or loss
+  assists: number;
+  clutchKills: number;
   damage: number;
-  firstKills: number;
+  deaths: number;
+  doubleKills: number;
+  enemiesFlashed: number;
   entryCount: number;
   entryWins: number;
-  clutchKills: number;
+  firstKills: number;
+  flashCount: number;
+  headshots: number;
+  hsPercent: number;
+  kdRatio: number;
+  kills: number;
+  krRatio: number;
+  mvps: number;
+  nickname: string;
   oneV1Count: number;
   oneV1Wins: number;
   oneV2Count: number;
   oneV2Wins: number;
-  doubleKills: number;
-  utilityDamage: number;
-  enemiesFlashed: number;
-  flashCount: number;
-  sniperKills: number;
+  pentaKills: number;
   pistolKills: number;
+  playerId: string;
+  quadroKills: number;
+  result: boolean; // win or loss
+  sniperKills: number;
+  tripleKills: number;
+  utilityDamage: number;
 }
 
 export interface PlayerHistoryMatch extends MatchPlayerStats {
-  matchId: string;
-  map: string;
-  score: string;
-  startedAt: number;
   finishedAt: number | null;
-  queueBucket: MatchQueueBucket;
+  hasDemoAnalytics?: boolean;
   knownQueuedFriendCount: number;
   knownQueuedFriendIds: string[];
+  map: string;
+  matchId: string;
   partySize: number | null;
-  hasDemoAnalytics?: boolean;
+  queueBucket: MatchQueueBucket;
+  score: string;
+  startedAt: number;
 }
 
 export interface MatchWithStats {
-  matchId: string;
-  map: string;
-  score: string;
-  status: MatchStatus;
-  startedAt: number;
   finishedAt: number | null;
+  map: string;
+  matchId: string;
   players: MatchPlayerStats[];
+  score: string;
+  startedAt: number;
+  status: MatchStatus;
 }
 
 export interface MatchDetail {
-  matchId: string;
-  map: string;
-  score: string;
-  status: MatchStatus;
-  startedAt: number;
-  finishedAt: number | null;
-  players: MatchPlayerStats[];
+  competitionName: string;
   demoUrl: string | null;
+  finishedAt: number | null;
+  map: string;
+  matchId: string;
+  players: MatchPlayerStats[];
+  region: string;
+  rounds: number;
+  score: string;
+  startedAt: number;
+  status: MatchStatus;
   teams: {
     faction1: { name: string; score: number; playerIds: string[] };
     faction2: { name: string; score: number; playerIds: string[] };
   };
-  rounds: number;
-  region: string;
-  competitionName: string;
 }
 
 export interface DemoPlayerAnalytics {
-  nickname: string;
-  teamKey: DemoTeamKey;
-  tradeKills: number;
-  tradedDeaths: number;
-  untradedDeaths: number;
-  rws: number;
-  playerId?: string;
-  steamId?: string;
-  kills?: number;
-  deaths?: number;
-  assists?: number;
-  headshots?: number;
   adr?: number;
-  hsPercent?: number;
-  damage?: number;
-  entryKills?: number;
-  entryDeaths?: number;
-  openingDuelAttempts?: number;
-  openingDuelWins?: number;
-  exitKills?: number;
+  assists?: number;
+  avgFlashBlindDuration?: number;
+  avgKillDistance?: number;
+  bombDefuses?: number;
+  bombPlants?: number;
   clutchAttempts?: number;
   clutchWins?: number;
-  lastAliveRounds?: number;
-  bombPlants?: number;
-  bombDefuses?: number;
-  utilityDamage?: number;
-  flashAssists?: number;
-  enemiesFlashed?: number;
-  kastPercent?: number;
-  rating?: number;
-  multiKills?: { threeK: number; fourK: number; ace: number };
-  killTimings?: { early: number; mid: number; late: number };
-  // Utility mastery
-  smokesThrown?: number;
-  flashesThrown?: number;
-  hesThrown?: number;
-  molotovsThrown?: number;
-  utilityPerRound?: number;
-  avgFlashBlindDuration?: number;
-  teamFlashes?: number;
-  effectiveFlashRate?: number;
-  // Kill quality
-  wallbangKills?: number;
-  thrusmokeKills?: number;
-  noscopeKills?: number;
-  avgKillDistance?: number;
-  weaponKills?: Record<string, number>;
-  // Economy
-  totalSpend?: number;
-  economyEfficiency?: number;
-  weaponRounds?: Record<string, number>;
+  ctAdr?: number;
+  ctDeaths?: number;
   // Side-split
   ctKills?: number;
-  ctDeaths?: number;
-  ctAdr?: number;
   ctRating?: number;
-  tKills?: number;
-  tDeaths?: number;
+  damage?: number;
+  deaths?: number;
+  economyEfficiency?: number;
+  effectiveFlashRate?: number;
+  enemiesFlashed?: number;
+  entryDeaths?: number;
+  entryKills?: number;
+  exitKills?: number;
+  flashAssists?: number;
+  flashesThrown?: number;
+  headshots?: number;
+  hesThrown?: number;
+  hsPercent?: number;
+  kastPercent?: number;
+  kills?: number;
+  killTimings?: { early: number; mid: number; late: number };
+  lastAliveRounds?: number;
+  molotovsThrown?: number;
+  multiKills?: { threeK: number; fourK: number; ace: number };
+  nickname: string;
+  noscopeKills?: number;
+  openingDuelAttempts?: number;
+  openingDuelWins?: number;
+  playerId?: string;
+  rating?: number;
+  rws: number;
+  // Utility mastery
+  smokesThrown?: number;
+  steamId?: string;
   tAdr?: number;
+  tDeaths?: number;
+  teamFlashes?: number;
+  teamKey: DemoTeamKey;
+  thrusmokeKills?: number;
+  tKills?: number;
+  // Economy
+  totalSpend?: number;
   tRating?: number;
+  tradedDeaths: number;
+  tradeKills: number;
+  untradedDeaths: number;
+  utilityDamage?: number;
+  utilityPerRound?: number;
+  // Kill quality
+  wallbangKills?: number;
+  weaponKills?: Record<string, number>;
+  weaponRounds?: Record<string, number>;
 }
 
 export interface DemoTeamAnalytics {
-  teamKey: DemoTeamKey;
   name: string;
-  side: "CT" | "T" | "unknown";
-  roundsWon: number;
   roundsLost: number;
+  roundsWon: number;
+  rws: number;
+  side: "CT" | "T" | "unknown";
+  teamKey: DemoTeamKey;
   tradeKills: number;
   untradedDeaths: number;
-  rws: number;
 }
 
 export interface DemoRoundAnalytics {
-  roundNumber: number;
-  winnerTeamKey: DemoTeamKey | null;
-  winnerSide: "CT" | "T" | null;
-  isPistolRound: boolean;
-  isBombRound: boolean;
-  scoreAfterRound: Record<DemoTeamKey, number>;
-  tTeamKey?: DemoTeamKey;
-  ctTeamKey?: DemoTeamKey;
-  tBuyType?: string;
-  ctBuyType?: string;
-  endReason?: string | null;
-  bombPlanted?: boolean;
   bombDefused?: boolean;
-  planterSteamId?: string | null;
-  defuserSteamId?: string | null;
-  tEquipValue?: number;
+  bombPlanted?: boolean;
+  ctBuyType?: string;
   ctEquipValue?: number;
+  ctTeamKey?: DemoTeamKey;
+  defuserSteamId?: string | null;
+  endReason?: string | null;
+  isBombRound: boolean;
+  isPistolRound: boolean;
+  planterSteamId?: string | null;
+  roundNumber: number;
+  scoreAfterRound: Record<DemoTeamKey, number>;
+  tBuyType?: string;
+  tEquipValue?: number;
+  tTeamKey?: DemoTeamKey;
+  winnerSide: "CT" | "T" | null;
+  winnerTeamKey: DemoTeamKey | null;
 }
 
 export interface DemoMatchAnalytics {
-  matchId: string;
-  sourceType: DemoAnalyticsSourceType;
   availability: DemoAnalyticsAvailability;
   ingestionStatus: DemoIngestionStatus;
   mapName: string;
-  totalRounds: number;
-  rounds: DemoRoundAnalytics[];
-  teams: DemoTeamAnalytics[];
+  matchId: string;
   players: DemoPlayerAnalytics[];
+  rounds: DemoRoundAnalytics[];
+  sourceType: DemoAnalyticsSourceType;
+  teams: DemoTeamAnalytics[];
+  totalRounds: number;
 }
 
 export interface MatchDetailWithDemoAnalytics extends MatchDetail {
@@ -256,114 +267,114 @@ export interface TwitchStream {
   channel: string;
   faceitId: string;
   isLive: boolean;
-  viewerCount: number;
-  title: string;
   thumbnailUrl: string;
+  title: string;
+  viewerCount: number;
 }
 
 export type BetSide = "team1" | "team2";
 export type BettingPoolStatus = "OPEN" | "CLOSED" | "RESOLVED" | "REFUNDED";
 
 export interface BettingPool {
-  id: string;
+  closesAt: string;
   faceitMatchId: string;
+  id: string;
+  opensAt: string;
+  resolvedAt: string | null;
   status: BettingPoolStatus;
   team1Name: string;
-  team2Name: string;
   team1Pool: number;
+  team2Name: string;
   team2Pool: number;
   winningTeam: BetSide | null;
-  opensAt: string;
-  closesAt: string;
-  resolvedAt: string | null;
 }
 
 export interface BetAuditEvent {
-  id: string;
-  betId: string;
-  poolId: string;
-  faceitMatchId: string;
-  userId: string;
-  side: BetSide;
   amount: number;
   betCreatedAt: string;
-  matchStartedAt: string | null;
-  secondsSinceMatchStart: number | null;
+  betId: string;
   capturedPoolStatus: BettingPoolStatus;
   createdAt: string;
+  faceitMatchId: string;
+  id: string;
+  matchStartedAt: string | null;
+  poolId: string;
+  secondsSinceMatchStart: number | null;
+  side: BetSide;
+  userId: string;
 }
 
 export interface Bet {
-  id: string;
-  poolId: string;
-  userId: string;
-  side: BetSide;
   amount: number;
-  payout: number | null;
   createdAt: string;
+  id: string;
+  payout: number | null;
+  poolId: string;
+  side: BetSide;
+  userId: string;
 }
 
 export interface BetWithPool extends Bet {
-  pool: BettingPool;
   audit?: BetAuditEvent | null;
+  pool: BettingPool;
 }
 
 export interface BettingLeaderboardEntry {
-  userId: string;
-  nickname: string;
-  coins: number;
   betsPlaced: number;
   betsWon: number;
-  resolvedBets: number;
-  totalWagered: number;
-  totalReturned: number;
+  coins: number;
   netProfit: number;
+  nickname: string;
+  resolvedBets: number;
+  totalReturned: number;
+  totalWagered: number;
+  userId: string;
   winRate: number;
 }
 
 export interface BetHistorySummary {
-  coins: number;
   betsPlaced: number;
   betsWon: number;
-  resolvedBets: number;
-  refundedBets: number;
-  pendingBets: number;
-  totalWagered: number;
-  totalReturned: number;
+  coins: number;
   netProfit: number;
+  pendingBets: number;
+  refundedBets: number;
+  resolvedBets: number;
+  totalReturned: number;
+  totalWagered: number;
   winRate: number;
 }
 
 export interface StatsLeaderboardEntry {
-  faceitId: string;
-  nickname: string;
-  elo: number;
-  gamesPlayed: number;
-  avgImpact: number;
-  avgKills: number;
-  avgKd: number;
   avgAdr: number;
-  winRate: number;       // 0–100
-  avgHsPercent: number;  // 0–100
-  avgKrRatio: number;
-  avgFirstKills: number;
   avgClutchKills: number;
-  avgUtilityDamage: number;
   avgEnemiesFlashed: number;
-  avgEntryRate: number;  // 0–1
+  avgEntryRate: number; // 0–1
+  avgFirstKills: number;
+  avgHsPercent: number; // 0–100
+  avgImpact: number;
+  avgKd: number;
+  avgKills: number;
+  avgKrRatio: number;
   avgSniperKills: number;
+  avgUtilityDamage: number;
+  elo: number;
+  faceitId: string;
+  gamesPlayed: number;
+  nickname: string;
+  winRate: number; // 0–100
 }
 
 export interface StatsLeaderboardResult {
   entries: StatsLeaderboardEntry[];
-  targetMatchCount: number;
   sharedFriendCount: number;
+  targetMatchCount: number;
 }
 
 export interface LeaderboardEntry {
-  userId: string;
-  nickname: string;
-  coins: number;
   betsPlaced: number;
   betsWon: number;
+  coins: number;
+  nickname: string;
+  userId: string;
 }

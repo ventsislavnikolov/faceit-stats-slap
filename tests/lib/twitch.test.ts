@@ -1,6 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { buildTwitchEmbedUrl, parseTwitchEmbedParents, parseTwitchStreams } from "~/lib/twitch";
 import { TWITCH_MAP } from "~/lib/constants";
+import {
+  buildTwitchEmbedUrl,
+  parseTwitchEmbedParents,
+  parseTwitchStreams,
+} from "~/lib/twitch";
 
 const ORIGINAL_ENV = {
   TWITCH_CLIENT_ID: process.env.TWITCH_CLIENT_ID,
@@ -75,7 +79,9 @@ describe("parseTwitchEmbedParents", () => {
   });
 
   it("drops protocol-only parent candidates", () => {
-    expect(parseTwitchEmbedParents("https://", ["http://"])).toEqual(["localhost"]);
+    expect(parseTwitchEmbedParents("https://", ["http://"])).toEqual([
+      "localhost",
+    ]);
   });
 });
 
@@ -85,7 +91,8 @@ describe("fetchLiveStreams", () => {
     process.env.TWITCH_CLIENT_ID = "client-id";
     process.env.TWITCH_CLIENT_SECRET = "client-secret";
 
-    const fetchMock = vi.fn()
+    const fetchMock = vi
+      .fn()
       .mockResolvedValueOnce({
         ok: true,
         json: async () => ({
@@ -140,7 +147,8 @@ describe("fetchLiveStreams", () => {
     process.env.TWITCH_CLIENT_ID = "client-id";
     process.env.TWITCH_CLIENT_SECRET = "client-secret";
 
-    const fetchMock = vi.fn()
+    const fetchMock = vi
+      .fn()
       .mockResolvedValueOnce({
         ok: true,
         json: async () => ({
@@ -201,7 +209,8 @@ describe("fetchLiveStreams", () => {
 
     vi.stubGlobal(
       "fetch",
-      vi.fn()
+      vi
+        .fn()
         .mockResolvedValueOnce({
           ok: true,
           json: async () => ({

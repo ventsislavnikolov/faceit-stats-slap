@@ -6,8 +6,12 @@ const subscribeToRecovery = createIsomorphicFn()
   .server(() => ({ unsubscribe: () => {} }))
   .client(async (onRecovery: () => void) => {
     const { getSupabaseClient } = await import("~/lib/supabase.client");
-    const { data: { subscription } } = getSupabaseClient().auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY") onRecovery();
+    const {
+      data: { subscription },
+    } = getSupabaseClient().auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") {
+        onRecovery();
+      }
     });
     return { unsubscribe: () => subscription.unsubscribe() };
   });
@@ -74,13 +78,17 @@ function ResetPasswordPage() {
     setSuccess(true);
   }
 
-  const inputClass = "bg-bg-elevated border border-border rounded px-3 py-2 text-text focus:border-accent outline-none";
+  const inputClass =
+    "bg-bg-elevated border border-border rounded px-3 py-2 text-text focus:border-accent outline-none";
 
   if (success) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4">
         <p className="text-accent text-sm">Password updated successfully.</p>
-        <Link to="/sign-in" className="text-text-muted text-sm hover:text-accent">
+        <Link
+          className="text-sm text-text-muted hover:text-accent"
+          to="/sign-in"
+        >
           Sign in with your new password
         </Link>
       </div>
@@ -89,9 +97,12 @@ function ResetPasswordPage() {
 
   if (!recoveryReady && expired) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4">
         <p className="text-error text-sm">Invalid or expired reset link.</p>
-        <Link to="/sign-in" className="text-text-muted text-sm hover:text-accent">
+        <Link
+          className="text-sm text-text-muted hover:text-accent"
+          to="/sign-in"
+        >
           Back to sign in
         </Link>
       </div>
@@ -100,39 +111,42 @@ function ResetPasswordPage() {
 
   if (!recoveryReady) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-text-muted text-sm">Verifying reset link...</p>
+      <div className="flex min-h-screen items-center justify-center">
+        <p className="text-sm text-text-muted">Verifying reset link...</p>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen gap-6">
-      <p className="text-text-muted text-sm">Set your new password</p>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full max-w-sm px-4">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-6">
+      <p className="text-sm text-text-muted">Set your new password</p>
+      <form
+        className="flex w-full max-w-sm flex-col gap-4 px-4"
+        onSubmit={handleSubmit}
+      >
         <input
-          type="password"
-          placeholder="New Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          minLength={6}
           className={inputClass}
+          minLength={6}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="New Password"
+          required
+          type="password"
+          value={password}
         />
         <input
-          type="password"
-          placeholder="Confirm Password"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          required
-          minLength={6}
           className={inputClass}
+          minLength={6}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          placeholder="Confirm Password"
+          required
+          type="password"
+          value={confirmPassword}
         />
         {error && <p className="text-error text-sm">{error}</p>}
         <button
-          type="submit"
+          className="rounded bg-accent py-2 font-bold text-bg hover:opacity-90 disabled:opacity-50"
           disabled={loading}
-          className="bg-accent text-bg font-bold py-2 rounded hover:opacity-90 disabled:opacity-50"
+          type="submit"
         >
           {loading ? "..." : "Update Password"}
         </button>

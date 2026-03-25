@@ -10,8 +10,8 @@ vi.mock("~/hooks/useCoinBalance", () => ({
   useCoinBalance: vi.fn(),
 }));
 
-import { useUserBets } from "~/hooks/useUserBets";
 import { useCoinBalance } from "~/hooks/useCoinBalance";
+import { useUserBets } from "~/hooks/useUserBets";
 
 function makeBet(overrides: Record<string, unknown> = {}) {
   return {
@@ -156,7 +156,7 @@ describe("BetHistoryTab", () => {
     } as any);
 
     expect(renderToStaticMarkup(<BetHistoryTab userId={null} />)).toContain(
-      "Sign in to see your bets",
+      "Sign in to see your bets"
     );
 
     vi.mocked(useUserBets).mockReturnValue({
@@ -166,7 +166,7 @@ describe("BetHistoryTab", () => {
     } as any);
 
     expect(renderToStaticMarkup(<BetHistoryTab userId="user-1" />)).toContain(
-      "Failed to load betting history",
+      "Failed to load betting history"
     );
   });
 });

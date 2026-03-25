@@ -1,7 +1,7 @@
 import {
   createFileRoute,
-  Outlet,
   Link,
+  Outlet,
   useRouter,
   useRouterState,
 } from "@tanstack/react-router";
@@ -13,11 +13,16 @@ import { getPlayerViewHref } from "~/lib/player-view-shell";
 
 const subscribeToAuthSession = createIsomorphicFn()
   .server(() => ({ unsubscribe: () => {} }))
-  .client(async (onSession: (session: { user: { id: string } } | null) => void) => {
-    const { getSupabaseClient } = await import("~/lib/supabase.client");
-    const cleanup = await initializeAuthSession(getSupabaseClient(), onSession);
-    return { unsubscribe: cleanup };
-  });
+  .client(
+    async (onSession: (session: { user: { id: string } } | null) => void) => {
+      const { getSupabaseClient } = await import("~/lib/supabase.client");
+      const cleanup = await initializeAuthSession(
+        getSupabaseClient(),
+        onSession
+      );
+      return { unsubscribe: cleanup };
+    }
+  );
 
 const doSignOut = createIsomorphicFn()
   .server(() => {})
@@ -30,7 +35,10 @@ export const Route = createFileRoute("/_authed")({
   component: AppLayout,
 });
 
-function getCurrentNickname(pathname: string, search: Record<string, unknown>): string | null {
+function getCurrentNickname(
+  pathname: string,
+  search: Record<string, unknown>
+): string | null {
   if (pathname === "/history" || pathname === "/leaderboard") {
     return typeof search.player === "string" && search.player.length > 0
       ? search.player
@@ -59,10 +67,15 @@ export function AppLayout() {
   const pathname = location.pathname;
   const currentSearch = location.search as Record<string, unknown>;
   const currentNickname = getCurrentNickname(pathname, currentSearch);
-  const friendsHref = currentNickname ? getPlayerViewHref("friends", currentNickname) : { to: "/" };
+  const friendsHref = currentNickname
+    ? getPlayerViewHref("friends", currentNickname)
+    : { to: "/" };
   const historyHref = currentNickname
     ? getPlayerViewHref("history", currentNickname)
-    : { to: "/history", search: { player: undefined, matches: 20, queue: "party" } };
+    : {
+        to: "/history",
+        search: { player: undefined, matches: 20, queue: "party" },
+      };
   const leaderboardHref = currentNickname
     ? getPlayerViewHref("leaderboard", currentNickname)
     : { to: "/leaderboard", search: { player: undefined } };
@@ -96,40 +109,41 @@ export function AppLayout() {
   }
 
   return (
-    <div className="flex flex-col h-screen">
-      <nav className="flex justify-between items-center px-4 py-2.5 bg-bg-card border-b border-border">
+    <div className="flex h-screen flex-col">
+      <nav className="flex items-center justify-between border-border border-b bg-bg-card px-4 py-2.5">
         <div className="flex items-center gap-4">
-          <Link to="/" className="text-accent font-bold text-base hover:opacity-80">
+          <Link
+            className="font-bold text-accent text-base hover:opacity-80"
+            to="/"
+          >
             FaceitFriends<span className="text-text">Live</span>
           </Link>
           <div className="flex gap-3 text-xs">
             <Link
-              to={friendsHref.to as never}
+              className={
+                isFriendsActive ? navLinkActiveClass : navLinkInactiveClass
+              }
               params={friendsHref.params as never}
               search={friendsHref.search as never}
-              className={
-                isFriendsActive
-                  ? navLinkActiveClass
-                  : navLinkInactiveClass
-              }
+              to={friendsHref.to as never}
             >
               Friends
             </Link>
             <Link
-              to={leaderboardHref.to as never}
-              params={leaderboardHref.params as never}
-              search={leaderboardHref.search as never}
               activeProps={{ className: navLinkActiveClass }}
               inactiveProps={{ className: navLinkInactiveClass }}
+              params={leaderboardHref.params as never}
+              search={leaderboardHref.search as never}
+              to={leaderboardHref.to as never}
             >
               Leaderboard
             </Link>
             <Link
-              to={historyHref.to as never}
-              params={historyHref.params as never}
-              search={historyHref.search as never}
               activeProps={{ className: navLinkActiveClass }}
               inactiveProps={{ className: navLinkInactiveClass }}
+              params={historyHref.params as never}
+              search={historyHref.search as never}
+              to={historyHref.to as never}
             >
               History
             </Link>
@@ -139,14 +153,17 @@ export function AppLayout() {
         {isSignedIn ? (
           <div className="flex items-center gap-3">
             {userId && <CoinBalance userId={userId} />}
-            <button onClick={handleSignOut} className="text-text-muted text-xs hover:text-error">
+            <button
+              className="text-text-muted text-xs hover:text-error"
+              onClick={handleSignOut}
+            >
               Sign Out
             </button>
           </div>
         ) : (
           <Link
+            className="rounded border border-accent/40 px-3 py-1 text-accent text-xs hover:bg-accent/10"
             to="/sign-in"
-            className="text-xs text-accent border border-accent/40 px-3 py-1 rounded hover:bg-accent/10"
             // @ts-expect-error dynamic route
           >
             Sign In

@@ -10,6 +10,8 @@ export function getPlayingFriendIds(
     ...liveMatches
       .filter((match) => activeStatuses.has(match.status))
       .flatMap((match) => match.friendIds),
-    ...twitchStreams.filter((stream) => stream.isLive).map((stream) => stream.faceitId),
+    ...twitchStreams
+      .filter((stream) => stream.isLive)
+      .map((stream) => stream.faceitId),
   ]);
 }

@@ -23,10 +23,14 @@ const END_REASON_ICONS: Record<string, string> = {
   time_ran_out: "t",
 };
 
-export function RoundTimeline({ rounds, team1Name, team2Name }: RoundTimelineProps) {
+export function RoundTimeline({
+  rounds,
+  team1Name,
+  team2Name,
+}: RoundTimelineProps) {
   if (rounds.length === 0) {
     return (
-      <div className="border border-border rounded-lg p-4 text-center text-xs text-text-dim">
+      <div className="rounded-lg border border-border p-4 text-center text-text-dim text-xs">
         No rounds data available
       </div>
     );
@@ -50,54 +54,63 @@ export function RoundTimeline({ rounds, team1Name, team2Name }: RoundTimelinePro
     if (r.winnerTeamKey === currentWinner) {
       currentStreak++;
     } else {
-      if (currentStreak >= 3) momentumShifts++;
+      if (currentStreak >= 3) {
+        momentumShifts++;
+      }
       currentWinner = r.winnerTeamKey;
       currentStreak = 1;
     }
   }
 
   return (
-    <div className="border border-border rounded-lg p-4">
+    <div className="rounded-lg border border-border p-4">
       {/* Score header */}
-      <div className="flex items-center justify-between mb-1">
+      <div className="mb-1 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-text">{team1Name}</span>
-          <span className="text-lg font-bold text-accent">{finalScore.team1}</span>
+          <span className="font-medium text-text text-xs">{team1Name}</span>
+          <span className="font-bold text-accent text-lg">
+            {finalScore.team1}
+          </span>
         </div>
         <div className="text-center">
-          <span className="text-[10px] text-text-dim uppercase tracking-wider">Round timeline</span>
+          <span className="text-[10px] text-text-dim uppercase tracking-wider">
+            Round timeline
+          </span>
           {halfTimeScore && (
             <div className="text-[9px] text-text-dim">
               HT: {halfTimeScore.team1}-{halfTimeScore.team2}
-              {momentumShifts > 0 && ` · ${momentumShifts} momentum shift${momentumShifts > 1 ? "s" : ""}`}
+              {momentumShifts > 0 &&
+                ` · ${momentumShifts} momentum shift${momentumShifts > 1 ? "s" : ""}`}
             </div>
           )}
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-lg font-bold text-error">{finalScore.team2}</span>
-          <span className="text-xs font-medium text-text">{team2Name}</span>
+          <span className="font-bold text-error text-lg">
+            {finalScore.team2}
+          </span>
+          <span className="font-medium text-text text-xs">{team2Name}</span>
         </div>
       </div>
 
       {/* Timeline */}
       <div className="flex items-start gap-0.5">
-        <HalfSection rounds={firstHalf} label="1st half" />
-        <div className="w-px h-16 bg-border mx-1 flex-shrink-0 mt-4" />
-        <HalfSection rounds={secondHalf} label="2nd half" />
+        <HalfSection label="1st half" rounds={firstHalf} />
+        <div className="mx-1 mt-4 h-16 w-px flex-shrink-0 bg-border" />
+        <HalfSection label="2nd half" rounds={secondHalf} />
       </div>
 
       {/* Legend */}
-      <div className="flex items-center gap-3 mt-2 text-[9px] text-text-dim flex-wrap">
+      <div className="mt-2 flex flex-wrap items-center gap-3 text-[9px] text-text-dim">
         <span className="flex items-center gap-1">
-          <span className="w-2 h-2 rounded-sm bg-accent inline-block" />
+          <span className="inline-block h-2 w-2 rounded-sm bg-accent" />
           {team1Name}
         </span>
         <span className="flex items-center gap-1">
-          <span className="w-2 h-2 rounded-sm bg-error inline-block" />
+          <span className="inline-block h-2 w-2 rounded-sm bg-error" />
           {team2Name}
         </span>
         <span className="flex items-center gap-1">
-          <span className="w-2 h-2 rounded-sm border border-text-dim inline-block" />
+          <span className="inline-block h-2 w-2 rounded-sm border border-text-dim" />
           pistol
         </span>
         <span>
@@ -123,8 +136,10 @@ function HalfSection({
 }) {
   return (
     <div className="flex-1">
-      <div className="text-[8px] text-text-dim text-center mb-1 uppercase">{label}</div>
-      <div className="flex gap-0.5 justify-center">
+      <div className="mb-1 text-center text-[8px] text-text-dim uppercase">
+        {label}
+      </div>
+      <div className="flex justify-center gap-0.5">
         {rounds.map((round) => (
           <RoundMarker key={round.roundNumber} round={round} />
         ))}
@@ -143,16 +158,16 @@ function RoundMarker({ round }: { round: DemoRoundAnalytics }) {
   const endIcon = END_REASON_ICONS[round.endReason ?? ""] ?? "";
 
   return (
-    <div className="flex flex-col items-center w-5">
+    <div className="flex w-5 flex-col items-center">
       {/* Buy type indicator: T side on top */}
-      <div className="flex gap-px text-[6px] leading-none mb-0.5">
+      <div className="mb-0.5 flex gap-px text-[6px] leading-none">
         <span className={tBuy.color}>{tBuy.short}</span>
         <span className={ctBuy.color}>{ctBuy.short}</span>
       </div>
 
       {/* Round number box */}
       <div
-        className={`w-5 h-5 rounded-sm flex items-center justify-center text-[8px] font-medium text-white ${bgColor} ${
+        className={`flex h-5 w-5 items-center justify-center rounded-sm font-medium text-[8px] text-white ${bgColor} ${
           isPistol ? "ring-1 ring-white/40" : ""
         }`}
         title={`R${round.roundNumber}${isPistol ? " (pistol)" : ""} — ${round.scoreAfterRound.team1}:${round.scoreAfterRound.team2} — ${round.endReason ?? ""}`}
@@ -161,9 +176,11 @@ function RoundMarker({ round }: { round: DemoRoundAnalytics }) {
       </div>
 
       {/* Bottom indicators: bomb/defuse + pistol */}
-      <div className="flex items-center gap-px mt-0.5 h-3">
+      <div className="mt-0.5 flex h-3 items-center gap-px">
         {round.bombPlanted && (
-          <span className={`text-[7px] font-bold ${round.bombDefused ? "text-blue-400" : "text-orange-400"}`}>
+          <span
+            className={`font-bold text-[7px] ${round.bombDefused ? "text-blue-400" : "text-orange-400"}`}
+          >
             {round.bombDefused ? "D" : "B"}
           </span>
         )}

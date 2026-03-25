@@ -3,24 +3,24 @@ import type { StatsLeaderboardEntry } from "~/lib/types";
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 export interface SharedStatsLeaderboardRow {
-  matchId: string;
-  playedAt: string | number | Date | null | undefined;
-  faceitId: string;
-  nickname: string;
-  elo: number;
-  kills: number;
-  kdRatio: number;
   adr: number;
-  hsPercent: number;
-  krRatio: number;
-  win: boolean;
-  firstKills: number;
   clutchKills: number;
-  utilityDamage: number;
+  elo: number;
   enemiesFlashed: number;
   entryCount: number;
   entryWins: number;
+  faceitId: string;
+  firstKills: number;
+  hsPercent: number;
+  kdRatio: number;
+  kills: number;
+  krRatio: number;
+  matchId: string;
+  nickname: string;
+  playedAt: string | number | Date | null | undefined;
   sniperKills: number;
+  utilityDamage: number;
+  win: boolean;
 }
 
 interface ValidSharedStatsLeaderboardRow extends SharedStatsLeaderboardRow {
@@ -28,10 +28,10 @@ interface ValidSharedStatsLeaderboardRow extends SharedStatsLeaderboardRow {
 }
 
 interface ImpactBaseline {
-  kd: number;
   adr: number;
-  kr: number;
   entryRate: number;
+  kd: number;
+  kr: number;
 }
 
 const IMPACT_BASELINE_POINTS: Array<{ elo: number } & ImpactBaseline> = [
@@ -48,23 +48,28 @@ const IMPACT_BASELINE_POINTS: Array<{ elo: number } & ImpactBaseline> = [
 
 export interface StatsLeaderboardResult {
   entries: StatsLeaderboardEntry[];
-  targetMatchCount: number;
   sharedFriendCount: number;
+  targetMatchCount: number;
 }
 
 export interface BuildSharedStatsLeaderboardInput {
+  days: number;
+  eligibleFriendIds?: string[];
+  friendIds: string[];
+  n: number;
+  now?: string | number | Date;
   rows: SharedStatsLeaderboardRow[];
   targetPlayerId: string;
-  friendIds: string[];
-  eligibleFriendIds?: string[];
-  n: number;
-  days: number;
-  now?: string | number | Date;
 }
 
-function toTimestamp(value: string | number | Date | null | undefined): number | null {
-  if (value == null) return null;
-  const timestamp = value instanceof Date ? value.getTime() : new Date(value).getTime();
+function toTimestamp(
+  value: string | number | Date | null | undefined
+): number | null {
+  if (value == null) {
+    return null;
+  }
+  const timestamp =
+    value instanceof Date ? value.getTime() : new Date(value).getTime();
   return Number.isFinite(timestamp) ? timestamp : null;
 }
 
@@ -73,8 +78,13 @@ function round(value: number, decimals: number): number {
   return Math.round(value * factor) / factor;
 }
 
-function average(rows: SharedStatsLeaderboardRow[], selector: (row: SharedStatsLeaderboardRow) => number): number {
-  if (rows.length === 0) return 0;
+function average(
+  rows: SharedStatsLeaderboardRow[],
+  selector: (row: SharedStatsLeaderboardRow) => number
+): number {
+  if (rows.length === 0) {
+    return 0;
+  }
   const sum = rows.reduce((acc, row) => acc + (Number(selector(row)) || 0), 0);
   return sum / rows.length;
 }
@@ -88,7 +98,9 @@ function averageRounded(
 }
 
 function averageNumbers(values: number[]): number {
-  if (values.length === 0) return 0;
+  if (values.length === 0) {
+    return 0;
+  }
   return values.reduce((sum, value) => sum + value, 0) / values.length;
 }
 
@@ -106,17 +118,29 @@ function getImpactBaseline(elo: number): ImpactBaseline {
   const last = IMPACT_BASELINE_POINTS[IMPACT_BASELINE_POINTS.length - 1];
 
   if (numericElo <= first.elo) {
-    return { kd: first.kd, adr: first.adr, kr: first.kr, entryRate: first.entryRate };
+    return {
+      kd: first.kd,
+      adr: first.adr,
+      kr: first.kr,
+      entryRate: first.entryRate,
+    };
   }
 
   if (numericElo >= last.elo) {
-    return { kd: last.kd, adr: last.adr, kr: last.kr, entryRate: last.entryRate };
+    return {
+      kd: last.kd,
+      adr: last.adr,
+      kr: last.kr,
+      entryRate: last.entryRate,
+    };
   }
 
   for (let index = 1; index < IMPACT_BASELINE_POINTS.length; index += 1) {
     const previous = IMPACT_BASELINE_POINTS[index - 1];
     const current = IMPACT_BASELINE_POINTS[index];
-    if (numericElo > current.elo) continue;
+    if (numericElo > current.elo) {
+      continue;
+    }
 
     const t = (numericElo - previous.elo) / (current.elo - previous.elo);
     return {
@@ -133,7 +157,9 @@ function getImpactBaseline(elo: number): ImpactBaseline {
 function getEntryRate(row: SharedStatsLeaderboardRow): number {
   const entryCount = Number(row.entryCount) || 0;
   const entryWins = Number(row.entryWins) || 0;
-  if (entryCount <= 0) return 0;
+  if (entryCount <= 0) {
+    return 0;
+  }
   return clamp(entryWins / entryCount, 0, 1);
 }
 
@@ -149,18 +175,27 @@ function computeImpactScore(row: SharedStatsLeaderboardRow): number {
     0.25 * ((cappedAdr - baseline.adr) / 10) +
     0.2 * (cappedKr - baseline.kr) +
     0.1 * (cappedEntryRate - baseline.entryRate);
-  const difficulty = clamp(Math.sqrt(Math.max(Number(row.elo) || 0, 1) / 2000), 0.85, 1.2);
+  const difficulty = clamp(
+    Math.sqrt(Math.max(Number(row.elo) || 0, 1) / 2000),
+    0.85,
+    1.2
+  );
 
   return 100 + 60 * overperf * difficulty + (row.win ? 5 : 0);
 }
 
-function normalizeRow(row: SharedStatsLeaderboardRow): ValidSharedStatsLeaderboardRow | null {
+function normalizeRow(
+  row: SharedStatsLeaderboardRow
+): ValidSharedStatsLeaderboardRow | null {
   const playedAtMs = toTimestamp(row.playedAt);
-  if (playedAtMs == null) return null;
+  if (playedAtMs == null) {
+    return null;
+  }
   return { ...row, playedAtMs };
 }
 
-export type BuildPersonalFormLeaderboardInput = BuildSharedStatsLeaderboardInput;
+export type BuildPersonalFormLeaderboardInput =
+  BuildSharedStatsLeaderboardInput;
 
 export function buildPersonalFormLeaderboard({
   rows,
@@ -185,16 +220,23 @@ export function buildPersonalFormLeaderboard({
 
   for (const row of rows) {
     const validRow = normalizeRow(row);
-    if (!validRow) continue;
+    if (!validRow) {
+      continue;
+    }
 
-    if (validRow.playedAtMs < cutoff) continue;
+    if (validRow.playedAtMs < cutoff) {
+      continue;
+    }
     recentRows.push(validRow);
 
     if (validRow.faceitId === targetPlayerId) {
       targetMatchIds.add(validRow.matchId);
     }
 
-    if (!precomputedEligibleFriendIds?.length && friendSet.has(validRow.faceitId)) {
+    if (
+      !precomputedEligibleFriendIds?.length &&
+      friendSet.has(validRow.faceitId)
+    ) {
       activeFriendIds.add(validRow.faceitId);
     }
   }
@@ -206,9 +248,13 @@ export function buildPersonalFormLeaderboard({
 
   const perFriendRows = new Map<string, ValidSharedStatsLeaderboardRow[]>();
   for (const validRow of recentRows) {
-    if (!includedPlayerIds.has(validRow.faceitId)) continue;
+    if (!includedPlayerIds.has(validRow.faceitId)) {
+      continue;
+    }
 
-    if (!perFriendRows.has(validRow.faceitId)) perFriendRows.set(validRow.faceitId, []);
+    if (!perFriendRows.has(validRow.faceitId)) {
+      perFriendRows.set(validRow.faceitId, []);
+    }
     perFriendRows.get(validRow.faceitId)!.push(validRow);
   }
 
@@ -218,13 +264,23 @@ export function buildPersonalFormLeaderboard({
         .sort((a, b) => b.playedAtMs - a.playedAtMs)
         .slice(0, n);
 
-      if (recentPersonalRows.length === 0) return null;
+      if (recentPersonalRows.length === 0) {
+        return null;
+      }
 
       const latest = recentPersonalRows[0];
       const wins = recentPersonalRows.filter((row) => row.win).length;
-      const totalEntryCount = recentPersonalRows.reduce((sum, row) => sum + (Number(row.entryCount) || 0), 0);
-      const totalEntryWins = recentPersonalRows.reduce((sum, row) => sum + (Number(row.entryWins) || 0), 0);
-      const impactScores = recentPersonalRows.map((row) => computeImpactScore(row));
+      const totalEntryCount = recentPersonalRows.reduce(
+        (sum, row) => sum + (Number(row.entryCount) || 0),
+        0
+      );
+      const totalEntryWins = recentPersonalRows.reduce(
+        (sum, row) => sum + (Number(row.entryWins) || 0),
+        0
+      );
+      const impactScores = recentPersonalRows.map((row) =>
+        computeImpactScore(row)
+      );
 
       return {
         faceitId,
@@ -235,21 +291,50 @@ export function buildPersonalFormLeaderboard({
         avgKills: averageRounded(recentPersonalRows, (row) => row.kills, 2),
         avgKd: averageRounded(recentPersonalRows, (row) => row.kdRatio, 2),
         avgAdr: averageRounded(recentPersonalRows, (row) => row.adr, 1),
-        winRate: recentPersonalRows.length > 0 ? Math.round((wins / recentPersonalRows.length) * 100) : 0,
-        avgHsPercent: Math.round(average(recentPersonalRows, (row) => row.hsPercent)),
+        winRate:
+          recentPersonalRows.length > 0
+            ? Math.round((wins / recentPersonalRows.length) * 100)
+            : 0,
+        avgHsPercent: Math.round(
+          average(recentPersonalRows, (row) => row.hsPercent)
+        ),
         avgKrRatio: averageRounded(recentPersonalRows, (row) => row.krRatio, 2),
-        avgFirstKills: averageRounded(recentPersonalRows, (row) => row.firstKills, 2),
-        avgClutchKills: averageRounded(recentPersonalRows, (row) => row.clutchKills, 2),
-        avgUtilityDamage: Math.round(average(recentPersonalRows, (row) => row.utilityDamage)),
-        avgEnemiesFlashed: averageRounded(recentPersonalRows, (row) => row.enemiesFlashed, 1),
-        avgEntryRate: recentPersonalRows.length > 0 && totalEntryCount > 0
-          ? round(totalEntryWins / totalEntryCount, 2)
-          : 0,
-        avgSniperKills: averageRounded(recentPersonalRows, (row) => row.sniperKills, 2),
+        avgFirstKills: averageRounded(
+          recentPersonalRows,
+          (row) => row.firstKills,
+          2
+        ),
+        avgClutchKills: averageRounded(
+          recentPersonalRows,
+          (row) => row.clutchKills,
+          2
+        ),
+        avgUtilityDamage: Math.round(
+          average(recentPersonalRows, (row) => row.utilityDamage)
+        ),
+        avgEnemiesFlashed: averageRounded(
+          recentPersonalRows,
+          (row) => row.enemiesFlashed,
+          1
+        ),
+        avgEntryRate:
+          recentPersonalRows.length > 0 && totalEntryCount > 0
+            ? round(totalEntryWins / totalEntryCount, 2)
+            : 0,
+        avgSniperKills: averageRounded(
+          recentPersonalRows,
+          (row) => row.sniperKills,
+          2
+        ),
       } satisfies StatsLeaderboardEntry;
     })
     .filter((entry): entry is StatsLeaderboardEntry => entry !== null)
-    .sort((a, b) => b.avgImpact - a.avgImpact || b.gamesPlayed - a.gamesPlayed || a.nickname.localeCompare(b.nickname));
+    .sort(
+      (a, b) =>
+        b.avgImpact - a.avgImpact ||
+        b.gamesPlayed - a.gamesPlayed ||
+        a.nickname.localeCompare(b.nickname)
+    );
 
   return {
     entries,

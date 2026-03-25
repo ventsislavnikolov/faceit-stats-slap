@@ -1,10 +1,11 @@
 // src/components/PostMatchScoreboard.tsx
-import type { MatchPlayerStats } from "~/lib/types";
+
 import { getBanterLine } from "~/lib/banter";
+import type { MatchPlayerStats } from "~/lib/types";
 
 interface PostMatchScoreboardProps {
-  matchId: string;
   friendIds: string[];
+  matchId: string;
   players: MatchPlayerStats[];
 }
 
@@ -18,7 +19,9 @@ export function PostMatchScoreboard({
     .filter((p) => friendSet.has(p.playerId))
     .sort((a, b) => b.kills - a.kills);
 
-  if (friendStats.length === 0) return null;
+  if (friendStats.length === 0) {
+    return null;
+  }
 
   const topFragger = friendStats[0];
   const bottomFragger = friendStats[friendStats.length - 1];
@@ -29,13 +32,13 @@ export function PostMatchScoreboard({
   );
 
   return (
-    <div className="border-t border-border mt-3 pt-3">
-      <div className="text-[10px] text-text-dim uppercase tracking-wider mb-2">
+    <div className="mt-3 border-border border-t pt-3">
+      <div className="mb-2 text-[10px] text-text-dim uppercase tracking-wider">
         Your Squad
       </div>
 
       {/* Table header */}
-      <div className="grid grid-cols-[20px_1fr_32px_32px_32px_40px_32px_36px_32px] gap-1 text-[9px] text-text-dim mb-1 px-1">
+      <div className="mb-1 grid grid-cols-[20px_1fr_32px_32px_32px_40px_32px_36px_32px] gap-1 px-1 text-[9px] text-text-dim">
         <span />
         <span />
         <span className="text-center">K</span>
@@ -56,9 +59,7 @@ export function PostMatchScoreboard({
         let nameColor = "text-text";
         let statsColor = "text-text";
         let rankDisplay: React.ReactNode = (
-          <span className="text-text-dim text-[10px] text-center">
-            {i + 1}
-          </span>
+          <span className="text-center text-[10px] text-text-dim">{i + 1}</span>
         );
 
         if (isTop) {
@@ -74,17 +75,17 @@ export function PostMatchScoreboard({
 
         return (
           <div
+            className={`grid grid-cols-[20px_1fr_32px_32px_32px_40px_32px_36px_32px] gap-1 rounded px-1 py-1.5 text-[11px] ${rowBg} mb-0.5 items-center`}
             key={player.playerId}
-            className={`grid grid-cols-[20px_1fr_32px_32px_32px_40px_32px_36px_32px] gap-1 text-[11px] px-1 py-1.5 rounded ${rowBg} mb-0.5 items-center`}
           >
             {rankDisplay}
             <span className={nameColor}>{player.nickname}</span>
-            <span className={`text-center ${isTop ? "font-bold text-text" : statsColor}`}>
+            <span
+              className={`text-center ${isTop ? "font-bold text-text" : statsColor}`}
+            >
               {player.kills}
             </span>
-            <span className={`text-center ${statsColor}`}>
-              {player.deaths}
-            </span>
+            <span className={`text-center ${statsColor}`}>{player.deaths}</span>
             <span className={`text-center ${statsColor}`}>
               {player.assists}
             </span>
@@ -101,25 +102,29 @@ export function PostMatchScoreboard({
             <span className={`text-center ${statsColor}`}>
               {player.hsPercent}%
             </span>
-            <span className={`text-center ${statsColor}`}>
-              {player.mvps}
-            </span>
+            <span className={`text-center ${statsColor}`}>{player.mvps}</span>
           </div>
         );
       })}
 
       {/* Multi-kill badges */}
       {multiKills.length > 0 && (
-        <div className="flex gap-1.5 mt-2 flex-wrap">
+        <div className="mt-2 flex flex-wrap gap-1.5">
           {multiKills.map((p) => {
             const parts: string[] = [];
-            if (p.tripleKills > 0) parts.push(`${p.tripleKills}x Triple`);
-            if (p.quadroKills > 0) parts.push(`${p.quadroKills}x Quadro`);
-            if (p.pentaKills > 0) parts.push(`${p.pentaKills}x Penta`);
+            if (p.tripleKills > 0) {
+              parts.push(`${p.tripleKills}x Triple`);
+            }
+            if (p.quadroKills > 0) {
+              parts.push(`${p.quadroKills}x Quadro`);
+            }
+            if (p.pentaKills > 0) {
+              parts.push(`${p.pentaKills}x Penta`);
+            }
             return (
               <span
+                className="rounded bg-accent/10 px-1.5 py-0.5 text-[9px] text-accent"
                 key={p.playerId}
-                className="bg-accent/10 text-accent text-[9px] px-1.5 py-0.5 rounded"
               >
                 {p.nickname}: {parts.join(", ")}
               </span>
@@ -130,8 +135,8 @@ export function PostMatchScoreboard({
 
       {/* Banter */}
       {showBanter && (
-        <div className="border-t border-border mt-3 pt-2.5 text-center">
-          <span className="text-text-muted text-[11px] italic">
+        <div className="mt-3 border-border border-t pt-2.5 text-center">
+          <span className="text-[11px] text-text-muted italic">
             {getBanterLine("carry", topFragger.nickname, matchId)}
             {". "}
             {getBanterLine("roast", bottomFragger.nickname, matchId)}

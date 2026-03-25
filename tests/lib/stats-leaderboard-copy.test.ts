@@ -12,7 +12,9 @@ describe("stats leaderboard copy", () => {
   });
 
   it("formats the yesterday summary and empty-state copy", () => {
-    expect(getStatsLeaderboardSummaryCopy("soavarice", 9, 30, "yesterday")).toBe(
+    expect(
+      getStatsLeaderboardSummaryCopy("soavarice", 9, 30, "yesterday")
+    ).toBe(
       "Showing friends of soavarice who played yesterday. Stats are from yesterday's matches only."
     );
 
@@ -55,7 +57,9 @@ describe("stats leaderboard copy", () => {
   });
 
   it("formats queue-specific summary and empty-state copy", () => {
-    expect(getStatsLeaderboardSummaryCopy("soavarice", 9, 90, 20, "party")).toBe(
+    expect(
+      getStatsLeaderboardSummaryCopy("soavarice", 9, 90, 20, "party")
+    ).toBe(
       "Showing friends of soavarice from party matches in the last 90 days. Stats are from each player's own last 20 matches."
     );
 

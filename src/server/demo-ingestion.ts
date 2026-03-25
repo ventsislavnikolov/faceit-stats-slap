@@ -19,11 +19,11 @@ interface SupabaseLike {
     select(columns?: string): {
       eq(
         column: string,
-        value: unknown,
+        value: unknown
       ): {
         order(
           column: string,
-          options?: { ascending: boolean },
+          options?: { ascending: boolean }
         ): {
           limit(count: number): {
             single(): PromiseLike<SupabaseResult<Record<string, unknown>>>;
@@ -40,8 +40,8 @@ interface SupabaseLike {
 // ---------------------------------------------------------------------------
 
 interface QueueFaceitDemoParseInput {
-  faceitMatchId: string;
   demoUrl: string | null;
+  faceitMatchId: string;
 }
 
 interface QueueManualDemoParseInput {
@@ -52,8 +52,8 @@ interface QueueManualDemoParseInput {
 }
 
 interface QueueResult {
-  id: string | null;
   alreadyExists: boolean;
+  id: string | null;
   sourceUnavailable?: boolean;
 }
 
@@ -65,7 +65,7 @@ const ACTIVE_STATUSES: DemoIngestionStatus[] = ["queued", "parsing", "parsed"];
 
 async function findActiveIngestion(
   supabase: SupabaseLike,
-  faceitMatchId: string,
+  faceitMatchId: string
 ): Promise<Record<string, unknown> | null> {
   const { data } = await supabase
     .from("demo_ingestions")
@@ -75,7 +75,9 @@ async function findActiveIngestion(
     .limit(1)
     .single();
 
-  if (!data) return null;
+  if (!data) {
+    return null;
+  }
 
   const status = String(data.status);
   if (ACTIVE_STATUSES.includes(status as DemoIngestionStatus)) {
@@ -87,7 +89,7 @@ async function findActiveIngestion(
 
 async function insertIngestionRow(
   supabase: SupabaseLike,
-  row: Record<string, unknown>,
+  row: Record<string, unknown>
 ): Promise<string> {
   const { data, error } = await supabase
     .from("demo_ingestions")
@@ -95,7 +97,9 @@ async function insertIngestionRow(
     .select("id")
     .single();
 
-  if (error) throw new Error(`insertIngestionRow failed: ${error.message}`);
+  if (error) {
+    throw new Error(`insertIngestionRow failed: ${error.message}`);
+  }
   return data!.id;
 }
 
@@ -105,7 +109,7 @@ async function insertIngestionRow(
 
 export async function queueFaceitDemoParse(
   supabase: SupabaseLike,
-  input: QueueFaceitDemoParseInput,
+  input: QueueFaceitDemoParseInput
 ): Promise<QueueResult> {
   // No demo URL → mark source as unavailable
   if (!input.demoUrl) {
@@ -137,7 +141,7 @@ export async function queueFaceitDemoParse(
 
 export async function queueManualDemoParse(
   supabase: SupabaseLike,
-  input: QueueManualDemoParseInput,
+  input: QueueManualDemoParseInput
 ): Promise<QueueResult> {
   // Check for existing active ingestion
   const existing = await findActiveIngestion(supabase, input.faceitMatchId);
@@ -159,7 +163,7 @@ export async function queueManualDemoParse(
 
 export async function getDemoIngestionForMatch(
   supabase: SupabaseLike,
-  faceitMatchId: string,
+  faceitMatchId: string
 ): Promise<Record<string, unknown> | null> {
   const { data } = await supabase
     .from("demo_ingestions")

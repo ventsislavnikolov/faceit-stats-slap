@@ -27,9 +27,15 @@ export function shouldAutoSyncStatsLeaderboard(params: {
   isPending: boolean;
   attemptedKeys: Set<string>;
 }): boolean {
-  if (!params.targetPlayerId) return false;
-  if (params.playerIds.length === 0) return false;
-  if (params.isPending) return false;
+  if (!params.targetPlayerId) {
+    return false;
+  }
+  if (params.playerIds.length === 0) {
+    return false;
+  }
+  if (params.isPending) {
+    return false;
+  }
 
   const key = buildStatsLeaderboardSyncKey(params);
   return !params.attemptedKeys.has(key);

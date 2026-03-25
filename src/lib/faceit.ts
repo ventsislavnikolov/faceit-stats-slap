@@ -6,14 +6,20 @@ const FACEIT_RETRY_DELAYS_MS = [400, 900];
 
 function getApiKey(): string {
   const key = process.env.FACEIT_SERVER_SIDE_API_KEY;
-  if (!key) throw new Error("Missing FACEIT_SERVER_SIDE_API_KEY");
+  if (!key) {
+    throw new Error("Missing FACEIT_SERVER_SIDE_API_KEY");
+  }
   return key;
 }
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export async function faceitFetch(path: string): Promise<unknown> {
-  for (let attempt = 0; attempt <= FACEIT_RETRY_DELAYS_MS.length; attempt += 1) {
+  for (
+    let attempt = 0;
+    attempt <= FACEIT_RETRY_DELAYS_MS.length;
+    attempt += 1
+  ) {
     const res = await fetch(`${BASE_URL}${path}`, {
       headers: {
         Authorization: `Bearer ${getApiKey()}`,
@@ -34,7 +40,9 @@ export async function faceitFetch(path: string): Promise<unknown> {
       continue;
     }
 
-    throw new Error(`FACEIT API error: ${res.status} ${res.statusText} for ${path}`);
+    throw new Error(
+      `FACEIT API error: ${res.status} ${res.statusText} for ${path}`
+    );
   }
 
   throw new Error(`FACEIT API error: exhausted retries for ${path}`);
@@ -55,11 +63,11 @@ export function parsePlayerProfile(raw: any): FaceitPlayer {
 export function parseLifetimeStats(raw: any) {
   const lt = raw.lifetime || {};
   return {
-    lifetimeKd: parseFloat(lt["Average K/D Ratio"]) || 0,
-    lifetimeHs: parseInt(lt["Average Headshots %"]) || 0,
-    lifetimeAdr: parseFloat(lt["ADR"]) || 0,
-    winRate: parseInt(lt["Win Rate %"]) || 0,
-    totalMatches: parseInt(lt["Matches"]) || 0,
+    lifetimeKd: Number.parseFloat(lt["Average K/D Ratio"]) || 0,
+    lifetimeHs: Number.parseInt(lt["Average Headshots %"]) || 0,
+    lifetimeAdr: Number.parseFloat(lt["ADR"]) || 0,
+    winRate: Number.parseInt(lt["Win Rate %"]) || 0,
+    totalMatches: Number.parseInt(lt["Matches"]) || 0,
     recentResults: (lt["Recent Results"] || []).map((r: string) => r === "1"),
   };
 }
@@ -69,48 +77,50 @@ export function parseMatchStats(raw: any): MatchPlayerStats {
   return {
     playerId: raw.player_id,
     nickname: raw.nickname,
-    kills: parseInt(s["Kills"]) || 0,
-    deaths: parseInt(s["Deaths"]) || 0,
-    assists: parseInt(s["Assists"]) || 0,
-    headshots: parseInt(s["Headshots"]) || 0,
-    mvps: parseInt(s["MVPs"]) || 0,
-    kdRatio: parseFloat(s["K/D Ratio"]) || 0,
-    adr: parseFloat(s["ADR"]) || 0,
-    hsPercent: parseInt(s["Headshots %"]) || 0,
-    krRatio: parseFloat(s["K/R Ratio"]) || 0,
-    tripleKills: parseInt(s["Triple Kills"]) || 0,
-    quadroKills: parseInt(s["Quadro Kills"]) || 0,
-    pentaKills: parseInt(s["Penta Kills"]) || 0,
+    kills: Number.parseInt(s["Kills"]) || 0,
+    deaths: Number.parseInt(s["Deaths"]) || 0,
+    assists: Number.parseInt(s["Assists"]) || 0,
+    headshots: Number.parseInt(s["Headshots"]) || 0,
+    mvps: Number.parseInt(s["MVPs"]) || 0,
+    kdRatio: Number.parseFloat(s["K/D Ratio"]) || 0,
+    adr: Number.parseFloat(s["ADR"]) || 0,
+    hsPercent: Number.parseInt(s["Headshots %"]) || 0,
+    krRatio: Number.parseFloat(s["K/R Ratio"]) || 0,
+    tripleKills: Number.parseInt(s["Triple Kills"]) || 0,
+    quadroKills: Number.parseInt(s["Quadro Kills"]) || 0,
+    pentaKills: Number.parseInt(s["Penta Kills"]) || 0,
     result: s["Result"] === "1",
-    damage: parseInt(s["Damage"]) || 0,
-    firstKills: parseInt(s["First Kills"]) || 0,
-    entryCount: parseInt(s["Entry Count"]) || 0,
-    entryWins: parseInt(s["Entry Wins"]) || 0,
-    clutchKills: parseInt(s["Clutch Kills"]) || 0,
-    oneV1Count: parseInt(s["1v1Count"]) || 0,
-    oneV1Wins: parseInt(s["1v1Wins"]) || 0,
-    oneV2Count: parseInt(s["1v2Count"]) || 0,
-    oneV2Wins: parseInt(s["1v2Wins"]) || 0,
-    doubleKills: parseInt(s["Double Kills"]) || 0,
-    utilityDamage: parseInt(s["Utility Damage"]) || 0,
-    enemiesFlashed: parseInt(s["Enemies Flashed"]) || 0,
-    flashCount: parseInt(s["Flash Count"]) || 0,
-    sniperKills: parseInt(s["Sniper Kills"]) || 0,
-    pistolKills: parseInt(s["Pistol Kills"]) || 0,
+    damage: Number.parseInt(s["Damage"]) || 0,
+    firstKills: Number.parseInt(s["First Kills"]) || 0,
+    entryCount: Number.parseInt(s["Entry Count"]) || 0,
+    entryWins: Number.parseInt(s["Entry Wins"]) || 0,
+    clutchKills: Number.parseInt(s["Clutch Kills"]) || 0,
+    oneV1Count: Number.parseInt(s["1v1Count"]) || 0,
+    oneV1Wins: Number.parseInt(s["1v1Wins"]) || 0,
+    oneV2Count: Number.parseInt(s["1v2Count"]) || 0,
+    oneV2Wins: Number.parseInt(s["1v2Wins"]) || 0,
+    doubleKills: Number.parseInt(s["Double Kills"]) || 0,
+    utilityDamage: Number.parseInt(s["Utility Damage"]) || 0,
+    enemiesFlashed: Number.parseInt(s["Enemies Flashed"]) || 0,
+    flashCount: Number.parseInt(s["Flash Count"]) || 0,
+    sniperKills: Number.parseInt(s["Sniper Kills"]) || 0,
+    pistolKills: Number.parseInt(s["Pistol Kills"]) || 0,
   };
 }
 
 export function parseMatchTeamScore(raw: any): number {
   return (
-    parseInt(raw?.["Final Score"]) ||
-    parseInt(raw?.["Current Score"]) ||
-    parseInt(raw?.Score) ||
+    Number.parseInt(raw?.["Final Score"]) ||
+    Number.parseInt(raw?.["Current Score"]) ||
+    Number.parseInt(raw?.Score) ||
     0
   );
 }
 
 export function buildMatchScoreString(roundStats: any, teams: any[]): string {
-  if (roundStats?.Score) return roundStats.Score;
+  if (roundStats?.Score) {
+    return roundStats.Score;
+  }
 
   const faction1 = parseMatchTeamScore(teams[0]?.team_stats);
   const faction2 = parseMatchTeamScore(teams[1]?.team_stats);
@@ -130,25 +140,29 @@ const ACTIVE_MATCH_STATUSES = new Set([
 ]);
 
 export function pickRelevantHistoryMatch(history: any[]): any | null {
-  if (!history.length) return null;
+  if (!history.length) {
+    return null;
+  }
 
-  const active = history.find((item) => ACTIVE_MATCH_STATUSES.has(item?.status));
+  const active = history.find((item) =>
+    ACTIVE_MATCH_STATUSES.has(item?.status)
+  );
   return active ?? history[0];
 }
 
 export async function fetchPlayer(
   playerId: string
 ): Promise<FaceitPlayer & { friendsIds: string[] }> {
-  const data = await faceitFetch(`/players/${playerId}`) as any;
+  const data = (await faceitFetch(`/players/${playerId}`)) as any;
   return { ...parsePlayerProfile(data), friendsIds: data.friends_ids || [] };
 }
 
 export async function fetchPlayerByNickname(
   nickname: string
 ): Promise<FaceitPlayer & { friendsIds: string[] }> {
-  const data = await faceitFetch(
+  const data = (await faceitFetch(
     `/players?nickname=${encodeURIComponent(nickname)}&game=cs2`
-  ) as any;
+  )) as any;
   return { ...parsePlayerProfile(data), friendsIds: data.friends_ids || [] };
 }
 
@@ -157,7 +171,11 @@ export async function fetchPlayerLifetimeStats(playerId: string) {
   return parseLifetimeStats(data);
 }
 
-export async function fetchPlayerHistory(playerId: string, limit = 30, offset = 0) {
+export async function fetchPlayerHistory(
+  playerId: string,
+  limit = 30,
+  offset = 0
+) {
   const data = (await faceitFetch(
     `/players/${playerId}/history?game=cs2&offset=${offset}&limit=${limit}`
   )) as any;

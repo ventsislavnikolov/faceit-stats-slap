@@ -1,16 +1,16 @@
 import { MatchRow } from "./MatchRow";
 
 interface RecentMatch {
-  nickname: string;
-  matchId: string;
-  map: string;
-  score: string;
-  kdRatio: number;
   adr: number;
-  hsPercent: number;
-  result: boolean;
   eloDelta?: number | null;
+  hsPercent: number;
+  kdRatio: number;
+  map: string;
+  matchId: string;
+  nickname: string;
   queueBucket?: "solo" | "party" | "unknown";
+  result: boolean;
+  score: string;
 }
 
 interface RecentMatchesProps {
@@ -20,18 +20,25 @@ interface RecentMatchesProps {
 export function RecentMatches({ matches }: RecentMatchesProps) {
   if (!matches.length) {
     return (
-      <div className="text-text-dim text-sm text-center py-8">No recent matches</div>
+      <div className="py-8 text-center text-sm text-text-dim">
+        No recent matches
+      </div>
     );
   }
 
   return (
     <div>
-      <div className="text-[11px] text-text-muted uppercase tracking-wider mb-2">
+      <div className="mb-2 text-[11px] text-text-muted uppercase tracking-wider">
         Recent Matches
       </div>
       <div className="flex flex-col gap-1">
         {matches.map((m) => (
-          <MatchRow key={m.matchId + m.nickname} {...m} matchId={m.matchId} win={m.result} />
+          <MatchRow
+            key={m.matchId + m.nickname}
+            {...m}
+            matchId={m.matchId}
+            win={m.result}
+          />
         ))}
       </div>
     </div>

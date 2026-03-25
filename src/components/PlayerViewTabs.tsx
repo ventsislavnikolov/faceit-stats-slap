@@ -20,7 +20,7 @@ export function PlayerViewTabs({ activeView, nickname }: PlayerViewTabsProps) {
 
         if (!tab.href) {
           return (
-            <span key={tab.view} className={className}>
+            <span className={className} key={tab.view}>
               {tab.label}
             </span>
           );
@@ -28,11 +28,11 @@ export function PlayerViewTabs({ activeView, nickname }: PlayerViewTabsProps) {
 
         return (
           <Link
+            className={className}
             key={tab.view}
-            to={tab.href.to as never}
             params={tab.href.params as never}
             search={tab.href.search as never}
-            className={className}
+            to={tab.href.to as never}
           >
             {tab.label}
           </Link>

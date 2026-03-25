@@ -1,10 +1,28 @@
 import { useState } from "react";
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
-  LineChart, Line, CartesianGrid, Legend, Cell,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Legend,
+  Line,
+  LineChart,
+  PolarAngleAxis,
+  PolarGrid,
+  PolarRadiusAxis,
+  Radar,
+  RadarChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
 } from "recharts";
-import type { DemoMatchAnalytics, DemoPlayerAnalytics, DemoRoundAnalytics, MatchPlayerStats } from "~/lib/types";
+import type {
+  DemoMatchAnalytics,
+  DemoPlayerAnalytics,
+  DemoRoundAnalytics,
+  MatchPlayerStats,
+} from "~/lib/types";
 
 // Design tokens matching app.css
 const ACCENT = "#00ff88";
@@ -27,11 +45,20 @@ const TEAM2_COLOR = ERROR;
 // ---------------------------------------------------------------------------
 
 function getProfileTag(p: DemoPlayerAnalytics): { tag: string; color: string } {
-  const exitPct = (p.kills ?? 0) > 0 ? ((p.exitKills ?? 0) / p.kills!) * 100 : 0;
-  if (exitPct > 20 && (p.lastAliveRounds ?? 0) >= 4) return { tag: "Exit Fragger", color: RED };
-  if ((p.clutchWins ?? 0) >= 1 && (p.lastAliveRounds ?? 0) >= 3) return { tag: "Clutch Player", color: GOLD };
-  if ((p.entryKills ?? 0) >= 3 && (p.lastAliveRounds ?? 0) <= 2) return { tag: "Entry Fragger", color: GREEN };
-  if ((p.utilityDamage ?? 0) >= 150) return { tag: "Support", color: BLUE };
+  const exitPct =
+    (p.kills ?? 0) > 0 ? ((p.exitKills ?? 0) / p.kills!) * 100 : 0;
+  if (exitPct > 20 && (p.lastAliveRounds ?? 0) >= 4) {
+    return { tag: "Exit Fragger", color: RED };
+  }
+  if ((p.clutchWins ?? 0) >= 1 && (p.lastAliveRounds ?? 0) >= 3) {
+    return { tag: "Clutch Player", color: GOLD };
+  }
+  if ((p.entryKills ?? 0) >= 3 && (p.lastAliveRounds ?? 0) <= 2) {
+    return { tag: "Entry Fragger", color: GREEN };
+  }
+  if ((p.utilityDamage ?? 0) >= 150) {
+    return { tag: "Support", color: BLUE };
+  }
   return { tag: "Balanced", color: TEXT_MUTED };
 }
 
@@ -41,12 +68,16 @@ function getProfileTag(p: DemoPlayerAnalytics): { tag: string; color: string } {
 
 function KastCircle({ kast }: { kast: number }) {
   let color = RED;
-  if (kast >= 75) color = GREEN;
-  else if (kast >= 65) color = GOLD;
-  else if (kast >= 55) color = "#fb923c";
+  if (kast >= 75) {
+    color = GREEN;
+  } else if (kast >= 65) {
+    color = GOLD;
+  } else if (kast >= 55) {
+    color = "#fb923c";
+  }
   return (
     <div
-      className="inline-flex items-center justify-center rounded-full text-[10px] font-bold"
+      className="inline-flex items-center justify-center rounded-full font-bold text-[10px]"
       style={{ width: 32, height: 32, border: `2px solid ${color}`, color }}
     >
       {Math.round(kast)}
@@ -56,35 +87,76 @@ function KastCircle({ kast }: { kast: number }) {
 
 function RatingBadge({ rating }: { rating: number }) {
   let color = TEXT_MUTED;
-  if (rating >= 1.2) color = GOLD;
-  else if (rating >= 1.0) color = GREEN;
-  else if (rating >= 0.8) color = "#fb923c";
-  else color = RED;
-  return <span style={{ color, fontWeight: 700, fontSize: 16 }}>{rating.toFixed(2)}</span>;
+  if (rating >= 1.2) {
+    color = GOLD;
+  } else if (rating >= 1.0) {
+    color = GREEN;
+  } else if (rating >= 0.8) {
+    color = "#fb923c";
+  } else {
+    color = RED;
+  }
+  return (
+    <span style={{ color, fontWeight: 700, fontSize: 16 }}>
+      {rating.toFixed(2)}
+    </span>
+  );
 }
 
-function StatBar({ value, max, color, label, suffix = "" }: { value: number; max: number; color: string; label: string; suffix?: string }) {
+function StatBar({
+  value,
+  max,
+  color,
+  label,
+  suffix = "",
+}: {
+  value: number;
+  max: number;
+  color: string;
+  label: string;
+  suffix?: string;
+}) {
   const pct = Math.min((value / max) * 100, 100);
   return (
     <div className="mb-1.5">
-      <div className="flex justify-between text-[10px] mb-0.5">
+      <div className="mb-0.5 flex justify-between text-[10px]">
         <span className="text-text-muted">{label}</span>
-        <span className="text-text">{typeof value === "number" ? (Number.isInteger(value) ? value : value.toFixed(1)) : value}{suffix}</span>
+        <span className="text-text">
+          {typeof value === "number"
+            ? Number.isInteger(value)
+              ? value
+              : value.toFixed(1)
+            : value}
+          {suffix}
+        </span>
       </div>
-      <div className="h-1.5 rounded-full overflow-hidden" style={{ background: BG_ELEVATED }}>
-        <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: color }} />
+      <div
+        className="h-1.5 overflow-hidden rounded-full"
+        style={{ background: BG_ELEVATED }}
+      >
+        <div
+          className="h-full rounded-full transition-all duration-500"
+          style={{ width: `${pct}%`, background: color }}
+        />
       </div>
     </div>
   );
 }
 
-const tooltipStyle = { background: BG_CARD, border: `1px solid ${BORDER}`, borderRadius: 8, color: TEXT, fontSize: 11 };
+const tooltipStyle = {
+  background: BG_CARD,
+  border: `1px solid ${BORDER}`,
+  borderRadius: 8,
+  color: TEXT,
+  fontSize: 11,
+};
 
 // ---------------------------------------------------------------------------
 // Tabs
 // ---------------------------------------------------------------------------
 
 interface AnalystDashboardProps {
+  demoAnalytics: DemoMatchAnalytics;
   matchData: {
     matchId: string;
     map: string;
@@ -97,10 +169,12 @@ interface AnalystDashboardProps {
     demoUrl: string | null;
     [key: string]: unknown;
   };
-  demoAnalytics: DemoMatchAnalytics;
 }
 
-export function AnalystDashboard({ matchData, demoAnalytics }: AnalystDashboardProps) {
+export function AnalystDashboard({
+  matchData,
+  demoAnalytics,
+}: AnalystDashboardProps) {
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("overview");
 
@@ -111,30 +185,40 @@ export function AnalystDashboard({ matchData, demoAnalytics }: AnalystDashboardP
   ];
 
   // Demo uses Steam IDs, FACEIT uses FACEIT UUIDs — match by nickname
-  const demoByNickname = new Map(demoAnalytics.players.map((p) => [p.nickname.toLowerCase(), p]));
-  const demoByPlayer = new Map(
-    matchData.players.map((fp: MatchPlayerStats) => {
-      const demo = demoByNickname.get(fp.nickname.toLowerCase());
-      return [fp.playerId, demo] as const;
-    }).filter(([, d]) => d != null),
+  const demoByNickname = new Map(
+    demoAnalytics.players.map((p) => [p.nickname.toLowerCase(), p])
   );
-  const faceitByPlayer = new Map(matchData.players.map((p: MatchPlayerStats) => [p.playerId, p]));
-  const selectedDemo = selectedPlayer ? demoByPlayer.get(selectedPlayer) ?? null : null;
-  const selectedFaceit = selectedPlayer ? faceitByPlayer.get(selectedPlayer) ?? null : null;
+  const demoByPlayer = new Map(
+    matchData.players
+      .map((fp: MatchPlayerStats) => {
+        const demo = demoByNickname.get(fp.nickname.toLowerCase());
+        return [fp.playerId, demo] as const;
+      })
+      .filter(([, d]) => d != null)
+  );
+  const faceitByPlayer = new Map(
+    matchData.players.map((p: MatchPlayerStats) => [p.playerId, p])
+  );
+  const selectedDemo = selectedPlayer
+    ? (demoByPlayer.get(selectedPlayer) ?? null)
+    : null;
+  const selectedFaceit = selectedPlayer
+    ? (faceitByPlayer.get(selectedPlayer) ?? null)
+    : null;
 
   return (
     <div className="space-y-4">
       {/* Tab bar */}
-      <div className="flex gap-1 border border-border rounded-lg p-1">
+      <div className="flex gap-1 rounded-lg border border-border p-1">
         {tabs.map((t) => (
           <button
-            key={t.id}
-            onClick={() => setActiveTab(t.id)}
-            className={`flex-1 px-4 py-2 rounded-md text-xs font-medium transition-colors ${
+            className={`flex-1 rounded-md px-4 py-2 font-medium text-xs transition-colors ${
               activeTab === t.id
                 ? "bg-surface-elevated text-text"
                 : "text-text-muted hover:text-text"
             }`}
+            key={t.id}
+            onClick={() => setActiveTab(t.id)}
           >
             {t.label}
           </button>
@@ -145,13 +229,15 @@ export function AnalystDashboard({ matchData, demoAnalytics }: AnalystDashboardP
         <OverviewTab
           demoAnalytics={demoAnalytics}
           matchData={matchData}
-          selectedPlayer={selectedPlayer}
           onSelectPlayer={setSelectedPlayer}
           selectedDemo={selectedDemo}
           selectedFaceit={selectedFaceit}
+          selectedPlayer={selectedPlayer}
         />
       )}
-{activeTab === "rounds" && <RoundsTab demoAnalytics={demoAnalytics} matchData={matchData} />}
+      {activeTab === "rounds" && (
+        <RoundsTab demoAnalytics={demoAnalytics} matchData={matchData} />
+      )}
       {activeTab === "compare" && <CompareTab demoAnalytics={demoAnalytics} />}
     </div>
   );
@@ -162,7 +248,12 @@ export function AnalystDashboard({ matchData, demoAnalytics }: AnalystDashboardP
 // ---------------------------------------------------------------------------
 
 function OverviewTab({
-  demoAnalytics, matchData, selectedPlayer, onSelectPlayer, selectedDemo, selectedFaceit,
+  demoAnalytics,
+  matchData,
+  selectedPlayer,
+  onSelectPlayer,
+  selectedDemo,
+  selectedFaceit,
 }: {
   demoAnalytics: DemoMatchAnalytics;
   matchData: AnalystDashboardProps["matchData"];
@@ -183,47 +274,80 @@ function OverviewTab({
         <ScoreboardTable
           demoAnalytics={demoAnalytics}
           matchData={matchData}
-          selectedPlayer={selectedPlayer}
           onSelectPlayer={onSelectPlayer}
+          selectedPlayer={selectedPlayer}
         />
       </Card>
 
       {/* Utility Usage by Player */}
       <Card title="Utility Thrown">
-        <ResponsiveContainer width="100%" height={200}>
-          <BarChart data={demoAnalytics.players.map(p => ({
-            name: p.nickname.slice(0, 8),
-            Smokes: p.smokesThrown ?? 0,
-            Flashes: p.flashesThrown ?? 0,
-            HEs: p.hesThrown ?? 0,
-            Molotovs: p.molotovsThrown ?? 0,
-          }))}>
-            <XAxis dataKey="name" tick={{ fill: TEXT_MUTED, fontSize: 9 }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fill: TEXT_DIM, fontSize: 9 }} axisLine={false} tickLine={false} />
+        <ResponsiveContainer height={200} width="100%">
+          <BarChart
+            data={demoAnalytics.players.map((p) => ({
+              name: p.nickname.slice(0, 8),
+              Smokes: p.smokesThrown ?? 0,
+              Flashes: p.flashesThrown ?? 0,
+              HEs: p.hesThrown ?? 0,
+              Molotovs: p.molotovsThrown ?? 0,
+            }))}
+          >
+            <XAxis
+              axisLine={false}
+              dataKey="name"
+              tick={{ fill: TEXT_MUTED, fontSize: 9 }}
+              tickLine={false}
+            />
+            <YAxis
+              axisLine={false}
+              tick={{ fill: TEXT_DIM, fontSize: 9 }}
+              tickLine={false}
+            />
             <Tooltip contentStyle={tooltipStyle} />
-            <Bar dataKey="Smokes" stackId="util" fill="#6b7280" />
-            <Bar dataKey="Flashes" stackId="util" fill="#facc15" />
-            <Bar dataKey="HEs" stackId="util" fill="#ef4444" />
-            <Bar dataKey="Molotovs" stackId="util" fill="#f97316" />
+            <Bar dataKey="Smokes" fill="#6b7280" stackId="util" />
+            <Bar dataKey="Flashes" fill="#facc15" stackId="util" />
+            <Bar dataKey="HEs" fill="#ef4444" stackId="util" />
+            <Bar dataKey="Molotovs" fill="#f97316" stackId="util" />
           </BarChart>
         </ResponsiveContainer>
       </Card>
 
       {/* Economy Efficiency */}
       <Card title="Economy Efficiency (DMG per $1000)">
-        <ResponsiveContainer width="100%" height={160}>
-          <BarChart data={[...demoAnalytics.players].map(p => ({
-            name: p.nickname.slice(0, 8),
-            efficiency: p.economyEfficiency ?? 0,
-            team: p.teamKey,
-          })).sort((a, b) => b.efficiency - a.efficiency)} barSize={28}>
-            <XAxis dataKey="name" tick={{ fill: TEXT_MUTED, fontSize: 9 }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fill: TEXT_DIM, fontSize: 9 }} axisLine={false} tickLine={false} />
+        <ResponsiveContainer height={160} width="100%">
+          <BarChart
+            barSize={28}
+            data={[...demoAnalytics.players]
+              .map((p) => ({
+                name: p.nickname.slice(0, 8),
+                efficiency: p.economyEfficiency ?? 0,
+                team: p.teamKey,
+              }))
+              .sort((a, b) => b.efficiency - a.efficiency)}
+          >
+            <XAxis
+              axisLine={false}
+              dataKey="name"
+              tick={{ fill: TEXT_MUTED, fontSize: 9 }}
+              tickLine={false}
+            />
+            <YAxis
+              axisLine={false}
+              tick={{ fill: TEXT_DIM, fontSize: 9 }}
+              tickLine={false}
+            />
             <Tooltip contentStyle={tooltipStyle} />
             <Bar dataKey="efficiency" radius={[4, 4, 0, 0]}>
-              {[...demoAnalytics.players].sort((a, b) => (b.economyEfficiency ?? 0) - (a.economyEfficiency ?? 0)).map((p) => (
-                <Cell key={p.nickname} fill={p.teamKey === "team1" ? TEAM1_COLOR : TEAM2_COLOR} />
-              ))}
+              {[...demoAnalytics.players]
+                .sort(
+                  (a, b) =>
+                    (b.economyEfficiency ?? 0) - (a.economyEfficiency ?? 0)
+                )
+                .map((p) => (
+                  <Cell
+                    fill={p.teamKey === "team1" ? TEAM1_COLOR : TEAM2_COLOR}
+                    key={p.nickname}
+                  />
+                ))}
             </Bar>
           </BarChart>
         </ResponsiveContainer>
@@ -231,7 +355,11 @@ function OverviewTab({
 
       {/* Player detail */}
       {selectedDemo && selectedFaceit && (
-        <PlayerDetailCard demo={selectedDemo} faceit={selectedFaceit} totalRounds={demoAnalytics.totalRounds} />
+        <PlayerDetailCard
+          demo={selectedDemo}
+          faceit={selectedFaceit}
+          totalRounds={demoAnalytics.totalRounds}
+        />
       )}
     </div>
   );
@@ -242,9 +370,15 @@ function OverviewTab({
 // ---------------------------------------------------------------------------
 
 function formatBuyType(buy: string | undefined): string {
-  if (buy === "full_buy") return "Full Buy";
-  if (buy === "force_buy") return "Force Buy";
-  if (buy === "eco") return "Eco";
+  if (buy === "full_buy") {
+    return "Full Buy";
+  }
+  if (buy === "force_buy") {
+    return "Force Buy";
+  }
+  if (buy === "eco") {
+    return "Eco";
+  }
   return buy ?? "?";
 }
 
@@ -259,11 +393,23 @@ function formatEndReason(reason: string): string {
   return map[reason] ?? reason.replace(/_/g, " ");
 }
 
-function RoundsTab({ demoAnalytics, matchData }: { demoAnalytics: DemoMatchAnalytics; matchData: AnalystDashboardProps["matchData"] }) {
+function RoundsTab({
+  demoAnalytics,
+  matchData,
+}: {
+  demoAnalytics: DemoMatchAnalytics;
+  matchData: AnalystDashboardProps["matchData"];
+}) {
   const buyColor = (buy: string | undefined) => {
-    if (buy === "full_buy") return GREEN;
-    if (buy === "force_buy") return "#fb923c";
-    if (buy === "eco") return RED;
+    if (buy === "full_buy") {
+      return GREEN;
+    }
+    if (buy === "force_buy") {
+      return "#fb923c";
+    }
+    if (buy === "eco") {
+      return RED;
+    }
     return TEXT_DIM;
   };
 
@@ -278,26 +424,58 @@ function RoundsTab({ demoAnalytics, matchData }: { demoAnalytics: DemoMatchAnaly
           const borderColor = isTeam1 ? TEAM1_COLOR : TEAM2_COLOR;
           return (
             <div
+              className="rounded-lg border p-3"
               key={r.roundNumber}
-              className="border rounded-lg p-3"
-              style={{ borderColor: BORDER, borderLeftColor: borderColor, borderLeftWidth: 3, background: BG_CARD }}
+              style={{
+                borderColor: BORDER,
+                borderLeftColor: borderColor,
+                borderLeftWidth: 3,
+                background: BG_CARD,
+              }}
             >
-              <div className="flex justify-between items-center mb-1">
-                <span className="font-bold text-sm text-text">R{r.roundNumber}</span>
-                <span className="font-semibold text-xs" style={{ color: borderColor }}>
+              <div className="mb-1 flex items-center justify-between">
+                <span className="font-bold text-sm text-text">
+                  R{r.roundNumber}
+                </span>
+                <span
+                  className="font-semibold text-xs"
+                  style={{ color: borderColor }}
+                >
                   {r.scoreAfterRound.team1}:{r.scoreAfterRound.team2}
                 </span>
               </div>
               <div className="text-[10px] text-text-muted">
-                <div>T: <span style={{ color: buyColor(r.tBuyType) }}>{formatBuyType(r.tBuyType)}</span></div>
-                <div>CT: <span style={{ color: buyColor(r.ctBuyType) }}>{formatBuyType(r.ctBuyType)}</span></div>
+                <div>
+                  T:{" "}
+                  <span style={{ color: buyColor(r.tBuyType) }}>
+                    {formatBuyType(r.tBuyType)}
+                  </span>
+                </div>
+                <div>
+                  CT:{" "}
+                  <span style={{ color: buyColor(r.ctBuyType) }}>
+                    {formatBuyType(r.ctBuyType)}
+                  </span>
+                </div>
               </div>
               {r.endReason && (
-                <div className="text-[9px] text-text-dim mt-1">{formatEndReason(r.endReason)}</div>
+                <div className="mt-1 text-[9px] text-text-dim">
+                  {formatEndReason(r.endReason)}
+                </div>
               )}
-              {r.isPistolRound && <div className="text-[9px] font-semibold mt-1" style={{ color: GOLD }}>PISTOL</div>}
+              {r.isPistolRound && (
+                <div
+                  className="mt-1 font-semibold text-[9px]"
+                  style={{ color: GOLD }}
+                >
+                  PISTOL
+                </div>
+              )}
               {r.bombPlanted && (
-                <div className="text-[9px] mt-0.5" style={{ color: r.bombDefused ? BLUE : "#fb923c" }}>
+                <div
+                  className="mt-0.5 text-[9px]"
+                  style={{ color: r.bombDefused ? BLUE : "#fb923c" }}
+                >
                   {r.bombDefused ? "Bomb defused" : "Bomb planted"}
                 </div>
               )}
@@ -317,23 +495,91 @@ function CompareTab({ demoAnalytics }: { demoAnalytics: DemoMatchAnalytics }) {
   const t1 = demoAnalytics.players.filter((p) => p.teamKey === "team1");
   const t2 = demoAnalytics.players.filter((p) => p.teamKey === "team2");
 
-  const avg = (arr: DemoPlayerAnalytics[], fn: (p: DemoPlayerAnalytics) => number) =>
-    arr.length > 0 ? arr.reduce((s, p) => s + fn(p), 0) / arr.length : 0;
-  const sum = (arr: DemoPlayerAnalytics[], fn: (p: DemoPlayerAnalytics) => number) =>
-    arr.reduce((s, p) => s + fn(p), 0);
+  const avg = (
+    arr: DemoPlayerAnalytics[],
+    fn: (p: DemoPlayerAnalytics) => number
+  ) => (arr.length > 0 ? arr.reduce((s, p) => s + fn(p), 0) / arr.length : 0);
+  const sum = (
+    arr: DemoPlayerAnalytics[],
+    fn: (p: DemoPlayerAnalytics) => number
+  ) => arr.reduce((s, p) => s + fn(p), 0);
 
   const metrics = [
-    { label: "Avg Rating", a: avg(t1, (p) => p.rating ?? 0).toFixed(2), b: avg(t2, (p) => p.rating ?? 0).toFixed(2) },
-    { label: "Total Kills", a: String(sum(t1, (p) => p.kills ?? 0)), b: String(sum(t2, (p) => p.kills ?? 0)) },
-    { label: "Avg ADR", a: avg(t1, (p) => p.adr ?? 0).toFixed(1), b: avg(t2, (p) => p.adr ?? 0).toFixed(1) },
-    { label: "Avg KAST%", a: `${avg(t1, (p) => p.kastPercent ?? 0).toFixed(0)}%`, b: `${avg(t2, (p) => p.kastPercent ?? 0).toFixed(0)}%` },
-    { label: "Trade Kills", a: String(sum(t1, (p) => p.tradeKills)), b: String(sum(t2, (p) => p.tradeKills)) },
-    { label: "Utility DMG", a: String(sum(t1, (p) => p.utilityDamage ?? 0)), b: String(sum(t2, (p) => p.utilityDamage ?? 0)) },
-    { label: "Flash Assists", a: String(sum(t1, (p) => p.flashAssists ?? 0)), b: String(sum(t2, (p) => p.flashAssists ?? 0)) },
-    { label: "Exit Kills", a: String(sum(t1, (p) => p.exitKills ?? 0)), b: String(sum(t2, (p) => p.exitKills ?? 0)), invert: true },
-    { label: "Utility Thrown", a: String(sum(t1, (p) => (p.smokesThrown ?? 0) + (p.flashesThrown ?? 0) + (p.hesThrown ?? 0) + (p.molotovsThrown ?? 0))), b: String(sum(t2, (p) => (p.smokesThrown ?? 0) + (p.flashesThrown ?? 0) + (p.hesThrown ?? 0) + (p.molotovsThrown ?? 0))) },
-    { label: "Team Flashes", a: String(sum(t1, (p) => p.teamFlashes ?? 0)), b: String(sum(t2, (p) => p.teamFlashes ?? 0)), invert: true },
-    { label: "Total Spend", a: `$${sum(t1, (p) => p.totalSpend ?? 0).toLocaleString()}`, b: `$${sum(t2, (p) => p.totalSpend ?? 0).toLocaleString()}` },
+    {
+      label: "Avg Rating",
+      a: avg(t1, (p) => p.rating ?? 0).toFixed(2),
+      b: avg(t2, (p) => p.rating ?? 0).toFixed(2),
+    },
+    {
+      label: "Total Kills",
+      a: String(sum(t1, (p) => p.kills ?? 0)),
+      b: String(sum(t2, (p) => p.kills ?? 0)),
+    },
+    {
+      label: "Avg ADR",
+      a: avg(t1, (p) => p.adr ?? 0).toFixed(1),
+      b: avg(t2, (p) => p.adr ?? 0).toFixed(1),
+    },
+    {
+      label: "Avg KAST%",
+      a: `${avg(t1, (p) => p.kastPercent ?? 0).toFixed(0)}%`,
+      b: `${avg(t2, (p) => p.kastPercent ?? 0).toFixed(0)}%`,
+    },
+    {
+      label: "Trade Kills",
+      a: String(sum(t1, (p) => p.tradeKills)),
+      b: String(sum(t2, (p) => p.tradeKills)),
+    },
+    {
+      label: "Utility DMG",
+      a: String(sum(t1, (p) => p.utilityDamage ?? 0)),
+      b: String(sum(t2, (p) => p.utilityDamage ?? 0)),
+    },
+    {
+      label: "Flash Assists",
+      a: String(sum(t1, (p) => p.flashAssists ?? 0)),
+      b: String(sum(t2, (p) => p.flashAssists ?? 0)),
+    },
+    {
+      label: "Exit Kills",
+      a: String(sum(t1, (p) => p.exitKills ?? 0)),
+      b: String(sum(t2, (p) => p.exitKills ?? 0)),
+      invert: true,
+    },
+    {
+      label: "Utility Thrown",
+      a: String(
+        sum(
+          t1,
+          (p) =>
+            (p.smokesThrown ?? 0) +
+            (p.flashesThrown ?? 0) +
+            (p.hesThrown ?? 0) +
+            (p.molotovsThrown ?? 0)
+        )
+      ),
+      b: String(
+        sum(
+          t2,
+          (p) =>
+            (p.smokesThrown ?? 0) +
+            (p.flashesThrown ?? 0) +
+            (p.hesThrown ?? 0) +
+            (p.molotovsThrown ?? 0)
+        )
+      ),
+    },
+    {
+      label: "Team Flashes",
+      a: String(sum(t1, (p) => p.teamFlashes ?? 0)),
+      b: String(sum(t2, (p) => p.teamFlashes ?? 0)),
+      invert: true,
+    },
+    {
+      label: "Total Spend",
+      a: `$${sum(t1, (p) => p.totalSpend ?? 0).toLocaleString()}`,
+      b: `$${sum(t2, (p) => p.totalSpend ?? 0).toLocaleString()}`,
+    },
   ];
 
   // ADR by player chart data
@@ -344,26 +590,43 @@ function CompareTab({ demoAnalytics }: { demoAnalytics: DemoMatchAnalytics }) {
   return (
     <div className="space-y-4">
       <Card>
-        <div className="flex justify-between mb-4">
+        <div className="mb-4 flex justify-between">
           <span className="font-bold text-sm" style={{ color: TEAM1_COLOR }}>
-            {demoAnalytics.teams.find((t) => t.teamKey === "team1")?.name ?? "Team 1"}
+            {demoAnalytics.teams.find((t) => t.teamKey === "team1")?.name ??
+              "Team 1"}
           </span>
-          <span className="text-text-dim text-xs self-center">VS</span>
+          <span className="self-center text-text-dim text-xs">VS</span>
           <span className="font-bold text-sm" style={{ color: TEAM2_COLOR }}>
-            {demoAnalytics.teams.find((t) => t.teamKey === "team2")?.name ?? "Team 2"}
+            {demoAnalytics.teams.find((t) => t.teamKey === "team2")?.name ??
+              "Team 2"}
           </span>
         </div>
         <div className="grid grid-cols-[1fr_auto_1fr] gap-0 text-xs">
           {metrics.map((m) => {
-            const aNum = parseFloat(m.a);
-            const bNum = parseFloat(m.b);
+            const aNum = Number.parseFloat(m.a);
+            const bNum = Number.parseFloat(m.b);
             const aWins = m.invert ? aNum < bNum : aNum > bNum;
             const bWins = m.invert ? bNum < aNum : bNum > aNum;
             return (
-              <div key={m.label} className="contents">
-                <div className="text-right py-1.5 px-3 font-semibold" style={{ color: aWins ? TEAM1_COLOR : TEXT_DIM }}>{m.a}</div>
-                <div className="text-center py-1.5 px-4 text-[10px] border-x" style={{ borderColor: BORDER, color: TEXT_MUTED }}>{m.label}</div>
-                <div className="text-left py-1.5 px-3 font-semibold" style={{ color: bWins ? TEAM2_COLOR : TEXT_DIM }}>{m.b}</div>
+              <div className="contents" key={m.label}>
+                <div
+                  className="px-3 py-1.5 text-right font-semibold"
+                  style={{ color: aWins ? TEAM1_COLOR : TEXT_DIM }}
+                >
+                  {m.a}
+                </div>
+                <div
+                  className="border-x px-4 py-1.5 text-center text-[10px]"
+                  style={{ borderColor: BORDER, color: TEXT_MUTED }}
+                >
+                  {m.label}
+                </div>
+                <div
+                  className="px-3 py-1.5 text-left font-semibold"
+                  style={{ color: bWins ? TEAM2_COLOR : TEXT_DIM }}
+                >
+                  {m.b}
+                </div>
               </div>
             );
           })}
@@ -371,14 +634,29 @@ function CompareTab({ demoAnalytics }: { demoAnalytics: DemoMatchAnalytics }) {
       </Card>
 
       <Card title="ADR by Player">
-        <ResponsiveContainer width="100%" height={250}>
-          <BarChart data={adrData} barSize={28}>
-            <XAxis dataKey="name" tick={{ fill: TEXT_MUTED, fontSize: 10 }} axisLine={false} tickLine={false} angle={-20} textAnchor="end" height={50} />
-            <YAxis tick={{ fill: TEXT_DIM, fontSize: 10 }} axisLine={false} tickLine={false} />
+        <ResponsiveContainer height={250} width="100%">
+          <BarChart barSize={28} data={adrData}>
+            <XAxis
+              angle={-20}
+              axisLine={false}
+              dataKey="name"
+              height={50}
+              textAnchor="end"
+              tick={{ fill: TEXT_MUTED, fontSize: 10 }}
+              tickLine={false}
+            />
+            <YAxis
+              axisLine={false}
+              tick={{ fill: TEXT_DIM, fontSize: 10 }}
+              tickLine={false}
+            />
             <Tooltip contentStyle={tooltipStyle} />
             <Bar dataKey="adr" radius={[4, 4, 0, 0]}>
               {adrData.map((entry) => (
-                <Cell key={entry.name} fill={entry.team === "team1" ? TEAM1_COLOR : TEAM2_COLOR} />
+                <Cell
+                  fill={entry.team === "team1" ? TEAM1_COLOR : TEAM2_COLOR}
+                  key={entry.name}
+                />
               ))}
             </Bar>
           </BarChart>
@@ -403,15 +681,36 @@ function ScoreEvolution({ rounds }: { rounds: DemoRoundAnalytics[] }) {
   ];
 
   return (
-    <ResponsiveContainer width="100%" height={180}>
+    <ResponsiveContainer height={180} width="100%">
       <LineChart data={data}>
         <CartesianGrid stroke={BORDER} strokeDasharray="3 3" />
-        <XAxis dataKey="round" tick={{ fill: TEXT_DIM, fontSize: 10 }} axisLine={{ stroke: BORDER }} />
-        <YAxis tick={{ fill: TEXT_DIM, fontSize: 10 }} axisLine={{ stroke: BORDER }} />
+        <XAxis
+          axisLine={{ stroke: BORDER }}
+          dataKey="round"
+          tick={{ fill: TEXT_DIM, fontSize: 10 }}
+        />
+        <YAxis
+          axisLine={{ stroke: BORDER }}
+          tick={{ fill: TEXT_DIM, fontSize: 10 }}
+        />
         <Tooltip contentStyle={tooltipStyle} />
         <Legend wrapperStyle={{ fontSize: 11, color: TEXT_MUTED }} />
-        <Line type="monotone" dataKey="team1" stroke={TEAM1_COLOR} strokeWidth={2} dot={{ r: 3 }} name="Team 1" />
-        <Line type="monotone" dataKey="team2" stroke={TEAM2_COLOR} strokeWidth={2} dot={{ r: 3 }} name="Team 2" />
+        <Line
+          dataKey="team1"
+          dot={{ r: 3 }}
+          name="Team 1"
+          stroke={TEAM1_COLOR}
+          strokeWidth={2}
+          type="monotone"
+        />
+        <Line
+          dataKey="team2"
+          dot={{ r: 3 }}
+          name="Team 2"
+          stroke={TEAM2_COLOR}
+          strokeWidth={2}
+          type="monotone"
+        />
       </LineChart>
     </ResponsiveContainer>
   );
@@ -422,7 +721,10 @@ function ScoreEvolution({ rounds }: { rounds: DemoRoundAnalytics[] }) {
 // ---------------------------------------------------------------------------
 
 function ScoreboardTable({
-  demoAnalytics, matchData, selectedPlayer, onSelectPlayer,
+  demoAnalytics,
+  matchData,
+  selectedPlayer,
+  onSelectPlayer,
 }: {
   demoAnalytics: DemoMatchAnalytics;
   matchData: AnalystDashboardProps["matchData"];
@@ -430,16 +732,24 @@ function ScoreboardTable({
   onSelectPlayer: (id: string) => void;
 }) {
   const faction1Set = new Set(matchData.teams.faction1.playerIds);
-  const demoByNick = new Map(demoAnalytics.players.map((p) => [p.nickname.toLowerCase(), p]));
+  const demoByNick = new Map(
+    demoAnalytics.players.map((p) => [p.nickname.toLowerCase(), p])
+  );
 
   const allPlayers = matchData.players.map((fp: MatchPlayerStats) => ({
     faceit: fp,
     demo: demoByNick.get(fp.nickname.toLowerCase()),
-    teamKey: faction1Set.has(fp.playerId) ? "team1" as const : "team2" as const,
+    teamKey: faction1Set.has(fp.playerId)
+      ? ("team1" as const)
+      : ("team2" as const),
   }));
 
-  const team1 = allPlayers.filter((p) => p.teamKey === "team1").sort((a, b) => (b.demo?.rating ?? 0) - (a.demo?.rating ?? 0));
-  const team2 = allPlayers.filter((p) => p.teamKey === "team2").sort((a, b) => (b.demo?.rating ?? 0) - (a.demo?.rating ?? 0));
+  const team1 = allPlayers
+    .filter((p) => p.teamKey === "team1")
+    .sort((a, b) => (b.demo?.rating ?? 0) - (a.demo?.rating ?? 0));
+  const team2 = allPlayers
+    .filter((p) => p.teamKey === "team2")
+    .sort((a, b) => (b.demo?.rating ?? 0) - (a.demo?.rating ?? 0));
 
   const headers: { label: string; tooltip?: string }[] = [
     { label: "Player" },
@@ -450,35 +760,97 @@ function ScoreboardTable({
     { label: "K/D", tooltip: "Kill/Death ratio" },
     { label: "ADR", tooltip: "Average Damage per Round" },
     { label: "HS%", tooltip: "Headshot percentage" },
-    { label: "KAST", tooltip: "Kill, Assist, Survived, or Traded — % of rounds with contribution" },
+    {
+      label: "KAST",
+      tooltip:
+        "Kill, Assist, Survived, or Traded — % of rounds with contribution",
+    },
   ];
 
-  const Row = ({ faceit, demo, teamKey }: { faceit: MatchPlayerStats; demo?: DemoPlayerAnalytics; teamKey: string }) => {
+  const Row = ({
+    faceit,
+    demo,
+    teamKey,
+  }: {
+    faceit: MatchPlayerStats;
+    demo?: DemoPlayerAnalytics;
+    teamKey: string;
+  }) => {
     const isSelected = selectedPlayer === faceit.playerId;
     const teamColor = teamKey === "team1" ? TEAM1_COLOR : TEAM2_COLOR;
     const kd = faceit.deaths > 0 ? faceit.kills / faceit.deaths : faceit.kills;
 
     return (
       <tr
-        onClick={() => onSelectPlayer(faceit.playerId)}
         className="cursor-pointer transition-colors hover:bg-surface-elevated/50"
+        onClick={() => onSelectPlayer(faceit.playerId)}
         style={{
-          background: isSelected ? (teamKey === "team1" ? "rgba(0,255,136,0.06)" : "rgba(255,68,68,0.06)") : "transparent",
-          borderLeft: isSelected ? `3px solid ${teamColor}` : "3px solid transparent",
+          background: isSelected
+            ? teamKey === "team1"
+              ? "rgba(0,255,136,0.06)"
+              : "rgba(255,68,68,0.06)"
+            : "transparent",
+          borderLeft: isSelected
+            ? `3px solid ${teamColor}`
+            : "3px solid transparent",
         }}
       >
-        <td className="py-2 px-3 font-semibold text-xs" style={{ color: teamColor }}>{faceit.nickname}</td>
-        <td className="py-2 px-2 text-center">{demo?.rating != null ? <RatingBadge rating={demo.rating} /> : <span className="text-text-dim">-</span>}</td>
-        <td className="py-2 px-2 text-center font-semibold" style={{ color: GREEN }}>{faceit.kills}</td>
-        <td className="py-2 px-2 text-center font-semibold" style={{ color: RED }}>{faceit.deaths}</td>
-        <td className="py-2 px-2 text-center text-text-muted">{faceit.assists}</td>
-        <td className="py-2 px-2 text-center font-semibold" style={{ color: kd >= 1 ? GREEN : RED }}>{kd.toFixed(2)}</td>
-        <td className="py-2 px-2 text-center" style={{ color: (demo?.adr ?? faceit.adr) >= 80 ? GREEN : (demo?.adr ?? faceit.adr) >= 60 ? GOLD : RED }}>
+        <td
+          className="px-3 py-2 font-semibold text-xs"
+          style={{ color: teamColor }}
+        >
+          {faceit.nickname}
+        </td>
+        <td className="px-2 py-2 text-center">
+          {demo?.rating == null ? (
+            <span className="text-text-dim">-</span>
+          ) : (
+            <RatingBadge rating={demo.rating} />
+          )}
+        </td>
+        <td
+          className="px-2 py-2 text-center font-semibold"
+          style={{ color: GREEN }}
+        >
+          {faceit.kills}
+        </td>
+        <td
+          className="px-2 py-2 text-center font-semibold"
+          style={{ color: RED }}
+        >
+          {faceit.deaths}
+        </td>
+        <td className="px-2 py-2 text-center text-text-muted">
+          {faceit.assists}
+        </td>
+        <td
+          className="px-2 py-2 text-center font-semibold"
+          style={{ color: kd >= 1 ? GREEN : RED }}
+        >
+          {kd.toFixed(2)}
+        </td>
+        <td
+          className="px-2 py-2 text-center"
+          style={{
+            color:
+              (demo?.adr ?? faceit.adr) >= 80
+                ? GREEN
+                : (demo?.adr ?? faceit.adr) >= 60
+                  ? GOLD
+                  : RED,
+          }}
+        >
           {Math.round(demo?.adr ?? faceit.adr)}
         </td>
-        <td className="py-2 px-2 text-center text-text">{demo?.hsPercent ?? faceit.hsPercent}%</td>
-        <td className="py-2 px-2 text-center">
-          {demo?.kastPercent != null ? <KastCircle kast={demo.kastPercent} /> : <span className="text-text-dim">-</span>}
+        <td className="px-2 py-2 text-center text-text">
+          {demo?.hsPercent ?? faceit.hsPercent}%
+        </td>
+        <td className="px-2 py-2 text-center">
+          {demo?.kastPercent == null ? (
+            <span className="text-text-dim">-</span>
+          ) : (
+            <KastCircle kast={demo.kastPercent} />
+          )}
         </td>
       </tr>
     );
@@ -486,14 +858,21 @@ function ScoreboardTable({
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-xs" style={{ borderCollapse: "collapse", color: TEXT }}>
+      <table
+        className="w-full text-xs"
+        style={{ borderCollapse: "collapse", color: TEXT }}
+      >
         <thead>
           <tr style={{ borderBottom: `2px solid ${BORDER}` }}>
             {headers.map((h) => (
-              <th key={h.label} className={`py-2 px-2 text-[10px] uppercase tracking-wider font-medium ${h.label === "Player" ? "text-left" : "text-center"} ${h.tooltip ? "group/th relative cursor-help" : ""}`} style={{ color: TEXT_MUTED }}>
+              <th
+                className={`px-2 py-2 font-medium text-[10px] uppercase tracking-wider ${h.label === "Player" ? "text-left" : "text-center"} ${h.tooltip ? "group/th relative cursor-help" : ""}`}
+                key={h.label}
+                style={{ color: TEXT_MUTED }}
+              >
                 {h.label}
                 {h.tooltip && (
-                  <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-1 z-50 hidden group-hover/th:block whitespace-nowrap rounded bg-bg-card border border-border px-2 py-1 text-[9px] normal-case tracking-normal font-normal text-text shadow-lg">
+                  <span className="pointer-events-none absolute top-full left-1/2 z-50 mt-1 hidden -translate-x-1/2 whitespace-nowrap rounded border border-border bg-bg-card px-2 py-1 font-normal text-[9px] text-text normal-case tracking-normal shadow-lg group-hover/th:block">
                     {h.tooltip}
                   </span>
                 )}
@@ -502,9 +881,15 @@ function ScoreboardTable({
           </tr>
         </thead>
         <tbody>
-          {team2.map((p) => <Row key={p.faceit.playerId} {...p} />)}
-          <tr><td colSpan={9} className="h-0.5" style={{ background: BORDER }} /></tr>
-          {team1.map((p) => <Row key={p.faceit.playerId} {...p} />)}
+          {team2.map((p) => (
+            <Row key={p.faceit.playerId} {...p} />
+          ))}
+          <tr>
+            <td className="h-0.5" colSpan={9} style={{ background: BORDER }} />
+          </tr>
+          {team1.map((p) => (
+            <Row key={p.faceit.playerId} {...p} />
+          ))}
         </tbody>
       </table>
     </div>
@@ -515,17 +900,25 @@ function ScoreboardTable({
 // Player Detail Card with charts
 // ---------------------------------------------------------------------------
 
-function PlayerDetailCard({ demo, faceit, totalRounds }: { demo: DemoPlayerAnalytics; faceit: MatchPlayerStats; totalRounds: number }) {
+function PlayerDetailCard({
+  demo,
+  faceit,
+  totalRounds,
+}: {
+  demo: DemoPlayerAnalytics;
+  faceit: MatchPlayerStats;
+  totalRounds: number;
+}) {
   const teamColor = demo.teamKey === "team1" ? TEAM1_COLOR : TEAM2_COLOR;
   const profile = getProfileTag(demo);
 
   const radarData = [
-    { stat: "Kills", value: Math.min((demo.kills ?? 0) / 25 * 100, 100) },
-    { stat: "ADR", value: Math.min((demo.adr ?? 0) / 120 * 100, 100) },
+    { stat: "Kills", value: Math.min(((demo.kills ?? 0) / 25) * 100, 100) },
+    { stat: "ADR", value: Math.min(((demo.adr ?? 0) / 120) * 100, 100) },
     { stat: "KAST", value: demo.kastPercent ?? 0 },
     { stat: "HS%", value: demo.hsPercent ?? 0 },
-    { stat: "Entry", value: Math.min((demo.entryKills ?? 0) / 6 * 100, 100) },
-    { stat: "Trade", value: Math.min(demo.tradeKills / 6 * 100, 100) },
+    { stat: "Entry", value: Math.min(((demo.entryKills ?? 0) / 6) * 100, 100) },
+    { stat: "Trade", value: Math.min((demo.tradeKills / 6) * 100, 100) },
   ];
 
   const timingData = [
@@ -543,64 +936,134 @@ function PlayerDetailCard({ demo, faceit, totalRounds }: { demo: DemoPlayerAnaly
   return (
     <Card>
       {/* Header */}
-      <div className="flex justify-between items-center mb-4">
+      <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-base font-bold" style={{ color: teamColor }}>{faceit.nickname}</span>
-          <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold" style={{ background: profile.color + "22", color: profile.color }}>
+          <span className="font-bold text-base" style={{ color: teamColor }}>
+            {faceit.nickname}
+          </span>
+          <span
+            className="rounded-full px-2 py-0.5 font-semibold text-[10px]"
+            style={{ background: profile.color + "22", color: profile.color }}
+          >
             {profile.tag}
           </span>
         </div>
         <div className="text-right">
           <div className="text-[10px] text-text-muted">RATING</div>
-          {demo.rating != null ? <RatingBadge rating={demo.rating} /> : <span className="text-text-dim">-</span>}
+          {demo.rating == null ? (
+            <span className="text-text-dim">-</span>
+          ) : (
+            <RatingBadge rating={demo.rating} />
+          )}
         </div>
       </div>
 
       {/* Radar + stat bars */}
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        <ResponsiveContainer width="100%" height={200}>
+      <div className="mb-4 grid grid-cols-2 gap-4">
+        <ResponsiveContainer height={200} width="100%">
           <RadarChart data={radarData}>
             <PolarGrid stroke={BORDER} />
-            <PolarAngleAxis dataKey="stat" tick={{ fill: TEXT_MUTED, fontSize: 10 }} />
-            <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} />
-            <Radar dataKey="value" stroke={teamColor} fill={teamColor} fillOpacity={0.2} strokeWidth={2} />
+            <PolarAngleAxis
+              dataKey="stat"
+              tick={{ fill: TEXT_MUTED, fontSize: 10 }}
+            />
+            <PolarRadiusAxis axisLine={false} domain={[0, 100]} tick={false} />
+            <Radar
+              dataKey="value"
+              fill={teamColor}
+              fillOpacity={0.2}
+              stroke={teamColor}
+              strokeWidth={2}
+            />
           </RadarChart>
         </ResponsiveContainer>
 
         <div className="flex flex-col justify-center">
-          <StatBar value={demo.adr ?? 0} max={120} color={teamColor} label="ADR" />
-          <StatBar value={demo.kastPercent ?? 0} max={100} color={GREEN} label="KAST%" suffix="%" />
-          <StatBar value={demo.hsPercent ?? 0} max={100} color={GOLD} label="HS%" suffix="%" />
-          <StatBar value={demo.tradeKills} max={8} color={ACCENT} label="Trade Kills" />
-          <StatBar value={demo.utilityDamage ?? 0} max={300} color="#a78bfa" label="Utility DMG" />
-          <StatBar value={demo.flashAssists ?? 0} max={5} color={BLUE} label="Flash Assists" />
+          <StatBar
+            color={teamColor}
+            label="ADR"
+            max={120}
+            value={demo.adr ?? 0}
+          />
+          <StatBar
+            color={GREEN}
+            label="KAST%"
+            max={100}
+            suffix="%"
+            value={demo.kastPercent ?? 0}
+          />
+          <StatBar
+            color={GOLD}
+            label="HS%"
+            max={100}
+            suffix="%"
+            value={demo.hsPercent ?? 0}
+          />
+          <StatBar
+            color={ACCENT}
+            label="Trade Kills"
+            max={8}
+            value={demo.tradeKills}
+          />
+          <StatBar
+            color="#a78bfa"
+            label="Utility DMG"
+            max={300}
+            value={demo.utilityDamage ?? 0}
+          />
+          <StatBar
+            color={BLUE}
+            label="Flash Assists"
+            max={5}
+            value={demo.flashAssists ?? 0}
+          />
         </div>
       </div>
 
       {/* Kill timing + Impact vs Exit */}
-      <div className="grid grid-cols-2 gap-4 mb-4">
+      <div className="mb-4 grid grid-cols-2 gap-4">
         <div>
-          <div className="text-[10px] text-text-muted uppercase tracking-wider mb-2">Kill Timing</div>
-          <ResponsiveContainer width="100%" height={120}>
-            <BarChart data={timingData} barSize={30}>
-              <XAxis dataKey="name" tick={{ fill: TEXT_MUTED, fontSize: 10 }} axisLine={false} tickLine={false} />
+          <div className="mb-2 text-[10px] text-text-muted uppercase tracking-wider">
+            Kill Timing
+          </div>
+          <ResponsiveContainer height={120} width="100%">
+            <BarChart barSize={30} data={timingData}>
+              <XAxis
+                axisLine={false}
+                dataKey="name"
+                tick={{ fill: TEXT_MUTED, fontSize: 10 }}
+                tickLine={false}
+              />
               <YAxis hide />
               <Tooltip contentStyle={tooltipStyle} />
               <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                {timingData.map((entry) => <Cell key={entry.name} fill={entry.fill} />)}
+                {timingData.map((entry) => (
+                  <Cell fill={entry.fill} key={entry.name} />
+                ))}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
         <div>
-          <div className="text-[10px] text-text-muted uppercase tracking-wider mb-2">Impact vs Exit Kills</div>
-          <ResponsiveContainer width="100%" height={120}>
-            <BarChart data={killBreakdown} layout="vertical" barSize={24}>
-              <XAxis type="number" hide />
-              <YAxis type="category" dataKey="name" tick={{ fill: TEXT_MUTED, fontSize: 11 }} axisLine={false} tickLine={false} width={50} />
+          <div className="mb-2 text-[10px] text-text-muted uppercase tracking-wider">
+            Impact vs Exit Kills
+          </div>
+          <ResponsiveContainer height={120} width="100%">
+            <BarChart barSize={24} data={killBreakdown} layout="vertical">
+              <XAxis hide type="number" />
+              <YAxis
+                axisLine={false}
+                dataKey="name"
+                tick={{ fill: TEXT_MUTED, fontSize: 11 }}
+                tickLine={false}
+                type="category"
+                width={50}
+              />
               <Tooltip contentStyle={tooltipStyle} />
               <Bar dataKey="value" radius={[0, 4, 4, 0]}>
-                {killBreakdown.map((entry) => <Cell key={entry.name} fill={entry.fill} />)}
+                {killBreakdown.map((entry) => (
+                  <Cell fill={entry.fill} key={entry.name} />
+                ))}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
@@ -610,14 +1073,37 @@ function PlayerDetailCard({ demo, faceit, totalRounds }: { demo: DemoPlayerAnaly
       {/* Bottom stat boxes */}
       <div className="grid grid-cols-4 gap-2">
         {[
-          { label: "Entry Duels", value: `${demo.entryKills ?? 0}W / ${demo.entryDeaths ?? 0}L`, color: (demo.entryKills ?? 0) >= (demo.entryDeaths ?? 0) ? GREEN : RED },
-          { label: "Last Alive", value: `${demo.lastAliveRounds ?? 0}x`, color: (demo.lastAliveRounds ?? 0) >= 4 ? "#fb923c" : TEXT },
-          { label: "Clutch", value: `${demo.clutchWins ?? 0}/${demo.clutchAttempts ?? 0}`, color: (demo.clutchWins ?? 0) > 0 ? GOLD : TEXT_DIM },
-          { label: "Untraded Deaths", value: String(demo.untradedDeaths), color: demo.untradedDeaths >= 8 ? RED : TEXT },
+          {
+            label: "Entry Duels",
+            value: `${demo.entryKills ?? 0}W / ${demo.entryDeaths ?? 0}L`,
+            color:
+              (demo.entryKills ?? 0) >= (demo.entryDeaths ?? 0) ? GREEN : RED,
+          },
+          {
+            label: "Last Alive",
+            value: `${demo.lastAliveRounds ?? 0}x`,
+            color: (demo.lastAliveRounds ?? 0) >= 4 ? "#fb923c" : TEXT,
+          },
+          {
+            label: "Clutch",
+            value: `${demo.clutchWins ?? 0}/${demo.clutchAttempts ?? 0}`,
+            color: (demo.clutchWins ?? 0) > 0 ? GOLD : TEXT_DIM,
+          },
+          {
+            label: "Untraded Deaths",
+            value: String(demo.untradedDeaths),
+            color: demo.untradedDeaths >= 8 ? RED : TEXT,
+          },
         ].map((s) => (
-          <div key={s.label} className="rounded-lg p-2 text-center" style={{ background: BG_ELEVATED }}>
-            <div className="text-[9px] text-text-muted mb-0.5">{s.label}</div>
-            <div className="text-sm font-bold" style={{ color: s.color }}>{s.value}</div>
+          <div
+            className="rounded-lg p-2 text-center"
+            key={s.label}
+            style={{ background: BG_ELEVATED }}
+          >
+            <div className="mb-0.5 text-[9px] text-text-muted">{s.label}</div>
+            <div className="font-bold text-sm" style={{ color: s.color }}>
+              {s.value}
+            </div>
           </div>
         ))}
       </div>
@@ -629,11 +1115,22 @@ function PlayerDetailCard({ demo, faceit, totalRounds }: { demo: DemoPlayerAnaly
 // Card wrapper
 // ---------------------------------------------------------------------------
 
-function Card({ title, children }: { title?: string; children: React.ReactNode }) {
+function Card({
+  title,
+  children,
+}: {
+  title?: string;
+  children: React.ReactNode;
+}) {
   return (
-    <div className="border border-border rounded-xl p-4" style={{ background: BG_CARD }}>
+    <div
+      className="rounded-xl border border-border p-4"
+      style={{ background: BG_CARD }}
+    >
       {title && (
-        <div className="text-[10px] text-text-muted uppercase tracking-wider mb-3">{title}</div>
+        <div className="mb-3 text-[10px] text-text-muted uppercase tracking-wider">
+          {title}
+        </div>
       )}
       {children}
     </div>

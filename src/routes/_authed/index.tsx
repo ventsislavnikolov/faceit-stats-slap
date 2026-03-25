@@ -13,7 +13,9 @@ function HomePage() {
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
     const target = resolveFaceitSearchTarget(input);
-    if (!target.value) return;
+    if (!target.value) {
+      return;
+    }
 
     if (target.kind === "match") {
       navigate({ to: "/match/$matchId", params: { matchId: target.value } });
@@ -24,28 +26,29 @@ function HomePage() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center flex-1 gap-6">
+    <div className="flex flex-1 flex-col items-center justify-center gap-6">
       <div className="text-center">
-        <p className="text-text-muted text-sm">
-          Enter a FACEIT nickname, profile link, or match ID to open the live dashboard
+        <p className="text-sm text-text-muted">
+          Enter a FACEIT nickname, profile link, or match ID to open the live
+          dashboard
         </p>
-        <p className="text-text-dim text-xs mt-1">
+        <p className="mt-1 text-text-dim text-xs">
           e.g. get the nickname from{" "}
           <span className="text-accent">faceit.com/en/players/soavarice</span>
         </p>
       </div>
-      <form onSubmit={handleSearch} className="flex gap-2 w-full max-w-sm">
+      <form className="flex w-full max-w-sm gap-2" onSubmit={handleSearch}>
         <input
-          type="text"
-          value={input}
+          autoFocus
+          className="flex-1 rounded border border-border bg-bg-elevated px-3 py-2 text-sm text-text outline-none focus:border-accent"
           onChange={(e) => setInput(e.target.value)}
           placeholder="FACEIT nickname, profile link, player UUID, or match ID..."
-          autoFocus
-          className="flex-1 bg-bg-elevated border border-border rounded px-3 py-2 text-sm text-text focus:border-accent outline-none"
+          type="text"
+          value={input}
         />
         <button
+          className="rounded bg-accent px-4 py-2 font-bold text-bg text-sm hover:opacity-90"
           type="submit"
-          className="bg-accent text-bg text-sm font-bold px-4 py-2 rounded hover:opacity-90"
         >
           Search
         </button>

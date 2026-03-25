@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { getPlayerStats } from "~/server/matches";
 import type { PlayerHistoryMatch } from "~/lib/types";
+import { getPlayerStats } from "~/server/matches";
 
 export function usePlayerStats(
   playerId: string | null,

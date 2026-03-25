@@ -1,14 +1,15 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { runWithStartContext } from "../../node_modules/.pnpm/@tanstack+start-storage-context@1.166.15/node_modules/@tanstack/start-storage-context/dist/esm/index.js";
-import { resolvePlayer, searchAndLoadFriends } from "~/server/friends";
 import {
   fetchPlayer,
   fetchPlayerByNickname,
   fetchPlayerLifetimeStats,
 } from "~/lib/faceit";
+import { resolvePlayer, searchAndLoadFriends } from "~/server/friends";
+import { runWithStartContext } from "../../node_modules/.pnpm/@tanstack+start-storage-context@1.166.15/node_modules/@tanstack/start-storage-context/dist/esm/index.js";
 
 vi.mock("~/lib/faceit", async () => {
-  const actual = await vi.importActual<typeof import("~/lib/faceit")>("~/lib/faceit");
+  const actual =
+    await vi.importActual<typeof import("~/lib/faceit")>("~/lib/faceit");
   return {
     ...actual,
     fetchPlayerByNickname: vi.fn(),
@@ -45,7 +46,9 @@ describe("resolvePlayer", () => {
         } as any)
     );
 
-    expect(fetchPlayer).toHaveBeenCalledWith("15844c99-d26e-419e-bd14-30908f502c03");
+    expect(fetchPlayer).toHaveBeenCalledWith(
+      "15844c99-d26e-419e-bd14-30908f502c03"
+    );
     expect(fetchPlayerByNickname).not.toHaveBeenCalled();
     expect(result).toEqual({
       faceitId: "15844c99-d26e-419e-bd14-30908f502c03",
@@ -107,7 +110,10 @@ describe("searchAndLoadFriends", () => {
   it("uses uuid lookup, caps to 20 friends, and loads friend stats in batches", async () => {
     vi.useFakeTimers();
 
-    const friendIds = Array.from({ length: 21 }, (_, index) => `friend-${index + 1}`);
+    const friendIds = Array.from(
+      { length: 21 },
+      (_, index) => `friend-${index + 1}`
+    );
     vi.mocked(fetchPlayer).mockImplementation(async (faceitId: string) => {
       if (faceitId === "15844c99-d26e-419e-bd14-30908f502c03") {
         return {
@@ -154,7 +160,9 @@ describe("searchAndLoadFriends", () => {
     await vi.runAllTimersAsync();
     const result = await promise;
 
-    expect(fetchPlayer).toHaveBeenCalledWith("15844c99-d26e-419e-bd14-30908f502c03");
+    expect(fetchPlayer).toHaveBeenCalledWith(
+      "15844c99-d26e-419e-bd14-30908f502c03"
+    );
     expect(fetchPlayerByNickname).not.toHaveBeenCalled();
     expect(result.player).toEqual({
       faceitId: "15844c99-d26e-419e-bd14-30908f502c03",

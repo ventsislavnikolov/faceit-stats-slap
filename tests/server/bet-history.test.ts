@@ -29,8 +29,12 @@ const supabaseMocks = vi.hoisted(() => {
   const auditSelect = vi.fn(() => ({
     in: auditInBetIds,
     eq: (column: string, value: string) => {
-      if (column === "faceit_match_id") return auditEqMatchId(column, value);
-      if (column === "user_id") return auditEqUserId(column, value);
+      if (column === "faceit_match_id") {
+        return auditEqMatchId(column, value);
+      }
+      if (column === "user_id") {
+        return auditEqUserId(column, value);
+      }
       throw new Error(`Unexpected eq on ${column}`);
     },
     order: auditOrder,
@@ -123,7 +127,7 @@ describe("bet history audit metadata", () => {
         contextAfterGlobalMiddlewares: {},
         request: new Request("http://localhost"),
       } as any,
-      () => getUserBetHistory({ data: "user-1" }),
+      () => getUserBetHistory({ data: "user-1" })
     );
 
     expect(result).toEqual([
@@ -175,7 +179,7 @@ describe("bet history audit metadata", () => {
         contextAfterGlobalMiddlewares: {},
         request: new Request("http://localhost"),
       } as any,
-      () => getBetAuditLog({ data: { faceitMatchId: "match-1" } }),
+      () => getBetAuditLog({ data: { faceitMatchId: "match-1" } })
     );
 
     expect(result).toEqual([

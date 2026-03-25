@@ -70,9 +70,9 @@ describe("BetsLeaderboardTab", () => {
       isError: false,
     } as any);
 
-    expect(renderToStaticMarkup(<BetsLeaderboardTab userId={null} />)).toContain(
-      "Loading...",
-    );
+    expect(
+      renderToStaticMarkup(<BetsLeaderboardTab userId={null} />)
+    ).toContain("Loading...");
 
     vi.mocked(useLeaderboard).mockReturnValue({
       data: [],
@@ -80,9 +80,9 @@ describe("BetsLeaderboardTab", () => {
       isError: true,
     } as any);
 
-    expect(renderToStaticMarkup(<BetsLeaderboardTab userId={null} />)).toContain(
-      "Failed to load betting leaderboard",
-    );
+    expect(
+      renderToStaticMarkup(<BetsLeaderboardTab userId={null} />)
+    ).toContain("Failed to load betting leaderboard");
 
     vi.mocked(useLeaderboard).mockReturnValue({
       data: [
@@ -103,9 +103,9 @@ describe("BetsLeaderboardTab", () => {
       isError: false,
     } as any);
 
-    expect(renderToStaticMarkup(<BetsLeaderboardTab userId={null} />)).toContain(
-      "No resolved bets yet",
-    );
+    expect(
+      renderToStaticMarkup(<BetsLeaderboardTab userId={null} />)
+    ).toContain("No resolved bets yet");
   });
 
   it("does not render the bets leaderboard before auth resolves", () => {
@@ -114,7 +114,7 @@ describe("BetsLeaderboardTab", () => {
         authResolved: false,
         isSignedIn: false,
         selectedTab: "bets",
-      }),
+      })
     ).toBe(false);
 
     expect(
@@ -122,7 +122,7 @@ describe("BetsLeaderboardTab", () => {
         authResolved: true,
         isSignedIn: false,
         selectedTab: "bets",
-      }),
+      })
     ).toBe(false);
 
     expect(
@@ -130,7 +130,7 @@ describe("BetsLeaderboardTab", () => {
         authResolved: true,
         isSignedIn: true,
         selectedTab: "bets",
-      }),
+      })
     ).toBe(true);
   });
 });

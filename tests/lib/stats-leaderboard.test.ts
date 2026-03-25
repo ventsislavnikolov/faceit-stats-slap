@@ -1,18 +1,17 @@
 import { describe, expect, it, vi } from "vitest";
-import { runWithStartContext } from "../../node_modules/.pnpm/@tanstack+start-storage-context@1.166.15/node_modules/@tanstack/start-storage-context/dist/esm/index.js";
 import { MY_FACEIT_ID } from "~/lib/constants";
+import { fetchMatchStats } from "~/lib/faceit";
 import {
   buildPersonalFormLeaderboard,
-  buildSharedStatsLeaderboard,
   type SharedStatsLeaderboardRow,
 } from "~/lib/stats-leaderboard";
-import { fetchMatchStats } from "~/lib/faceit";
 import { getStatsLeaderboard } from "~/server/matches";
+import { runWithStartContext } from "../../node_modules/.pnpm/@tanstack+start-storage-context@1.166.15/node_modules/@tanstack/start-storage-context/dist/esm/index.js";
 
 vi.mock("~/lib/stats-leaderboard", async () => {
-  const actual = await vi.importActual<typeof import("~/lib/stats-leaderboard")>(
-    "~/lib/stats-leaderboard"
-  );
+  const actual = await vi.importActual<
+    typeof import("~/lib/stats-leaderboard")
+  >("~/lib/stats-leaderboard");
   return {
     ...actual,
     buildPersonalFormLeaderboard: vi.fn(actual.buildPersonalFormLeaderboard),
@@ -165,13 +164,18 @@ const mockSupabase = vi.hoisted(() => {
       .flat()
       .sort((a, b) => b.played_at.localeCompare(a.played_at));
 
-  const buildMatchPlayerStatsPage = (rows: any[], from = 0, to = rows.length - 1) => ({
+  const buildMatchPlayerStatsPage = (
+    rows: any[],
+    from = 0,
+    to = rows.length - 1
+  ) => ({
     data: rows.slice(from, to + 1),
   });
 
   const buildOrderedRangeQuery = (rows: any[]) => ({
     order: () => ({
-      range: async (from: number, to: number) => buildMatchPlayerStatsPage(rows, from, to),
+      range: async (from: number, to: number) =>
+        buildMatchPlayerStatsPage(rows, from, to),
     }),
   });
 
@@ -189,7 +193,8 @@ const mockSupabase = vi.hoisted(() => {
               .sort((a, b) => b.played_at.localeCompare(a.played_at));
 
             return {
-              range: async (from: number, to: number) => buildMatchPlayerStatsPage(rows, from, to),
+              range: async (from: number, to: number) =>
+                buildMatchPlayerStatsPage(rows, from, to),
             };
           },
         }),
@@ -199,23 +204,29 @@ const mockSupabase = vi.hoisted(() => {
           lastMatchPlayerStatIds = value;
           const getRows = (cutoffIso?: string) =>
             value
-              .flatMap((faceitId) => leaderboardRowsByPlayer.get(faceitId) ?? [])
+              .flatMap(
+                (faceitId) => leaderboardRowsByPlayer.get(faceitId) ?? []
+              )
               .filter((row) => (cutoffIso ? row.played_at >= cutoffIso : true))
               .sort((a, b) => b.played_at.localeCompare(a.played_at));
 
           return {
-            gte: (_gteColumn: string, cutoffIso: string) => buildOrderedRangeQuery(getRows(cutoffIso)),
+            gte: (_gteColumn: string, cutoffIso: string) =>
+              buildOrderedRangeQuery(getRows(cutoffIso)),
             ...buildOrderedRangeQuery(getRows()),
           };
         }
 
         if (column === "match_id") {
-          const rows = getAllLeaderboardRows().filter((row) => value.includes(row.match_id));
+          const rows = getAllLeaderboardRows().filter((row) =>
+            value.includes(row.match_id)
+          );
           return {
             data: rows,
             in: (_nextColumn: string, _nextValue: string[]) => ({
               order: () => ({
-                range: async (from: number, to: number) => buildMatchPlayerStatsPage(rows, from, to),
+                range: async (from: number, to: number) =>
+                  buildMatchPlayerStatsPage(rows, from, to),
               }),
             }),
             order: async () => ({ data: rows }),
@@ -289,7 +300,10 @@ vi.mock("~/lib/faceit", () => ({
 }));
 
 function makeRow(
-  overrides: Pick<SharedStatsLeaderboardRow, "matchId" | "faceitId" | "playedAt"> &
+  overrides: Pick<
+    SharedStatsLeaderboardRow,
+    "matchId" | "faceitId" | "playedAt"
+  > &
     Partial<SharedStatsLeaderboardRow>
 ): SharedStatsLeaderboardRow {
   return {
@@ -590,7 +604,9 @@ describe("buildPersonalFormLeaderboard", () => {
       "friend-high-kd",
       "target",
     ]);
-    expect(result.entries[0].avgImpact).toBeGreaterThan(result.entries[1].avgImpact);
+    expect(result.entries[0].avgImpact).toBeGreaterThan(
+      result.entries[1].avgImpact
+    );
     expect(result.entries[0].avgKd).toBeLessThan(result.entries[1].avgKd);
   });
 
@@ -636,8 +652,12 @@ describe("buildPersonalFormLeaderboard", () => {
       now: "2026-03-22T12:00:00.000Z",
     });
 
-    const lowerElo = result.entries.find((entry) => entry.faceitId === "friend-2070");
-    const higherElo = result.entries.find((entry) => entry.faceitId === "friend-2574");
+    const lowerElo = result.entries.find(
+      (entry) => entry.faceitId === "friend-2070"
+    );
+    const higherElo = result.entries.find(
+      (entry) => entry.faceitId === "friend-2574"
+    );
 
     expect(lowerElo?.avgImpact).toBeGreaterThan(higherElo?.avgImpact ?? 0);
   });
@@ -1241,7 +1261,9 @@ describe("buildPersonalFormLeaderboard", () => {
         match_id: `target-recent-${index}`,
         faceit_player_id: "target",
         nickname: "Target",
-        played_at: new Date(Date.UTC(2026, 2, 21, 23, 59 - index)).toISOString(),
+        played_at: new Date(
+          Date.UTC(2026, 2, 21, 23, 59 - index)
+        ).toISOString(),
         kills: 15,
         kd_ratio: 1,
         adr: 70,
@@ -1283,7 +1305,9 @@ describe("buildPersonalFormLeaderboard", () => {
         match_id: `friend-a-recent-${index}`,
         faceit_player_id: "friend-a",
         nickname: "Friend A",
-        played_at: new Date(Date.UTC(2026, 2, 21, 22, 59 - index)).toISOString(),
+        played_at: new Date(
+          Date.UTC(2026, 2, 21, 22, 59 - index)
+        ).toISOString(),
         kills: 20 + (index % 3),
         kd_ratio: 1.2,
         adr: 82,
@@ -1383,8 +1407,13 @@ describe("buildPersonalFormLeaderboard", () => {
         } as any)
     );
 
-    expect(mockSupabase.getLastMatchPlayerStatIds()).toEqual(["target", "friend-a"]);
-    expect(mockSupabase.getLastMatchPlayerStatIds()).not.toContain(MY_FACEIT_ID);
+    expect(mockSupabase.getLastMatchPlayerStatIds()).toEqual([
+      "target",
+      "friend-a",
+    ]);
+    expect(mockSupabase.getLastMatchPlayerStatIds()).not.toContain(
+      MY_FACEIT_ID
+    );
     expect(result.entries).toEqual([
       expect.objectContaining({
         faceitId: "target",
@@ -1504,7 +1533,9 @@ describe("buildPersonalFormLeaderboard", () => {
         } as any)
     );
 
-    expect(result.entries.find((entry) => entry.faceitId === "friend-null")).toMatchObject({
+    expect(
+      result.entries.find((entry) => entry.faceitId === "friend-null")
+    ).toMatchObject({
       faceitId: "friend-null",
       nickname: "friend-null",
       avgKills: 0,
@@ -1682,7 +1713,8 @@ describe("buildPersonalFormLeaderboard", () => {
           teams: [
             {
               players:
-                matchId === "match-target-solo" || matchId === "match-friend-a-solo"
+                matchId === "match-target-solo" ||
+                matchId === "match-friend-a-solo"
                   ? [{ player_id: "target" }, { player_id: "random" }]
                   : [
                       { player_id: "target" },

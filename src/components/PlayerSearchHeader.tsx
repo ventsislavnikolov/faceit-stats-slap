@@ -1,15 +1,15 @@
 import type { ReactNode } from "react";
 
 interface PlayerSearchHeaderProps {
-  value: string;
-  onValueChange: (value: string) => void;
-  onSubmit: (event: React.FormEvent) => void;
-  placeholder: string;
+  children?: ReactNode;
+  error?: ReactNode;
   isSearching?: boolean;
   layout?: "contained" | "full";
+  onSubmit: (event: React.FormEvent) => void;
+  onValueChange: (value: string) => void;
+  placeholder: string;
   status?: ReactNode;
-  error?: ReactNode;
-  children?: ReactNode;
+  value: string;
 }
 
 export function PlayerSearchHeader({
@@ -24,36 +24,34 @@ export function PlayerSearchHeader({
   children,
 }: PlayerSearchHeaderProps) {
   return (
-    <div className="border-b border-border bg-bg-card">
-      <div className={layout === "full" ? "px-4 py-3" : "mx-auto max-w-6xl px-4 py-3"}>
-        <form onSubmit={onSubmit} className="flex gap-2 max-w-md">
+    <div className="border-border border-b bg-bg-card">
+      <div
+        className={
+          layout === "full" ? "px-4 py-3" : "mx-auto max-w-6xl px-4 py-3"
+        }
+      >
+        <form className="flex max-w-md gap-2" onSubmit={onSubmit}>
           <input
-            type="text"
-            value={value}
+            className="flex-1 rounded border border-border bg-bg-elevated px-3 py-1.5 text-sm text-text outline-none focus:border-accent"
             onChange={(event) => onValueChange(event.target.value)}
             placeholder={placeholder}
-            className="flex-1 rounded border border-border bg-bg-elevated px-3 py-1.5 text-sm text-text outline-none focus:border-accent"
+            type="text"
+            value={value}
           />
           <button
-            type="submit"
+            className="rounded bg-accent px-4 py-1.5 font-bold text-bg text-sm hover:opacity-90 disabled:opacity-50"
             disabled={isSearching}
-            className="rounded bg-accent px-4 py-1.5 text-sm font-bold text-bg hover:opacity-90 disabled:opacity-50"
+            type="submit"
           >
             {isSearching ? "..." : "Search"}
           </button>
         </form>
 
         {status && (
-          <div className="mt-1.5 text-xs text-text-muted">
-            {status}
-          </div>
+          <div className="mt-1.5 text-text-muted text-xs">{status}</div>
         )}
 
-        {error && (
-          <div className="mt-1.5 text-xs text-error">
-            {error}
-          </div>
-        )}
+        {error && <div className="mt-1.5 text-error text-xs">{error}</div>}
 
         {children}
       </div>

@@ -18,7 +18,8 @@ import {
 
 describe("demo analytics contracts", () => {
   it("exposes the ingestion lifecycle values", () => {
-    const statuses = DEMO_INGESTION_STATUS_VALUES satisfies readonly DemoIngestionStatus[];
+    const statuses =
+      DEMO_INGESTION_STATUS_VALUES satisfies readonly DemoIngestionStatus[];
 
     expect(statuses).toEqual([
       "queued",
@@ -30,7 +31,8 @@ describe("demo analytics contracts", () => {
   });
 
   it("exposes the source and availability values", () => {
-    const sourceValues = DEMO_ANALYTICS_SOURCE_TYPE_VALUES satisfies readonly DemoAnalyticsSourceType[];
+    const sourceValues =
+      DEMO_ANALYTICS_SOURCE_TYPE_VALUES satisfies readonly DemoAnalyticsSourceType[];
     const availabilityValues =
       DEMO_ANALYTICS_AVAILABILITY_VALUES satisfies readonly DemoAnalyticsAvailability[];
 
@@ -142,8 +144,8 @@ describe("demo analytics contracts", () => {
       map: "de_inferno",
       score: "13 / 11",
       status: "FINISHED",
-      startedAt: 1711363200000,
-      finishedAt: 1711366800000,
+      startedAt: 1_711_363_200_000,
+      finishedAt: 1_711_366_800_000,
       players: [],
       demoUrl: "https://example.com/match.dem",
       teams: {

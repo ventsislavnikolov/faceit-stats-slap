@@ -9,16 +9,22 @@ function getTimeZoneOffsetMinutes(date: Date, timeZone: string): number {
     second: "2-digit",
   }).formatToParts(date);
 
-  const offsetValue = parts.find((part) => part.type === "timeZoneName")?.value ?? "GMT+00:00";
+  const offsetValue =
+    parts.find((part) => part.type === "timeZoneName")?.value ?? "GMT+00:00";
   const match = offsetValue.match(/^GMT([+-])(\d{1,2})(?::?(\d{2}))?$/);
-  if (!match) return 0;
+  if (!match) {
+    return 0;
+  }
 
   const [, sign, hourPart, minutePart = "00"] = match;
   const totalMinutes = Number(hourPart) * 60 + Number(minutePart);
   return sign === "-" ? -totalMinutes : totalMinutes;
 }
 
-function getDatePartsInTimeZone(date: Date, timeZone: string): {
+function getDatePartsInTimeZone(
+  date: Date,
+  timeZone: string
+): {
   year: number;
   month: number;
   day: number;
@@ -45,9 +51,15 @@ function zonedMidnightToUtc(params: {
 }): Date {
   const { year, month, day, timeZone } = params;
   const assumedUtcMs = Date.UTC(year, month - 1, day, 0, 0, 0);
-  const firstOffsetMinutes = getTimeZoneOffsetMinutes(new Date(assumedUtcMs), timeZone);
+  const firstOffsetMinutes = getTimeZoneOffsetMinutes(
+    new Date(assumedUtcMs),
+    timeZone
+  );
   const firstPassMs = assumedUtcMs - firstOffsetMinutes * 60 * 1000;
-  const correctedOffsetMinutes = getTimeZoneOffsetMinutes(new Date(firstPassMs), timeZone);
+  const correctedOffsetMinutes = getTimeZoneOffsetMinutes(
+    new Date(firstPassMs),
+    timeZone
+  );
   return new Date(assumedUtcMs - correctedOffsetMinutes * 60 * 1000);
 }
 
@@ -66,7 +78,10 @@ export function getPreviousCalendarDayRange(
   const todayStart = zonedMidnightToUtc({ ...todayParts, timeZone });
   const previousDayProbe = new Date(todayStart.getTime() - 12 * 60 * 60 * 1000);
   const previousDayParts = getDatePartsInTimeZone(previousDayProbe, timeZone);
-  const previousDayStart = zonedMidnightToUtc({ ...previousDayParts, timeZone });
+  const previousDayStart = zonedMidnightToUtc({
+    ...previousDayParts,
+    timeZone,
+  });
 
   return {
     start: previousDayStart,

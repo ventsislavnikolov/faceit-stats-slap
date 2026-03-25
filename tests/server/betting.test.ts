@@ -2,15 +2,14 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { runWithStartContext } from "../../node_modules/.pnpm/@tanstack+start-storage-context@1.166.15/node_modules/@tanstack/start-storage-context/dist/esm/index.js";
 
 const supabaseMocks = vi.hoisted(() => {
-  let profiles: Array<{ id: string; nickname: string; coins: number }> | null = [];
-  let bets:
-    | Array<{
-        user_id: string;
-        amount: number;
-        payout: number | null;
-        betting_pools: { status: string } | null;
-      }>
-    | null = [];
+  let profiles: Array<{ id: string; nickname: string; coins: number }> | null =
+    [];
+  let bets: Array<{
+    user_id: string;
+    amount: number;
+    payout: number | null;
+    betting_pools: { status: string } | null;
+  }> | null = [];
 
   const order = vi.fn(async () => ({ data: profiles }));
   const selectProfiles = vi.fn(() => ({ order }));
@@ -103,7 +102,7 @@ describe("getLeaderboard", () => {
         contextAfterGlobalMiddlewares: {},
         request: new Request("http://localhost"),
       } as any,
-      () => getLeaderboard(),
+      () => getLeaderboard()
     );
 
     expect(result).toEqual([
@@ -157,7 +156,7 @@ describe("getLeaderboard", () => {
         contextAfterGlobalMiddlewares: {},
         request: new Request("http://localhost"),
       } as any,
-      () => getLeaderboard(),
+      () => getLeaderboard()
     );
 
     expect(result).toEqual([

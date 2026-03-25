@@ -9,8 +9,8 @@ vi.mock("~/hooks/useMatchDetail", () => ({
   useMatchDetail: vi.fn(),
 }));
 
-import { useMatchDetail } from "~/hooks/useMatchDetail";
 import { DemoAnalyticsStatusPanel } from "~/components/DemoAnalyticsStatusPanel";
+import { useMatchDetail } from "~/hooks/useMatchDetail";
 
 function buildBaselineMatch() {
   return {
@@ -18,12 +18,24 @@ function buildBaselineMatch() {
     map: "de_inferno",
     score: "13 / 7",
     status: "FINISHED",
-    startedAt: 1710000000,
-    finishedAt: 1710000900,
+    startedAt: 1_710_000_000,
+    finishedAt: 1_710_000_900,
     demoUrl: "https://demo.test/demo.dem.zst",
     players: [
-      { playerId: "p1", nickname: "Player1", kills: 25, deaths: 12, assists: 5 },
-      { playerId: "p2", nickname: "Player2", kills: 18, deaths: 15, assists: 3 },
+      {
+        playerId: "p1",
+        nickname: "Player1",
+        kills: 25,
+        deaths: 12,
+        assists: 5,
+      },
+      {
+        playerId: "p2",
+        nickname: "Player2",
+        kills: 18,
+        deaths: 15,
+        assists: 3,
+      },
     ],
     teams: {
       faction1: { name: "Alpha", score: 13, playerIds: ["p1"] },
@@ -89,7 +101,7 @@ function buildParsedDemoAnalytics() {
 describe("DemoAnalyticsStatusPanel", () => {
   it("renders nothing when demoAnalytics is null and no demoUrl", () => {
     const html = renderToStaticMarkup(
-      <DemoAnalyticsStatusPanel demoAnalytics={null} demoUrl={null} />,
+      <DemoAnalyticsStatusPanel demoAnalytics={null} demoUrl={null} />
     );
     expect(html).toBe("");
   });
@@ -99,7 +111,7 @@ describe("DemoAnalyticsStatusPanel", () => {
       <DemoAnalyticsStatusPanel
         demoAnalytics={null}
         demoUrl="https://demo.test/demo.dem.zst"
-      />,
+      />
     );
     expect(html).toContain("Demo available");
   });
@@ -113,7 +125,7 @@ describe("DemoAnalyticsStatusPanel", () => {
           availability: "available",
         }}
         demoUrl="https://demo.test/demo.dem.zst"
-      />,
+      />
     );
     expect(html).toContain("queued");
   });
@@ -127,7 +139,7 @@ describe("DemoAnalyticsStatusPanel", () => {
           availability: "available",
         }}
         demoUrl={null}
-      />,
+      />
     );
     expect(html).toContain("parsing");
   });
@@ -141,7 +153,7 @@ describe("DemoAnalyticsStatusPanel", () => {
           availability: "available",
         }}
         demoUrl={null}
-      />,
+      />
     );
     expect(html).toContain("failed");
   });
@@ -151,7 +163,7 @@ describe("DemoAnalyticsStatusPanel", () => {
       <DemoAnalyticsStatusPanel
         demoAnalytics={buildParsedDemoAnalytics()}
         demoUrl={null}
-      />,
+      />
     );
     expect(html).toContain("parsed");
   });
@@ -179,7 +191,10 @@ describe("useMatchDetail hook contract", () => {
 
   it("returns demoAnalytics when parsed demo exists", () => {
     const hookResult = {
-      data: { ...buildBaselineMatch(), demoAnalytics: buildParsedDemoAnalytics() },
+      data: {
+        ...buildBaselineMatch(),
+        demoAnalytics: buildParsedDemoAnalytics(),
+      },
       isLoading: false,
       isError: false,
       error: null,

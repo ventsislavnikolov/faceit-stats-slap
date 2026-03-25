@@ -35,7 +35,13 @@ describe("player view shell", () => {
       nickname: null,
     });
 
-    expect(tabs.map((tab) => ({ label: tab.label, isActive: tab.isActive, isDisabled: tab.isDisabled }))).toEqual([
+    expect(
+      tabs.map((tab) => ({
+        label: tab.label,
+        isActive: tab.isActive,
+        isDisabled: tab.isDisabled,
+      }))
+    ).toEqual([
       { label: "Friends", isActive: false, isDisabled: true },
       { label: "History", isActive: true, isDisabled: true },
       { label: "Leaderboard", isActive: false, isDisabled: true },
@@ -43,10 +49,11 @@ describe("player view shell", () => {
   });
 
   it("keeps all player views in a stable order", () => {
-    expect(getPlayerViewTabs({ activeView: "leaderboard", nickname: "soavarice" }).map((tab) => tab.view)).toEqual([
-      "friends",
-      "history",
-      "leaderboard",
-    ] satisfies PlayerView[]);
+    expect(
+      getPlayerViewTabs({
+        activeView: "leaderboard",
+        nickname: "soavarice",
+      }).map((tab) => tab.view)
+    ).toEqual(["friends", "history", "leaderboard"] satisfies PlayerView[]);
   });
 });

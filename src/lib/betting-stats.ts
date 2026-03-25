@@ -1,7 +1,7 @@
 import type {
   BetHistorySummary,
-  BetWithPool,
   BettingLeaderboardEntry,
+  BetWithPool,
 } from "~/lib/types";
 
 type BetOutcomeLabel = "Won" | "Lost" | "Refunded" | "Pending";
@@ -24,7 +24,7 @@ export function getBetOutcomeLabel(bet: BetWithPool): BetOutcomeLabel {
 
 export function buildBetHistorySummary(
   bets: BetWithPool[],
-  coins: number,
+  coins: number
 ): BetHistorySummary {
   let betsWon = 0;
   let resolvedBets = 0;
@@ -70,7 +70,7 @@ export function buildBetHistorySummary(
 }
 
 export function sortBettingLeaderboardEntries(
-  entries: BettingLeaderboardEntry[],
+  entries: BettingLeaderboardEntry[]
 ): BettingLeaderboardEntry[] {
   return [...entries].sort((a, b) => {
     if (b.netProfit !== a.netProfit) {

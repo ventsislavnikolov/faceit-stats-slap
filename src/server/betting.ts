@@ -1,15 +1,15 @@
 import { createServerFn } from "@tanstack/react-start";
-import { createServerSupabase } from "~/lib/supabase.server";
 import {
   buildBetHistorySummary,
   sortBettingLeaderboardEntries,
 } from "~/lib/betting-stats";
+import { createServerSupabase } from "~/lib/supabase.server";
 import type {
-  BettingPool,
   Bet,
   BetAuditEvent,
-  BetWithPool,
   BettingLeaderboardEntry,
+  BettingPool,
+  BetWithPool,
 } from "~/lib/types";
 
 // ── Helpers ──────────────────────────────────────────────────
@@ -66,7 +66,9 @@ export const createBettingPool = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const supabase = createServerSupabase();
     const opensAt = new Date(data.startedAt * 1000).toISOString();
-    const closesAt = new Date(data.startedAt * 1000 + 5 * 60 * 1000).toISOString();
+    const closesAt = new Date(
+      data.startedAt * 1000 + 5 * 60 * 1000
+    ).toISOString();
 
     const { error } = await supabase.from("betting_pools").insert({
       faceit_match_id: data.faceitMatchId,
@@ -87,32 +89,42 @@ export const createBettingPool = createServerFn({ method: "POST" })
 
 export const getBettingPool = createServerFn({ method: "GET" })
   .inputValidator((faceitMatchId: string) => faceitMatchId)
-  .handler(async ({ data: faceitMatchId }): Promise<{
-    pool: BettingPool | null;
-    userBet: Bet | null;
-    userCoins: number;
-  }> => {
-    const supabase = createServerSupabase();
+  .handler(
+    async ({
+      data: faceitMatchId,
+    }): Promise<{
+      pool: BettingPool | null;
+      userBet: Bet | null;
+      userCoins: number;
+    }> => {
+      const supabase = createServerSupabase();
 
-    const { data: poolRow } = await supabase
-      .from("betting_pools")
-      .select("*")
-      .eq("faceit_match_id", faceitMatchId)
-      .single();
+      const { data: poolRow } = await supabase
+        .from("betting_pools")
+        .select("*")
+        .eq("faceit_match_id", faceitMatchId)
+        .single();
 
-    if (!poolRow) return { pool: null, userBet: null, userCoins: 0 };
+      if (!poolRow) {
+        return { pool: null, userBet: null, userCoins: 0 };
+      }
 
-    // Get user's bet if any — need user id from session (client-side context)
-    // userBet fetched client-side via useBettingPool hook
-    return { pool: rowToPool(poolRow), userBet: null, userCoins: 0 };
-  });
+      // Get user's bet if any — need user id from session (client-side context)
+      // userBet fetched client-side via useBettingPool hook
+      return { pool: rowToPool(poolRow), userBet: null, userCoins: 0 };
+    }
+  );
 
 // ── placeBet ──────────────────────────────────────────────────
 
 export const placeBet = createServerFn({ method: "POST" })
   .inputValidator(
-    (input: { poolId: string; side: "team1" | "team2"; amount: number; userId: string }) =>
-      input
+    (input: {
+      poolId: string;
+      side: "team1" | "team2";
+      amount: number;
+      userId: string;
+    }) => input
   )
   .handler(async ({ data }): Promise<{ success: boolean; error?: string }> => {
     const supabase = createServerSupabase();
@@ -122,9 +134,13 @@ export const placeBet = createServerFn({ method: "POST" })
       p_side: data.side,
       p_amount: data.amount,
     });
-    if (error) return { success: false, error: error.message };
+    if (error) {
+      return { success: false, error: error.message };
+    }
     const parsed = result as any;
-    if (parsed?.error) return { success: false, error: parsed.error };
+    if (parsed?.error) {
+      return { success: false, error: parsed.error };
+    }
     return { success: true };
   });
 
@@ -191,11 +207,15 @@ export const getLeaderboard = createServerFn({ method: "GET" }).handler(
       .select("id, nickname, coins")
       .order("coins", { ascending: false });
 
-    if (!profiles) return [];
+    if (!profiles) {
+      return [];
+    }
 
     const { data: betRows } = await supabase
       .from("bets")
-      .select("id, pool_id, user_id, side, amount, payout, created_at, betting_pools(*)");
+      .select(
+        "id, pool_id, user_id, side, amount, payout, created_at, betting_pools(*)"
+      );
 
     const betsByUser = new Map<string, BetWithPool[]>();
     for (const [index, row] of (betRows ?? []).entries()) {
@@ -210,7 +230,8 @@ export const getLeaderboard = createServerFn({ method: "GET" }).handler(
         createdAt: row.created_at ?? "",
         pool: rowToPool({
           id: row.betting_pools?.id ?? `pool-${index}`,
-          faceit_match_id: row.betting_pools?.faceit_match_id ?? `match-${index}`,
+          faceit_match_id:
+            row.betting_pools?.faceit_match_id ?? `match-${index}`,
           status: row.betting_pools?.status ?? "OPEN",
           team1_name: row.betting_pools?.team1_name ?? "Team 1",
           team2_name: row.betting_pools?.team2_name ?? "Team 2",
@@ -226,7 +247,10 @@ export const getLeaderboard = createServerFn({ method: "GET" }).handler(
     }
 
     const entries = profiles.map((p) => {
-      const summary = buildBetHistorySummary(betsByUser.get(p.id) ?? [], p.coins);
+      const summary = buildBetHistorySummary(
+        betsByUser.get(p.id) ?? [],
+        p.coins
+      );
       return {
         userId: p.id,
         nickname: p.nickname,
@@ -258,7 +282,9 @@ export const getUserBetForMatch = createServerFn({ method: "GET" })
       .eq("faceit_match_id", data.faceitMatchId)
       .single();
 
-    if (!poolRow) return null;
+    if (!poolRow) {
+      return null;
+    }
 
     const { data: betRow } = await supabase
       .from("bets")
@@ -267,7 +293,9 @@ export const getUserBetForMatch = createServerFn({ method: "GET" })
       .eq("user_id", data.userId)
       .single();
 
-    if (!betRow) return null;
+    if (!betRow) {
+      return null;
+    }
 
     return {
       id: betRow.id,
@@ -294,10 +322,7 @@ export const getUserBetHistory = createServerFn({ method: "GET" })
 
     const betIds = (data ?? []).map((row: any) => row.id).filter(Boolean);
     const { data: auditRows } = betIds.length
-      ? await supabase
-          .from("bet_audit_events")
-          .select("*")
-          .in("bet_id", betIds)
+      ? await supabase.from("bet_audit_events").select("*").in("bet_id", betIds)
       : { data: [] };
     const auditByBetId = new Map(
       (auditRows ?? []).map((row: any) => [row.bet_id, rowToBetAuditEvent(row)])
@@ -318,11 +343,8 @@ export const getUserBetHistory = createServerFn({ method: "GET" })
 
 export const getBetAuditLog = createServerFn({ method: "GET" })
   .inputValidator(
-    (input: {
-      faceitMatchId?: string;
-      userId?: string;
-      limit?: number;
-    }) => input
+    (input: { faceitMatchId?: string; userId?: string; limit?: number }) =>
+      input
   )
   .handler(async ({ data }): Promise<BetAuditEvent[]> => {
     const supabase = createServerSupabase();
@@ -336,6 +358,8 @@ export const getBetAuditLog = createServerFn({ method: "GET" })
       query = query.eq("user_id", data.userId);
     }
 
-    const { data: rows } = await query.order("created_at", { ascending: false });
+    const { data: rows } = await query.order("created_at", {
+      ascending: false,
+    });
     return (rows ?? []).slice(0, limit).map(rowToBetAuditEvent);
   });

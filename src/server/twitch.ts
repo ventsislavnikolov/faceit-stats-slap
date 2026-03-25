@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
-import { fetchLiveStreams, parseTwitchStreams } from "~/lib/twitch";
 import { TWITCH_MAP } from "~/lib/constants";
+import { fetchLiveStreams, parseTwitchStreams } from "~/lib/twitch";
 import type { TwitchStream } from "~/lib/types";
 
 export const getTwitchStreams = createServerFn({ method: "GET" }).handler(

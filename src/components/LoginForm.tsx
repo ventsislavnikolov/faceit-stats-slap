@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { useRouter, Link } from "@tanstack/react-router";
+import { Link, useRouter } from "@tanstack/react-router";
 import { createIsomorphicFn } from "@tanstack/react-start";
+import { useState } from "react";
 
 const doSignIn = createIsomorphicFn()
   .server(async (_email: string, _password: string) => ({ error: null as any }))
@@ -16,7 +16,8 @@ export function LoginForm({ redirectTo = "/" }: { redirectTo?: string }) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const inputClass = "bg-bg-elevated border border-border rounded px-3 py-2 text-text focus:border-accent outline-none";
+  const inputClass =
+    "bg-bg-elevated border border-border rounded px-3 py-2 text-text focus:border-accent outline-none";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -35,37 +36,46 @@ export function LoginForm({ redirectTo = "/" }: { redirectTo?: string }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full max-w-sm">
+    <form
+      className="flex w-full max-w-sm flex-col gap-4"
+      onSubmit={handleSubmit}
+    >
       <input
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        required
         className={inputClass}
+        onChange={(e) => setEmail(e.target.value)}
+        placeholder="Email"
+        required
+        type="email"
+        value={email}
       />
       <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        required
-        minLength={6}
         className={inputClass}
+        minLength={6}
+        onChange={(e) => setPassword(e.target.value)}
+        placeholder="Password"
+        required
+        type="password"
+        value={password}
       />
       {error && <p className="text-error text-sm">{error}</p>}
       <button
-        type="submit"
+        className="rounded bg-accent py-2 font-bold text-bg hover:opacity-90 disabled:opacity-50"
         disabled={loading}
-        className="bg-accent text-bg font-bold py-2 rounded hover:opacity-90 disabled:opacity-50"
+        type="submit"
       >
         {loading ? "..." : "Sign In"}
       </button>
-      <div className="flex justify-between items-center">
-        <Link to="/sign-up" className="text-text-muted text-sm hover:text-accent">
+      <div className="flex items-center justify-between">
+        <Link
+          className="text-sm text-text-muted hover:text-accent"
+          to="/sign-up"
+        >
           Need an account? Sign up
         </Link>
-        <Link to="/forgot-password" className="text-text-muted text-sm hover:text-accent">
+        <Link
+          className="text-sm text-text-muted hover:text-accent"
+          to="/forgot-password"
+        >
           Forgot password?
         </Link>
       </div>

@@ -2,11 +2,14 @@ import type { MatchQueueBucket } from "./types";
 
 export const PARTY_FRIEND_THRESHOLD = 2;
 
-type QueueMatchTeam = {
-  players?: Array<{
-    player_id?: string | null;
-  }> | null;
-} | null | undefined;
+type QueueMatchTeam =
+  | {
+      players?: Array<{
+        player_id?: string | null;
+      }> | null;
+    }
+  | null
+  | undefined;
 
 export function classifyKnownFriendQueue(params: {
   targetPlayerId: string;
@@ -40,15 +43,18 @@ export function classifyKnownFriendQueue(params: {
       continue;
     }
 
-    const knownQueuedFriendIds = [...new Set(
-      playerIds.filter(
-        (playerId) => playerId !== targetPlayerId && friendIdSet.has(playerId)
-      )
-    )];
+    const knownQueuedFriendIds = [
+      ...new Set(
+        playerIds.filter(
+          (playerId) => playerId !== targetPlayerId && friendIdSet.has(playerId)
+        )
+      ),
+    ];
     const knownQueuedFriendCount = knownQueuedFriendIds.length;
 
     return {
-      queueBucket: knownQueuedFriendCount >= PARTY_FRIEND_THRESHOLD ? "party" : "solo",
+      queueBucket:
+        knownQueuedFriendCount >= PARTY_FRIEND_THRESHOLD ? "party" : "solo",
       knownQueuedFriendCount,
       knownQueuedFriendIds,
       partySize: knownQueuedFriendCount + 1,

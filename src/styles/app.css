@@ -2,8 +2,8 @@
 
 @layer base {
   * {
-    scrollbar-width: thin;
     scrollbar-color: #1a1a1a transparent;
+    scrollbar-width: thin;
   }
 }
 
@@ -13,7 +13,7 @@
   --color-bg-elevated: #111111;
   --color-accent: #00ff88;
   --color-error: #ff4444;
-  --color-twitch: #9146FF;
+  --color-twitch: #9146ff;
   --color-text: #e0e0e0;
   --color-text-muted: #888888;
   --color-text-dim: #444444;

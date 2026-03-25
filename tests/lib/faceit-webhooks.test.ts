@@ -78,9 +78,7 @@ describe("extractFaceitWebhookMatchUpdate", () => {
       event: "match_status_finished",
       payload: {
         match_id: "1-finished-match",
-        players: [
-          { player_id: TRACKED_WEBHOOK_PLAYERS.tibabg.faceitId },
-        ],
+        players: [{ player_id: TRACKED_WEBHOOK_PLAYERS.tibabg.faceitId }],
       },
     });
 
@@ -124,7 +122,9 @@ describe("extractFaceitWebhookMatchUpdate", () => {
             id: "1-finished-match",
             teams: {
               faction1: {
-                roster: [{ player_id: TRACKED_WEBHOOK_PLAYERS.tibabg.faceitId }],
+                roster: [
+                  { player_id: TRACKED_WEBHOOK_PLAYERS.tibabg.faceitId },
+                ],
               },
             },
           },

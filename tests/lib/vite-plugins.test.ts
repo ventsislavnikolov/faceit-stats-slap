@@ -10,10 +10,14 @@ function getPluginNames(isTest: boolean): string[] {
 
 describe("createAppPlugins", () => {
   it("omits Nitro plugins during Vitest runs", () => {
-    expect(getPluginNames(true).some((name) => name.startsWith("nitro:"))).toBe(false);
+    expect(getPluginNames(true).some((name) => name.startsWith("nitro:"))).toBe(
+      false
+    );
   });
 
   it("keeps Nitro plugins for normal app builds", () => {
-    expect(getPluginNames(false).some((name) => name.startsWith("nitro:"))).toBe(true);
+    expect(
+      getPluginNames(false).some((name) => name.startsWith("nitro:"))
+    ).toBe(true);
   });
 });

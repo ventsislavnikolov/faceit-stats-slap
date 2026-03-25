@@ -1,38 +1,38 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { createIsomorphicFn } from "@tanstack/react-start";
-import { useStatsLeaderboard } from "~/hooks/useStatsLeaderboard";
-import { useSyncPlayerHistory } from "~/hooks/useSyncPlayerHistory";
+import { useEffect, useRef, useState } from "react";
 import { BetsLeaderboardTab } from "~/components/BetsLeaderboardTab";
 import {
   PageSectionTabs,
   shouldRenderPageSectionTabs,
 } from "~/components/PageSectionTabs";
 import { PlayerSearchHeader } from "~/components/PlayerSearchHeader";
+import { useStatsLeaderboard } from "~/hooks/useStatsLeaderboard";
+import { useSyncPlayerHistory } from "~/hooks/useSyncPlayerHistory";
 import { MY_FACEIT_ID } from "~/lib/constants";
 import { resolveFaceitSearchTarget } from "~/lib/faceit-search";
-import {
-  getLeaderboardTabs,
-  normalizeLeaderboardTab,
-  type LeaderboardTab,
-} from "~/lib/leaderboard-page";
-import {
-  getStatsLeaderboardEmptyStateCopy,
-  getStatsLeaderboardSummaryCopy,
-} from "~/lib/stats-leaderboard-copy";
 import {
   getHistoryMatchCountOptions,
   getHistoryQueueOptions,
   type HistoryMatchCount,
 } from "~/lib/history-page";
 import {
+  getLeaderboardTabs,
+  type LeaderboardTab,
+  normalizeLeaderboardTab,
+} from "~/lib/leaderboard-page";
+import {
+  getStatsLeaderboardEmptyStateCopy,
+  getStatsLeaderboardSummaryCopy,
+} from "~/lib/stats-leaderboard-copy";
+import {
   buildStatsLeaderboardSyncKey,
   buildStatsLeaderboardSyncPlayerIds,
   shouldAutoSyncStatsLeaderboard,
 } from "~/lib/stats-leaderboard-sync";
-import { searchAndLoadFriends } from "~/server/friends";
-import { useEffect, useRef, useState } from "react";
 import type { StatsLeaderboardEntry } from "~/lib/types";
+import { searchAndLoadFriends } from "~/server/friends";
 
 const getClientSession = createIsomorphicFn()
   .server(() => null)
@@ -57,7 +57,9 @@ export function shouldRenderLeaderboardBetsTab(params: {
   isSignedIn: boolean;
   selectedTab: LeaderboardTab;
 }): boolean {
-  return params.authResolved && params.isSignedIn && params.selectedTab === "bets";
+  return (
+    params.authResolved && params.isSignedIn && params.selectedTab === "bets"
+  );
 }
 
 type SortKey =
@@ -86,26 +88,99 @@ const STAT_GROUPS: { key: StatGroup; label: string }[] = [
 
 const STATS_COLS: Record<
   StatGroup,
-  { key: SortKey; label: string; decimals: number; suffix?: string; tooltip?: string }[]
+  {
+    key: SortKey;
+    label: string;
+    decimals: number;
+    suffix?: string;
+    tooltip?: string;
+  }[]
 > = {
   combat: [
-    { key: "avgImpact", label: "Impact", decimals: 1, tooltip: "Composite impact rating per match" },
-    { key: "avgKills", label: "Kills", decimals: 2, tooltip: "Average kills per match" },
-    { key: "avgKd", label: "K/D", decimals: 2, tooltip: "Average Kill/Death ratio" },
-    { key: "avgAdr", label: "ADR", decimals: 1, tooltip: "Average Damage per Round" },
-    { key: "winRate", label: "WIN%", decimals: 0, suffix: "%", tooltip: "Win rate percentage" },
-    { key: "avgHsPercent", label: "HS%", decimals: 0, suffix: "%", tooltip: "Average headshot percentage" },
-    { key: "avgKrRatio", label: "K/R", decimals: 2, tooltip: "Average Kill/Round ratio" },
+    {
+      key: "avgImpact",
+      label: "Impact",
+      decimals: 1,
+      tooltip: "Composite impact rating per match",
+    },
+    {
+      key: "avgKills",
+      label: "Kills",
+      decimals: 2,
+      tooltip: "Average kills per match",
+    },
+    {
+      key: "avgKd",
+      label: "K/D",
+      decimals: 2,
+      tooltip: "Average Kill/Death ratio",
+    },
+    {
+      key: "avgAdr",
+      label: "ADR",
+      decimals: 1,
+      tooltip: "Average Damage per Round",
+    },
+    {
+      key: "winRate",
+      label: "WIN%",
+      decimals: 0,
+      suffix: "%",
+      tooltip: "Win rate percentage",
+    },
+    {
+      key: "avgHsPercent",
+      label: "HS%",
+      decimals: 0,
+      suffix: "%",
+      tooltip: "Average headshot percentage",
+    },
+    {
+      key: "avgKrRatio",
+      label: "K/R",
+      decimals: 2,
+      tooltip: "Average Kill/Round ratio",
+    },
   ],
   entry: [
-    { key: "avgFirstKills", label: "FK", decimals: 2, tooltip: "Average first kills per match" },
-    { key: "avgEntryRate", label: "ER", decimals: 2, tooltip: "Average entry rate — opening duel win ratio" },
-    { key: "avgClutchKills", label: "CK", decimals: 2, tooltip: "Average clutch kills per match" },
-    { key: "avgSniperKills", label: "AWP", decimals: 2, tooltip: "Average AWP kills per match" },
+    {
+      key: "avgFirstKills",
+      label: "FK",
+      decimals: 2,
+      tooltip: "Average first kills per match",
+    },
+    {
+      key: "avgEntryRate",
+      label: "ER",
+      decimals: 2,
+      tooltip: "Average entry rate — opening duel win ratio",
+    },
+    {
+      key: "avgClutchKills",
+      label: "CK",
+      decimals: 2,
+      tooltip: "Average clutch kills per match",
+    },
+    {
+      key: "avgSniperKills",
+      label: "AWP",
+      decimals: 2,
+      tooltip: "Average AWP kills per match",
+    },
   ],
   utility: [
-    { key: "avgUtilityDamage", label: "UD", decimals: 0, tooltip: "Average utility damage per match" },
-    { key: "avgEnemiesFlashed", label: "EF", decimals: 1, tooltip: "Average enemies flashed per match" },
+    {
+      key: "avgUtilityDamage",
+      label: "UD",
+      decimals: 0,
+      tooltip: "Average utility damage per match",
+    },
+    {
+      key: "avgEnemiesFlashed",
+      label: "EF",
+      decimals: 1,
+      tooltip: "Average enemies flashed per match",
+    },
   ],
 };
 
@@ -116,10 +191,10 @@ function fmt(val: number, decimals: number, suffix = "") {
 function sortEntries(
   entries: StatsLeaderboardEntry[],
   key: SortKey,
-  dir: SortDir,
+  dir: SortDir
 ): StatsLeaderboardEntry[] {
   return [...entries].sort((a, b) =>
-    dir === "desc" ? b[key] - a[key] : a[key] - b[key],
+    dir === "desc" ? b[key] - a[key] : a[key] - b[key]
   );
 }
 
@@ -173,7 +248,7 @@ function StatsTab({
         leaderboard.sharedFriendCount,
         days,
         n,
-        queue,
+        queue
       )
     : null;
   const emptyStateCopy = leaderboard
@@ -237,13 +312,13 @@ function StatsTab({
           <div className="flex gap-1">
             {getHistoryMatchCountOptions().map((option) => (
               <button
-                key={option.value}
-                onClick={() => setN(option.value)}
                 className={`rounded px-3 py-1.5 transition-colors ${
                   n === option.value
                     ? "bg-accent font-bold text-bg"
                     : "bg-bg-elevated text-text-muted hover:text-text"
                 }`}
+                key={option.value}
+                onClick={() => setN(option.value)}
               >
                 {option.label}
               </button>
@@ -256,13 +331,13 @@ function StatsTab({
           <div className="flex gap-1">
             {getHistoryQueueOptions().map((option) => (
               <button
-                key={option.value}
-                onClick={() => setQueue(option.value)}
                 className={`rounded px-3 py-1.5 transition-colors ${
                   queue === option.value
                     ? "bg-accent font-bold text-bg"
                     : "bg-bg-elevated text-text-muted hover:text-text"
                 }`}
+                key={option.value}
+                onClick={() => setQueue(option.value)}
               >
                 {option.label}
               </button>
@@ -274,13 +349,13 @@ function StatsTab({
           <div className="flex gap-1">
             {([30, 90, 180, 365, 730] as const).map((v) => (
               <button
-                key={v}
-                onClick={() => setDays(v)}
                 className={`rounded px-3 py-1.5 transition-colors ${
                   days === v
                     ? "bg-accent font-bold text-bg"
                     : "bg-bg-elevated text-text-muted hover:text-text"
                 }`}
+                key={v}
+                onClick={() => setDays(v)}
               >
                 {v}
               </button>
@@ -289,9 +364,9 @@ function StatsTab({
           <span className="text-text-dim">days</span>
         </div>
         <button
-          onClick={() => manualSync.mutate({ n, days })}
+          className="rounded bg-bg-elevated px-3 py-1.5 text-text-muted text-xs transition-colors hover:text-text disabled:opacity-50"
           disabled={manualSync.isPending || !targetPlayerId}
-          className="rounded bg-bg-elevated px-3 py-1.5 text-xs transition-colors text-text-muted hover:text-text disabled:opacity-50"
+          onClick={() => manualSync.mutate({ n, days })}
         >
           {manualSync.isPending ? "Syncing..." : "↻ Refresh"}
         </button>
@@ -313,10 +388,6 @@ function StatsTab({
       )}
 
       <PageSectionTabs
-        tabs={STAT_GROUPS.map((group) => ({
-          key: group.key,
-          label: group.label,
-        }))}
         activeKey={statGroup}
         onChange={(key) => {
           const group = key as StatGroup;
@@ -324,119 +395,127 @@ function StatsTab({
           setSortKey(STATS_COLS[group][0].key);
           setSortDir("desc");
         }}
+        tabs={STAT_GROUPS.map((group) => ({
+          key: group.key,
+          label: group.label,
+        }))}
       />
 
       {isResolvingTarget ? (
-        <div className="text-accent animate-pulse text-center py-8">
+        <div className="animate-pulse py-8 text-center text-accent">
           Loading...
         </div>
-      ) : !targetPlayerId && !hasSearchTarget ? (
-        <div className="text-text-dim text-center py-12">
+      ) : targetPlayerId || hasSearchTarget ? (
+        isLoading ? (
+          <div className="animate-pulse py-8 text-center text-accent">
+            Loading...
+          </div>
+        ) : (
+          <div className="flex w-full flex-col gap-1">
+            {emptyStateCopy && (
+              <div className="py-12 text-center text-sm text-text-dim">
+                {emptyStateCopy}
+              </div>
+            )}
+
+            {!emptyStateCopy && (
+              <div className="w-full overflow-x-auto">
+                <div
+                  className="grid gap-2 px-3 pb-1 text-[10px] text-text-dim uppercase tracking-wider"
+                  style={{
+                    gridTemplateColumns: leaderboardGridTemplate,
+                    minWidth: leaderboardMinWidth,
+                  }}
+                >
+                  <span>#</span>
+                  <span>Player</span>
+                  <span className="group/hdr relative cursor-help text-right">
+                    GP
+                    <span className="pointer-events-none absolute top-full left-1/2 z-50 mt-1 hidden -translate-x-1/2 whitespace-nowrap rounded border border-border bg-bg-card px-2 py-1 font-normal text-[9px] text-text normal-case tracking-normal shadow-lg group-hover/hdr:block">
+                      Games played
+                    </span>
+                  </span>
+                  {activeCols.map((col) => (
+                    <button
+                      className={`group/col relative text-right transition-colors hover:text-text ${
+                        sortKey === col.key ? "text-accent" : ""
+                      }`}
+                      key={col.key}
+                      onClick={() => handleSort(col.key)}
+                    >
+                      {col.label}
+                      {sortKey === col.key
+                        ? sortDir === "desc"
+                          ? " ↓"
+                          : " ↑"
+                        : ""}
+                      {col.tooltip && (
+                        <span className="pointer-events-none absolute top-full left-1/2 z-50 mt-1 hidden -translate-x-1/2 whitespace-nowrap rounded border border-border bg-bg-card px-2 py-1 font-normal text-[9px] text-text normal-case tracking-normal shadow-lg group-hover/col:block">
+                          {col.tooltip}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+
+                <div
+                  className="flex flex-col gap-1"
+                  style={{ minWidth: leaderboardMinWidth }}
+                >
+                  {entries.map((entry, i) => {
+                    const isMe = entry.faceitId === MY_FACEIT_ID;
+                    return (
+                      <div
+                        className={`grid items-center gap-2 rounded px-3 py-2 text-sm ${
+                          isMe
+                            ? "border-accent border-l-2 bg-accent/10"
+                            : "bg-bg-elevated"
+                        }`}
+                        key={entry.faceitId}
+                        style={{ gridTemplateColumns: leaderboardGridTemplate }}
+                      >
+                        <span className={`font-bold text-xs ${rankColor(i)}`}>
+                          {i + 1}
+                        </span>
+                        <div className="flex min-w-0 items-baseline gap-1.5">
+                          <span
+                            className={`truncate font-bold ${isMe ? "text-accent" : "text-text"}`}
+                          >
+                            {isMe ? "You" : entry.nickname}
+                          </span>
+                          {entry.elo > 0 && (
+                            <span className="shrink-0 text-[10px] text-text-dim">
+                              {entry.elo}
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-right text-text-muted text-xs">
+                          {entry.gamesPlayed || "—"}
+                        </span>
+                        {activeCols.map((col) => (
+                          <span
+                            className={`text-right text-xs ${
+                              sortKey === col.key
+                                ? "font-semibold text-accent"
+                                : "text-text-muted"
+                            }`}
+                            key={col.key}
+                          >
+                            {fmt(entry[col.key], col.decimals, col.suffix)}
+                          </span>
+                        ))}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )
+      ) : (
+        <div className="py-12 text-center text-text-dim">
           Search a player above to see how their friends are performing across
           their own recent matches
-        </div>
-      ) : isLoading ? (
-        <div className="text-accent animate-pulse text-center py-8">
-          Loading...
-        </div>
-      ) : (
-        <div className="flex w-full flex-col gap-1">
-          {emptyStateCopy && (
-            <div className="text-text-dim text-center py-12 text-sm">
-              {emptyStateCopy}
-            </div>
-          )}
-
-          {!emptyStateCopy && (
-            <div className="w-full overflow-x-auto">
-              <div
-                className="grid gap-2 px-3 pb-1 text-[10px] text-text-dim uppercase tracking-wider"
-                style={{
-                  gridTemplateColumns: leaderboardGridTemplate,
-                  minWidth: leaderboardMinWidth,
-                }}
-              >
-                <span>#</span>
-                <span>Player</span>
-                <span className="text-right group/hdr relative cursor-help">
-                  GP
-                  <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-1 z-50 hidden group-hover/hdr:block whitespace-nowrap rounded bg-bg-card border border-border px-2 py-1 text-[9px] normal-case tracking-normal font-normal text-text shadow-lg">Games played</span>
-                </span>
-                {activeCols.map((col) => (
-                  <button
-                    key={col.key}
-                    onClick={() => handleSort(col.key)}
-                    className={`text-right hover:text-text transition-colors group/col relative ${
-                      sortKey === col.key ? "text-accent" : ""
-                    }`}
-                  >
-                    {col.label}
-                    {sortKey === col.key
-                      ? sortDir === "desc"
-                        ? " ↓"
-                        : " ↑"
-                      : ""}
-                    {col.tooltip && (
-                      <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-1 z-50 hidden group-hover/col:block whitespace-nowrap rounded bg-bg-card border border-border px-2 py-1 text-[9px] normal-case tracking-normal font-normal text-text shadow-lg">
-                        {col.tooltip}
-                      </span>
-                    )}
-                  </button>
-                ))}
-              </div>
-
-              <div
-                className="flex flex-col gap-1"
-                style={{ minWidth: leaderboardMinWidth }}
-              >
-                {entries.map((entry, i) => {
-                  const isMe = entry.faceitId === MY_FACEIT_ID;
-                  return (
-                    <div
-                      key={entry.faceitId}
-                      className={`grid gap-2 items-center rounded px-3 py-2 text-sm ${
-                        isMe
-                          ? "border-l-2 border-accent bg-accent/10"
-                          : "bg-bg-elevated"
-                      }`}
-                      style={{ gridTemplateColumns: leaderboardGridTemplate }}
-                    >
-                      <span className={`text-xs font-bold ${rankColor(i)}`}>
-                        {i + 1}
-                      </span>
-                      <div className="flex min-w-0 items-baseline gap-1.5">
-                        <span
-                          className={`truncate font-bold ${isMe ? "text-accent" : "text-text"}`}
-                        >
-                          {isMe ? "You" : entry.nickname}
-                        </span>
-                        {entry.elo > 0 && (
-                          <span className="shrink-0 text-[10px] text-text-dim">
-                            {entry.elo}
-                          </span>
-                        )}
-                      </div>
-                      <span className="text-right text-xs text-text-muted">
-                        {entry.gamesPlayed || "—"}
-                      </span>
-                      {activeCols.map((col) => (
-                        <span
-                          key={col.key}
-                          className={`text-right text-xs ${
-                            sortKey === col.key
-                              ? "font-semibold text-accent"
-                              : "text-text-muted"
-                          }`}
-                        >
-                          {fmt(entry[col.key], col.decimals, col.suffix)}
-                        </span>
-                      ))}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
         </div>
       )}
     </div>
@@ -521,7 +600,9 @@ function LeaderboardPage() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const target = resolveFaceitSearchTarget(input);
-    if (!target.value) return;
+    if (!target.value) {
+      return;
+    }
 
     if (target.kind === "match") {
       navigate({ to: "/match/$matchId", params: { matchId: target.value } });
@@ -540,12 +621,12 @@ function LeaderboardPage() {
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
       <PlayerSearchHeader
-        value={input}
-        onValueChange={setInput}
-        onSubmit={handleSearch}
-        placeholder="FACEIT nickname, profile link, player UUID, or match ID..."
-        isSearching={searchLoading}
         error={searchError ? "Player not found." : null}
+        isSearching={searchLoading}
+        onSubmit={handleSearch}
+        onValueChange={setInput}
+        placeholder="FACEIT nickname, profile link, player UUID, or match ID..."
+        value={input}
       />
 
       <div
@@ -555,7 +636,6 @@ function LeaderboardPage() {
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6">
           {shouldRenderPageSectionTabs(sectionTabs) ? (
             <PageSectionTabs
-              tabs={sectionTabs}
               activeKey={normalizedSelectedTab}
               onChange={(tab) => {
                 const nextTab = tab as LeaderboardTab;
@@ -568,6 +648,7 @@ function LeaderboardPage() {
                   replace: true,
                 });
               }}
+              tabs={sectionTabs}
             />
           ) : null}
 
@@ -575,17 +656,17 @@ function LeaderboardPage() {
             shouldRenderBetsTab ? (
               <BetsLeaderboardTab userId={userId} />
             ) : (
-              <div className="py-12 text-center text-accent animate-pulse">
+              <div className="animate-pulse py-12 text-center text-accent">
                 Loading...
               </div>
             )
           ) : (
             <StatsTab
-              targetPlayerId={targetPlayerId}
-              targetNickname={targetNickname}
-              playerIds={friendIds}
               hasSearchTarget={hasSearchTarget}
               isResolvingTarget={isResolvingTarget}
+              playerIds={friendIds}
+              targetNickname={targetNickname}
+              targetPlayerId={targetPlayerId}
             />
           )}
         </div>

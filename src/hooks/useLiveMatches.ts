@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { getLiveMatches } from "~/server/matches";
 import type { LiveMatch } from "~/lib/types";
+import { getLiveMatches } from "~/server/matches";
 
 export function useLiveMatches(playerIds: string[]) {
   return useQuery<LiveMatch[]>({

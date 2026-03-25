@@ -1,4 +1,9 @@
-import type { LiveMatch, MatchDetail, MatchPlayerStats, MatchTeam } from "./types";
+import type {
+  LiveMatch,
+  MatchDetail,
+  MatchPlayerStats,
+  MatchTeam,
+} from "./types";
 
 function getFriendNicknames(team: MatchTeam, friendIds: string[]): string[] {
   return team.roster
@@ -7,7 +12,9 @@ function getFriendNicknames(team: MatchTeam, friendIds: string[]): string[] {
 }
 
 function formatTeamLabel(friendNicknames: string[]): string {
-  if (friendNicknames.length === 0) return "Opponents";
+  if (friendNicknames.length === 0) {
+    return "Opponents";
+  }
   return friendNicknames[0];
 }
 
@@ -16,8 +23,12 @@ export function getLiveMatchTeamLabels(match: LiveMatch): {
   faction2: string;
 } {
   return {
-    faction1: formatTeamLabel(getFriendNicknames(match.teams.faction1, match.friendIds)),
-    faction2: formatTeamLabel(getFriendNicknames(match.teams.faction2, match.friendIds)),
+    faction1: formatTeamLabel(
+      getFriendNicknames(match.teams.faction1, match.friendIds)
+    ),
+    faction2: formatTeamLabel(
+      getFriendNicknames(match.teams.faction2, match.friendIds)
+    ),
   };
 }
 

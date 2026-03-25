@@ -10,8 +10,8 @@ vi.mock("~/hooks/useLiveMatches", () => ({
 vi.mock("~/components/LiveMatchCard", () => ({
   LiveMatchCard: ({ match, authResolved, userId, userCoins }: any) => (
     <div>
-      {match.matchId} {authResolved ? userId ?? "no-user" : "public"}{" "}
-      {authResolved ? userCoins ?? 0 : "betting-hidden"}
+      {match.matchId} {authResolved ? (userId ?? "no-user") : "public"}{" "}
+      {authResolved ? (userCoins ?? 0) : "betting-hidden"}
     </div>
   ),
 }));
@@ -28,8 +28,11 @@ describe("HomeLiveMatchesSection", () => {
 
     expect(
       renderToStaticMarkup(
-        <HomeLiveMatchesSection authResolved={true} bettingContextReady={true} />,
-      ),
+        <HomeLiveMatchesSection
+          authResolved={true}
+          bettingContextReady={true}
+        />
+      )
     ).toContain("Loading live matches");
 
     vi.mocked(useLiveMatches).mockReturnValue({
@@ -40,12 +43,15 @@ describe("HomeLiveMatchesSection", () => {
 
     expect(
       renderToStaticMarkup(
-        <HomeLiveMatchesSection authResolved={true} bettingContextReady={true} />,
-      ),
+        <HomeLiveMatchesSection
+          authResolved={true}
+          bettingContextReady={true}
+        />
+      )
     ).toContain("No tracked players are live right now");
 
     expect(vi.mocked(useLiveMatches)).toHaveBeenLastCalledWith(
-      getTrackedWebhookPlayerIds(),
+      getTrackedWebhookPlayerIds()
     );
   });
 
@@ -74,9 +80,9 @@ describe("HomeLiveMatchesSection", () => {
       <HomeLiveMatchesSection
         authResolved={false}
         bettingContextReady={false}
-        userId="user-1"
         userCoins={1234}
-      />,
+        userId="user-1"
+      />
     );
 
     expect(html).toContain("match-1");
@@ -110,16 +116,16 @@ describe("HomeLiveMatchesSection", () => {
       <HomeLiveMatchesSection
         authResolved={true}
         bettingContextReady={true}
-        userId="user-1"
         userCoins={1234}
-      />,
+        userId="user-1"
+      />
     );
 
     expect(html).toContain("match-1");
     expect(html).toContain("user-1");
     expect(html).toContain("1234");
     expect(vi.mocked(useLiveMatches)).toHaveBeenLastCalledWith(
-      getTrackedWebhookPlayerIds(),
+      getTrackedWebhookPlayerIds()
     );
   });
 });

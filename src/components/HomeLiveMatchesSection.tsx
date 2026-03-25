@@ -1,13 +1,13 @@
-import type { LiveMatch } from "~/lib/types";
-import { getTrackedWebhookPlayerIds } from "~/lib/faceit-webhooks";
-import { LiveMatchCard } from "./LiveMatchCard";
 import { useLiveMatches } from "~/hooks/useLiveMatches";
+import { getTrackedWebhookPlayerIds } from "~/lib/faceit-webhooks";
+import type { LiveMatch } from "~/lib/types";
+import { LiveMatchCard } from "./LiveMatchCard";
 
 interface HomeLiveMatchesSectionProps {
   authResolved: boolean;
   bettingContextReady: boolean;
-  userId?: string | null;
   userCoins?: number;
+  userId?: string | null;
 }
 
 export function HomeLiveMatchesSection({
@@ -17,11 +17,15 @@ export function HomeLiveMatchesSection({
   userCoins,
 }: HomeLiveMatchesSectionProps) {
   const trackedPlayerIds = getTrackedWebhookPlayerIds();
-  const { data: matches = [], isLoading, isError } = useLiveMatches(trackedPlayerIds);
+  const {
+    data: matches = [],
+    isLoading,
+    isError,
+  } = useLiveMatches(trackedPlayerIds);
 
   if (isLoading) {
     return (
-      <div className="py-8 text-center text-accent animate-pulse">
+      <div className="animate-pulse py-8 text-center text-accent">
         Loading live matches...
       </div>
     );
@@ -29,7 +33,7 @@ export function HomeLiveMatchesSection({
 
   if (isError) {
     return (
-      <div className="py-12 text-center text-sm text-error">
+      <div className="py-12 text-center text-error text-sm">
         Failed to load live matches.
       </div>
     );
@@ -47,7 +51,7 @@ export function HomeLiveMatchesSection({
     <section className="flex w-full flex-col gap-3">
       <div className="flex items-baseline justify-between gap-3">
         <div>
-          <div className="text-[10px] uppercase tracking-wider text-text-dim">
+          <div className="text-[10px] text-text-dim uppercase tracking-wider">
             Live Matches
           </div>
           <div className="text-sm text-text-muted">
@@ -62,12 +66,12 @@ export function HomeLiveMatchesSection({
       <div className="flex flex-col gap-4">
         {matches.map((match: LiveMatch) => (
           <LiveMatchCard
-            key={match.matchId}
-            match={match}
             authResolved={authResolved}
             bettingContextReady={bettingContextReady}
-            userId={userId ?? null}
+            key={match.matchId}
+            match={match}
             userCoins={userCoins ?? 0}
+            userId={userId ?? null}
           />
         ))}
       </div>

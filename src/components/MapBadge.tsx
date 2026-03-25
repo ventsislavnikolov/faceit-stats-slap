@@ -9,7 +9,7 @@ export function MapBadge({ map }: MapBadgeProps) {
   const name = map.replace("de_", "");
   return (
     <span
-      className="text-xs px-2 py-0.5 rounded"
+      className="rounded px-2 py-0.5 text-xs"
       style={{ color, backgroundColor: `${color}22` }}
     >
       {name}

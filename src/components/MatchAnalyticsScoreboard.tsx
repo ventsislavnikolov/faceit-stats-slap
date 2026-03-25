@@ -1,14 +1,14 @@
 import type { DemoPlayerAnalytics, MatchPlayerStats } from "~/lib/types";
 
 interface MatchAnalyticsScoreboardProps {
-  faceitPlayers: MatchPlayerStats[];
   demoPlayers: DemoPlayerAnalytics[];
+  faceitPlayers: MatchPlayerStats[];
+  onSelectPlayer: (playerId: string) => void;
+  selectedPlayerId: string | null;
   teams: {
     faction1: { name: string; playerIds: string[] };
     faction2: { name: string; playerIds: string[] };
   };
-  selectedPlayerId: string | null;
-  onSelectPlayer: (playerId: string) => void;
 }
 
 export function MatchAnalyticsScoreboard({
@@ -32,20 +32,20 @@ export function MatchAnalyticsScoreboard({
   return (
     <div className="space-y-3">
       <TeamTable
-        teamName={teams.faction1.name}
-        players={team1Players}
         demoByPlayer={demoByPlayer}
         hasDemoData={hasDemoData}
-        selectedPlayerId={selectedPlayerId}
         onSelectPlayer={onSelectPlayer}
+        players={team1Players}
+        selectedPlayerId={selectedPlayerId}
+        teamName={teams.faction1.name}
       />
       <TeamTable
-        teamName={teams.faction2.name}
-        players={team2Players}
         demoByPlayer={demoByPlayer}
         hasDemoData={hasDemoData}
-        selectedPlayerId={selectedPlayerId}
         onSelectPlayer={onSelectPlayer}
+        players={team2Players}
+        selectedPlayerId={selectedPlayerId}
+        teamName={teams.faction2.name}
       />
     </div>
   );
@@ -71,14 +71,14 @@ function TeamTable({
   const gridCols = baseCols + demoCols;
 
   return (
-    <div className="border border-border rounded-lg overflow-hidden">
-      <div className="bg-surface-elevated px-3 py-2 text-xs font-medium text-text">
+    <div className="overflow-hidden rounded-lg border border-border">
+      <div className="bg-surface-elevated px-3 py-2 font-medium text-text text-xs">
         {teamName}
       </div>
 
       {/* Header */}
       <div
-        className="grid gap-1 px-3 py-1 text-[9px] text-text-dim border-b border-border"
+        className="grid gap-1 border-border border-b px-3 py-1 text-[9px] text-text-dim"
         style={{ gridTemplateColumns: gridCols }}
       >
         <span>Player</span>
@@ -106,15 +106,15 @@ function TeamTable({
 
         return (
           <button
-            key={p.playerId}
-            type="button"
-            onClick={() => onSelectPlayer(p.playerId)}
-            className={`grid gap-1 px-3 py-1.5 text-xs w-full text-left hover:bg-surface-elevated/50 transition-colors ${
-              isSelected ? "ring-1 ring-accent bg-accent/5" : ""
+            className={`grid w-full gap-1 px-3 py-1.5 text-left text-xs transition-colors hover:bg-surface-elevated/50 ${
+              isSelected ? "bg-accent/5 ring-1 ring-accent" : ""
             }`}
+            key={p.playerId}
+            onClick={() => onSelectPlayer(p.playerId)}
             style={{ gridTemplateColumns: gridCols }}
+            type="button"
           >
-            <span className="text-text truncate font-medium">{p.nickname}</span>
+            <span className="truncate font-medium text-text">{p.nickname}</span>
             <span className="text-center text-text">{p.kills}</span>
             <span className="text-center text-text">{p.deaths}</span>
             <span className="text-center text-text">{p.assists}</span>
@@ -129,19 +129,30 @@ function TeamTable({
             <span className="text-center text-text">{p.hsPercent}%</span>
             {hasDemoData && demo && (
               <>
-                <span className="text-center text-accent">{demo.tradeKills}</span>
-                <span className="text-center text-error/70">{demo.untradedDeaths}</span>
-                <span className="text-center text-text font-medium">
+                <span className="text-center text-accent">
+                  {demo.tradeKills}
+                </span>
+                <span className="text-center text-error/70">
+                  {demo.untradedDeaths}
+                </span>
+                <span className="text-center font-medium text-text">
                   {demo.rws.toFixed(1)}
                 </span>
                 <span className="text-center text-text">
-                  {demo.kastPercent != null ? `${Math.round(demo.kastPercent)}` : "-"}
+                  {demo.kastPercent == null
+                    ? "-"
+                    : `${Math.round(demo.kastPercent)}`}
                 </span>
-                <span className={`text-center font-bold ${
-                  (demo.rating ?? 0) >= 1.1 ? "text-accent" :
-                  (demo.rating ?? 0) < 0.9 ? "text-error/70" : "text-text"
-                }`}>
-                  {demo.rating != null ? demo.rating.toFixed(2) : "-"}
+                <span
+                  className={`text-center font-bold ${
+                    (demo.rating ?? 0) >= 1.1
+                      ? "text-accent"
+                      : (demo.rating ?? 0) < 0.9
+                        ? "text-error/70"
+                        : "text-text"
+                  }`}
+                >
+                  {demo.rating == null ? "-" : demo.rating.toFixed(2)}
                 </span>
               </>
             )}

@@ -6,10 +6,10 @@ describe("PlayerSearchHeader", () => {
   it("uses the contained layout by default", () => {
     const html = renderToStaticMarkup(
       <PlayerSearchHeader
-        value=""
-        onValueChange={vi.fn()}
         onSubmit={vi.fn()}
+        onValueChange={vi.fn()}
         placeholder="Search"
+        value=""
       />
     );
 
@@ -19,11 +19,11 @@ describe("PlayerSearchHeader", () => {
   it("uses a full-width layout when requested", () => {
     const html = renderToStaticMarkup(
       <PlayerSearchHeader
-        value=""
-        onValueChange={vi.fn()}
-        onSubmit={vi.fn()}
-        placeholder="Search"
         layout="full"
+        onSubmit={vi.fn()}
+        onValueChange={vi.fn()}
+        placeholder="Search"
+        value=""
       />
     );
 

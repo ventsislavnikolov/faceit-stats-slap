@@ -5,8 +5,9 @@ describe("initializeAuthSession", () => {
   it("hydrates the current session and subscribes to future auth changes", async () => {
     const onSession = vi.fn();
     const unsubscribe = vi.fn();
-    let authListener: ((event: string, session: { user: { id: string } } | null) => void) | null =
-      null;
+    let authListener:
+      | ((event: string, session: { user: { id: string } } | null) => void)
+      | null = null;
 
     const client = {
       auth: {

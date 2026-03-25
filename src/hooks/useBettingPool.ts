@@ -1,8 +1,8 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
 import { createIsomorphicFn } from "@tanstack/react-start";
+import { useEffect } from "react";
+import type { Bet, BettingPool } from "~/lib/types";
 import { getBettingPool, getUserBetForMatch } from "~/server/betting";
-import type { BettingPool, Bet } from "~/lib/types";
 
 const subscribeToPool = createIsomorphicFn()
   .server(() => ({ unsubscribe: () => {} }))
@@ -30,10 +30,15 @@ export function useBettingPool(faceitMatchId: string, userId: string | null) {
 
   const query = useQuery({
     queryKey,
-    queryFn: async (): Promise<{ pool: BettingPool | null; userBet: Bet | null }> => {
+    queryFn: async (): Promise<{
+      pool: BettingPool | null;
+      userBet: Bet | null;
+    }> => {
       const { pool } = await getBettingPool({ data: faceitMatchId });
 
-      if (!pool) return { pool: null, userBet: null };
+      if (!pool) {
+        return { pool: null, userBet: null };
+      }
 
       let userBet: Bet | null = null;
       if (userId) {
@@ -47,11 +52,15 @@ export function useBettingPool(faceitMatchId: string, userId: string | null) {
   });
 
   useEffect(() => {
-    if (!faceitMatchId) return;
+    if (!faceitMatchId) {
+      return;
+    }
     let channel: any;
     subscribeToPool(faceitMatchId, () => {
       queryClient.invalidateQueries({ queryKey });
-    }).then((ch) => { channel = ch; });
+    }).then((ch) => {
+      channel = ch;
+    });
     return () => {
       channel?.unsubscribe();
     };

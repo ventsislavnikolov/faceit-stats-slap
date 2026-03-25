@@ -1,13 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { runWithStartContext } from "../../node_modules/.pnpm/@tanstack+start-storage-context@1.166.15/node_modules/@tanstack/start-storage-context/dist/esm/index.js";
 import {
-  fetchPlayerRecentHistory,
   fetchPlayerHistoryWindow,
+  fetchPlayerRecentHistory,
   getLiveMatches,
   getMatchDetails,
   getPlayerStats,
   syncAllPlayerHistory,
 } from "~/server/matches";
+import { runWithStartContext } from "../../node_modules/.pnpm/@tanstack+start-storage-context@1.166.15/node_modules/@tanstack/start-storage-context/dist/esm/index.js";
 
 const faceitMocks = vi.hoisted(() => ({
   fetchPlayer: vi.fn(),
@@ -26,7 +26,10 @@ const webhookMocks = vi.hoisted(() => ({
 
 const supabaseState = vi.hoisted(() => {
   const matchesUpsert = vi.fn(async () => ({ data: null, error: null }));
-  const matchPlayerStatsUpsert = vi.fn(async () => ({ data: null, error: null }));
+  const matchPlayerStatsUpsert = vi.fn(async () => ({
+    data: null,
+    error: null,
+  }));
   const bettingPoolIgnore = vi.fn(async () => ({ data: null, error: null }));
   const bettingPoolInsert = vi.fn(() => ({
     onConflict: vi.fn(() => ({
@@ -53,9 +56,13 @@ const supabaseState = vi.hoisted(() => {
     in: bettingPoolsSelectIn,
   }));
   let matchPlayerStatsRowsByMatchId = new Map<string, any[]>();
-  const matchPlayerStatsSelectIn = vi.fn(async (_column: string, value: string[]) => ({
-    data: value.flatMap((matchId) => matchPlayerStatsRowsByMatchId.get(matchId) ?? []),
-  }));
+  const matchPlayerStatsSelectIn = vi.fn(
+    async (_column: string, value: string[]) => ({
+      data: value.flatMap(
+        (matchId) => matchPlayerStatsRowsByMatchId.get(matchId) ?? []
+      ),
+    })
+  );
   const matchPlayerStatsSelect = vi.fn(() => ({
     in: matchPlayerStatsSelectIn,
   }));
@@ -87,10 +94,16 @@ const supabaseState = vi.hoisted(() => {
       return {
         select: vi.fn(() => ({
           eq: vi.fn(() => ({
-            single: vi.fn(async () => ({ data: null, error: { message: "not found", code: "PGRST116" } })),
+            single: vi.fn(async () => ({
+              data: null,
+              error: { message: "not found", code: "PGRST116" },
+            })),
             order: vi.fn(() => ({
               limit: vi.fn(() => ({
-                single: vi.fn(async () => ({ data: null, error: { message: "not found", code: "PGRST116" } })),
+                single: vi.fn(async () => ({
+                  data: null,
+                  error: { message: "not found", code: "PGRST116" },
+                })),
               })),
             })),
           })),
@@ -105,9 +118,9 @@ const supabaseState = vi.hoisted(() => {
     createSupabase() {
       return {
         from,
-      rpc,
-    };
-  },
+        rpc,
+      };
+    },
     matchesSelectIn,
     matchesUpsert,
     matchPlayerStatsUpsert,
@@ -146,7 +159,8 @@ const supabaseState = vi.hoisted(() => {
 });
 
 vi.mock("~/lib/faceit", async () => {
-  const actual = await vi.importActual<typeof import("~/lib/faceit")>("~/lib/faceit");
+  const actual =
+    await vi.importActual<typeof import("~/lib/faceit")>("~/lib/faceit");
   return {
     ...actual,
     fetchPlayer: faceitMocks.fetchPlayer,
@@ -230,35 +244,47 @@ describe("fetchPlayerHistoryWindow", () => {
     vi.setSystemTime(new Date("2026-03-23T12:00:00.000Z"));
     faceitMocks.fetchPlayerHistory
       .mockResolvedValueOnce([
-        { match_id: "recent-1", finished_at: 1774000000 },
-        { match_id: "recent-1b", finished_at: 1773800000 },
+        { match_id: "recent-1", finished_at: 1_774_000_000 },
+        { match_id: "recent-1b", finished_at: 1_773_800_000 },
       ])
       .mockResolvedValueOnce([
-        { match_id: "recent-2", started_at: 1773900000 },
+        { match_id: "recent-2", started_at: 1_773_900_000 },
       ]);
 
     const result = await fetchPlayerHistoryWindow("target", 30, 2);
 
-    expect(faceitMocks.fetchPlayerHistory).toHaveBeenNthCalledWith(1, "target", 2, 0);
-    expect(faceitMocks.fetchPlayerHistory).toHaveBeenNthCalledWith(2, "target", 2, 2);
+    expect(faceitMocks.fetchPlayerHistory).toHaveBeenNthCalledWith(
+      1,
+      "target",
+      2,
+      0
+    );
+    expect(faceitMocks.fetchPlayerHistory).toHaveBeenNthCalledWith(
+      2,
+      "target",
+      2,
+      2
+    );
     expect(result).toEqual([
-      { match_id: "recent-1", finished_at: 1774000000 },
-      { match_id: "recent-1b", finished_at: 1773800000 },
-      { match_id: "recent-2", started_at: 1773900000 },
+      { match_id: "recent-1", finished_at: 1_774_000_000 },
+      { match_id: "recent-1b", finished_at: 1_773_800_000 },
+      { match_id: "recent-2", started_at: 1_773_900_000 },
     ]);
   });
 
   it("stops when the oldest item has no usable timestamp", async () => {
     vi.setSystemTime(new Date("2026-03-23T12:00:00.000Z"));
     faceitMocks.fetchPlayerHistory.mockResolvedValueOnce([
-      { match_id: "recent-1", finished_at: 1774000000 },
+      { match_id: "recent-1", finished_at: 1_774_000_000 },
       { match_id: "no-time" },
     ]);
 
     const result = await fetchPlayerHistoryWindow("target", 30, 2);
 
     expect(faceitMocks.fetchPlayerHistory).toHaveBeenCalledTimes(1);
-    expect(result).toEqual([{ match_id: "recent-1", finished_at: 1774000000 }]);
+    expect(result).toEqual([
+      { match_id: "recent-1", finished_at: 1_774_000_000 },
+    ]);
   });
 });
 
@@ -266,22 +292,32 @@ describe("fetchPlayerRecentHistory", () => {
   it("stops after collecting the requested number of recent matches", async () => {
     faceitMocks.fetchPlayerHistory
       .mockResolvedValueOnce([
-        { match_id: "recent-1", finished_at: 1774000000 },
-        { match_id: "recent-2", finished_at: 1773900000 },
+        { match_id: "recent-1", finished_at: 1_774_000_000 },
+        { match_id: "recent-2", finished_at: 1_773_900_000 },
       ])
       .mockResolvedValueOnce([
-        { match_id: "recent-3", finished_at: 1773800000 },
-        { match_id: "recent-4", finished_at: 1773700000 },
+        { match_id: "recent-3", finished_at: 1_773_800_000 },
+        { match_id: "recent-4", finished_at: 1_773_700_000 },
       ]);
 
     const result = await fetchPlayerRecentHistory("target", 3, 2);
 
-    expect(faceitMocks.fetchPlayerHistory).toHaveBeenNthCalledWith(1, "target", 2, 0);
-    expect(faceitMocks.fetchPlayerHistory).toHaveBeenNthCalledWith(2, "target", 2, 2);
+    expect(faceitMocks.fetchPlayerHistory).toHaveBeenNthCalledWith(
+      1,
+      "target",
+      2,
+      0
+    );
+    expect(faceitMocks.fetchPlayerHistory).toHaveBeenNthCalledWith(
+      2,
+      "target",
+      2,
+      2
+    );
     expect(result).toEqual([
-      { match_id: "recent-1", finished_at: 1774000000 },
-      { match_id: "recent-2", finished_at: 1773900000 },
-      { match_id: "recent-3", finished_at: 1773800000 },
+      { match_id: "recent-1", finished_at: 1_774_000_000 },
+      { match_id: "recent-2", finished_at: 1_773_900_000 },
+      { match_id: "recent-3", finished_at: 1_773_800_000 },
     ]);
   });
 });
@@ -291,8 +327,8 @@ describe("getMatchDetails", () => {
     faceitMocks.fetchMatch.mockResolvedValue({
       match_id: "match-1",
       status: "FINISHED",
-      started_at: 1710000000,
-      finished_at: 1710000900,
+      started_at: 1_710_000_000,
+      finished_at: 1_710_000_900,
       demo_url: ["https://demo.test/demo"],
       teams: {
         faction1: { name: "Alpha" },
@@ -365,7 +401,7 @@ describe("getMatchDetails", () => {
     faceitMocks.fetchMatch.mockResolvedValue({
       match_id: "match-2",
       status: "ONGOING",
-      started_at: 1710000000,
+      started_at: 1_710_000_000,
       finished_at: null,
       demo_url: [],
       teams: {
@@ -405,8 +441,8 @@ describe("getMatchDetails", () => {
     faceitMocks.fetchMatch.mockResolvedValue({
       match_id: "match-3",
       status: "FINISHED",
-      started_at: 1710000000,
-      finished_at: 1710000900,
+      started_at: 1_710_000_000,
+      finished_at: 1_710_000_900,
       demo_url: [],
       teams: {
         faction1: { name: "Alpha" },
@@ -427,7 +463,9 @@ describe("getMatchDetails", () => {
         },
       ],
     });
-    faceitMocks.parseMatchStats.mockReturnValue(buildParsedPlayer("p1", "Player One", 20));
+    faceitMocks.parseMatchStats.mockReturnValue(
+      buildParsedPlayer("p1", "Player One", 20)
+    );
     faceitMocks.parseMatchTeamScore.mockReturnValue(0);
     faceitMocks.buildMatchScoreString.mockReturnValue("");
 
@@ -477,15 +515,19 @@ describe("getPlayerStats", () => {
             },
             teams: [
               {
-                players: matchId === "m3" ? [{ player_id: "other" }] : [{ player_id: "target" }],
+                players:
+                  matchId === "m3"
+                    ? [{ player_id: "other" }]
+                    : [{ player_id: "target" }],
               },
             ],
           },
         ],
       };
     });
-    faceitMocks.parseMatchStats.mockImplementation((player: { player_id: string }) =>
-      buildParsedPlayer(player.player_id, `nick-${player.player_id}`, 17)
+    faceitMocks.parseMatchStats.mockImplementation(
+      (player: { player_id: string }) =>
+        buildParsedPlayer(player.player_id, `nick-${player.player_id}`, 17)
     );
 
     const promise = runWithStartContext(
@@ -502,7 +544,11 @@ describe("getPlayerStats", () => {
     await vi.runAllTimersAsync();
     const result = await promise;
 
-    expect(faceitMocks.fetchPlayerHistory).toHaveBeenCalledWith("target", 20, 0);
+    expect(faceitMocks.fetchPlayerHistory).toHaveBeenCalledWith(
+      "target",
+      20,
+      0
+    );
     expect(faceitMocks.fetchMatchStats).toHaveBeenCalledTimes(6);
     expect(result).toHaveLength(4);
     expect(result[0]).toMatchObject({
@@ -532,7 +578,9 @@ describe("getPlayerStats", () => {
         },
       ],
     });
-    faceitMocks.parseMatchStats.mockReturnValue(buildParsedPlayer("target", "Target", 24));
+    faceitMocks.parseMatchStats.mockReturnValue(
+      buildParsedPlayer("target", "Target", 24)
+    );
 
     const result = await runWithStartContext(
       {
@@ -609,7 +657,9 @@ describe("getPlayerStats", () => {
         },
       ],
     });
-    faceitMocks.parseMatchStats.mockReturnValue(buildParsedPlayer("target", "Target", 19));
+    faceitMocks.parseMatchStats.mockReturnValue(
+      buildParsedPlayer("target", "Target", 19)
+    );
 
     const result = await runWithStartContext(
       {
@@ -659,7 +709,9 @@ describe("getPlayerStats", () => {
         },
       ],
     }));
-    faceitMocks.parseMatchStats.mockReturnValue(buildParsedPlayer("target", "Target", 23));
+    faceitMocks.parseMatchStats.mockReturnValue(
+      buildParsedPlayer("target", "Target", 23)
+    );
 
     const result = await runWithStartContext(
       {
@@ -710,7 +762,9 @@ describe("getPlayerStats", () => {
         },
       ],
     }));
-    faceitMocks.parseMatchStats.mockReturnValue(buildParsedPlayer("target", "Target", 18));
+    faceitMocks.parseMatchStats.mockReturnValue(
+      buildParsedPlayer("target", "Target", 18)
+    );
 
     const result = await runWithStartContext(
       {
@@ -740,17 +794,33 @@ describe("getPlayerStats", () => {
 
     faceitMocks.fetchPlayerHistory
       .mockResolvedValueOnce([
-        { match_id: "today-match", started_at: 1774329000, finished_at: 1774332600 },
-        { match_id: "yesterday-late", started_at: 1774292400, finished_at: 1774296000 },
+        {
+          match_id: "today-match",
+          started_at: 1_774_329_000,
+          finished_at: 1_774_332_600,
+        },
+        {
+          match_id: "yesterday-late",
+          started_at: 1_774_292_400,
+          finished_at: 1_774_296_000,
+        },
         ...Array.from({ length: 18 }, (_, index) => ({
           match_id: `today-filler-${index}`,
-          started_at: 1774320000 - index * 60,
-          finished_at: 1774320300 - index * 60,
+          started_at: 1_774_320_000 - index * 60,
+          finished_at: 1_774_320_300 - index * 60,
         })),
       ])
       .mockResolvedValueOnce([
-        { match_id: "yesterday-early", started_at: 1774225800, finished_at: 1774229400 },
-        { match_id: "older-match", started_at: 1774211400, finished_at: 1774215000 },
+        {
+          match_id: "yesterday-early",
+          started_at: 1_774_225_800,
+          finished_at: 1_774_229_400,
+        },
+        {
+          match_id: "older-match",
+          started_at: 1_774_211_400,
+          finished_at: 1_774_215_000,
+        },
       ]);
     faceitMocks.fetchMatchStats.mockImplementation(async (matchId: string) => ({
       rounds: [
@@ -767,7 +837,9 @@ describe("getPlayerStats", () => {
         },
       ],
     }));
-    faceitMocks.parseMatchStats.mockReturnValue(buildParsedPlayer("target", "Target", 21));
+    faceitMocks.parseMatchStats.mockReturnValue(
+      buildParsedPlayer("target", "Target", 21)
+    );
 
     const result = await runWithStartContext(
       {
@@ -780,7 +852,10 @@ describe("getPlayerStats", () => {
         } as any)
     );
 
-    expect(result.map((match) => match.matchId)).toEqual(["yesterday-late", "yesterday-early"]);
+    expect(result.map((match) => match.matchId)).toEqual([
+      "yesterday-late",
+      "yesterday-early",
+    ]);
     expect(faceitMocks.fetchPlayerHistory).toHaveBeenCalledTimes(2);
     expect(faceitMocks.fetchMatchStats).toHaveBeenCalledTimes(2);
   });
@@ -807,8 +882,18 @@ describe("syncAllPlayerHistory", () => {
     );
 
     expect(faceitMocks.fetchPlayerHistory).toHaveBeenCalledTimes(2);
-    expect(faceitMocks.fetchPlayerHistory).toHaveBeenNthCalledWith(1, "target", 50, 0);
-    expect(faceitMocks.fetchPlayerHistory).toHaveBeenNthCalledWith(2, "friend-a", 100, 0);
+    expect(faceitMocks.fetchPlayerHistory).toHaveBeenNthCalledWith(
+      1,
+      "target",
+      50,
+      0
+    );
+    expect(faceitMocks.fetchPlayerHistory).toHaveBeenNthCalledWith(
+      2,
+      "friend-a",
+      100,
+      0
+    );
     expect(supabaseState.matchesSelectIn).not.toHaveBeenCalled();
     expect(supabaseState.matchPlayerStatsSelectIn).not.toHaveBeenCalled();
     expect(supabaseState.matchesUpsert).not.toHaveBeenCalled();
@@ -823,8 +908,8 @@ describe("syncAllPlayerHistory", () => {
       .mockResolvedValueOnce([
         {
           match_id: "history-match-1",
-          started_at: 1774170000,
-          finished_at: 1774170900,
+          started_at: 1_774_170_000,
+          finished_at: 1_774_170_900,
         },
       ])
       .mockResolvedValueOnce([]);
@@ -867,10 +952,16 @@ describe("syncAllPlayerHistory", () => {
     );
 
     expect(faceitMocks.fetchPlayerHistory).toHaveBeenCalledTimes(1);
-    expect(faceitMocks.fetchPlayerHistory).toHaveBeenNthCalledWith(1, "target", 50, 0);
-    expect(supabaseState.matchesSelectIn).toHaveBeenCalledWith("faceit_match_id", [
-      "history-match-1",
-    ]);
+    expect(faceitMocks.fetchPlayerHistory).toHaveBeenNthCalledWith(
+      1,
+      "target",
+      50,
+      0
+    );
+    expect(supabaseState.matchesSelectIn).toHaveBeenCalledWith(
+      "faceit_match_id",
+      ["history-match-1"]
+    );
     expect(faceitMocks.fetchMatchStats).toHaveBeenCalledWith("history-match-1");
     expect(supabaseState.matchesUpsert).toHaveBeenCalled();
     expect(supabaseState.matchPlayerStatsUpsert).toHaveBeenCalledTimes(2);
@@ -885,8 +976,8 @@ describe("syncAllPlayerHistory", () => {
     faceitMocks.fetchPlayerHistory.mockResolvedValueOnce([
       {
         match_id: "history-match-1",
-        started_at: 1774170000,
-        finished_at: 1774170900,
+        started_at: 1_774_170_000,
+        finished_at: 1_774_170_900,
       },
     ]);
     supabaseState.matchesSelectIn.mockResolvedValueOnce({
@@ -909,9 +1000,10 @@ describe("syncAllPlayerHistory", () => {
         } as any)
     );
 
-    expect(supabaseState.matchesSelectIn).toHaveBeenCalledWith("faceit_match_id", [
-      "history-match-1",
-    ]);
+    expect(supabaseState.matchesSelectIn).toHaveBeenCalledWith(
+      "faceit_match_id",
+      ["history-match-1"]
+    );
     expect(faceitMocks.fetchMatchStats).not.toHaveBeenCalled();
     expect(supabaseState.matchesUpsert).not.toHaveBeenCalled();
     expect(supabaseState.matchPlayerStatsUpsert).not.toHaveBeenCalled();
@@ -925,20 +1017,20 @@ describe("syncAllPlayerHistory", () => {
       .mockResolvedValueOnce([
         {
           match_id: "target-shared-match",
-          started_at: 1774170000,
-          finished_at: 1774170900,
+          started_at: 1_774_170_000,
+          finished_at: 1_774_170_900,
         },
       ])
       .mockResolvedValueOnce([
         {
           match_id: "eligible-friend-recent-1",
-          started_at: 1774160000,
-          finished_at: 1774160900,
+          started_at: 1_774_160_000,
+          finished_at: 1_774_160_900,
         },
         {
           match_id: "eligible-friend-recent-2",
-          started_at: 1774150000,
-          finished_at: 1774150900,
+          started_at: 1_774_150_000,
+          finished_at: 1_774_150_900,
         },
       ])
       .mockResolvedValueOnce([]);
@@ -961,8 +1053,9 @@ describe("syncAllPlayerHistory", () => {
         },
       ],
     }));
-    faceitMocks.parseMatchStats.mockImplementation((player: { player_id: string }) =>
-      buildParsedPlayer(player.player_id, player.player_id, 20)
+    faceitMocks.parseMatchStats.mockImplementation(
+      (player: { player_id: string }) =>
+        buildParsedPlayer(player.player_id, player.player_id, 20)
     );
 
     await runWithStartContext(
@@ -982,9 +1075,24 @@ describe("syncAllPlayerHistory", () => {
     );
 
     expect(faceitMocks.fetchPlayerHistory).toHaveBeenCalledTimes(3);
-    expect(faceitMocks.fetchPlayerHistory).toHaveBeenNthCalledWith(1, "target", 50, 0);
-    expect(faceitMocks.fetchPlayerHistory).toHaveBeenNthCalledWith(2, "friend-a", 100, 0);
-    expect(faceitMocks.fetchPlayerHistory).toHaveBeenNthCalledWith(3, "friend-b", 100, 0);
+    expect(faceitMocks.fetchPlayerHistory).toHaveBeenNthCalledWith(
+      1,
+      "target",
+      50,
+      0
+    );
+    expect(faceitMocks.fetchPlayerHistory).toHaveBeenNthCalledWith(
+      2,
+      "friend-a",
+      100,
+      0
+    );
+    expect(faceitMocks.fetchPlayerHistory).toHaveBeenNthCalledWith(
+      3,
+      "friend-b",
+      100,
+      0
+    );
   });
 });
 
@@ -1034,7 +1142,14 @@ describe("getLiveMatches", () => {
         faction1: {
           faction_id: "f1",
           leader: "Alpha",
-          roster: [{ player_id: "p1", nickname: "P1", avatar: "", game_skill_level: 8 }],
+          roster: [
+            {
+              player_id: "p1",
+              nickname: "P1",
+              avatar: "",
+              game_skill_level: 8,
+            },
+          ],
         },
         faction2: {
           faction_id: "f2",
@@ -1069,7 +1184,9 @@ describe("getLiveMatches", () => {
     faceitMocks.fetchPlayerHistory.mockResolvedValue([
       { match_id: "p3-match", status: "UNKNOWN" },
     ]);
-    faceitMocks.pickRelevantHistoryMatch.mockReturnValue({ match_id: "p3-match" });
+    faceitMocks.pickRelevantHistoryMatch.mockReturnValue({
+      match_id: "p3-match",
+    });
     supabaseState.setStalePools([]);
 
     faceitMocks.fetchMatch.mockImplementation(async (matchId: string) => {
@@ -1085,7 +1202,14 @@ describe("getLiveMatches", () => {
             faction1: {
               faction_id: "a1",
               leader: "Alpha",
-              roster: [{ player_id: "p1", nickname: "P1", avatar: "", game_skill_level: 8 }],
+              roster: [
+                {
+                  player_id: "p1",
+                  nickname: "P1",
+                  avatar: "",
+                  game_skill_level: 8,
+                },
+              ],
             },
             faction2: {
               faction_id: "a2",
@@ -1108,7 +1232,14 @@ describe("getLiveMatches", () => {
             faction1: {
               faction_id: "b1",
               leader: "Charlie",
-              roster: [{ player_id: "p2", nickname: "P2", avatar: "", game_skill_level: 9 }],
+              roster: [
+                {
+                  player_id: "p2",
+                  nickname: "P2",
+                  avatar: "",
+                  game_skill_level: 9,
+                },
+              ],
             },
             faction2: {
               faction_id: "b2",
@@ -1131,7 +1262,14 @@ describe("getLiveMatches", () => {
             faction1: {
               faction_id: "c1",
               leader: "Echo",
-              roster: [{ player_id: "p3", nickname: "P3", avatar: "", game_skill_level: 7 }],
+              roster: [
+                {
+                  player_id: "p3",
+                  nickname: "P3",
+                  avatar: "",
+                  game_skill_level: 7,
+                },
+              ],
             },
             faction2: {
               faction_id: "c2",
@@ -1156,7 +1294,10 @@ describe("getLiveMatches", () => {
     await vi.runAllTimersAsync();
     const result = await promise;
 
-    expect(result.map((match) => match.matchId)).toEqual(["p2-match", "p1-match"]);
+    expect(result.map((match) => match.matchId)).toEqual([
+      "p2-match",
+      "p1-match",
+    ]);
     expect(supabaseState.bettingPoolInsert).toHaveBeenCalledTimes(1);
   });
 
@@ -1179,7 +1320,14 @@ describe("getLiveMatches", () => {
         faction1: {
           faction_id: "f1",
           leader: "Alpha",
-          roster: [{ player_id: "someone-else", nickname: "Else", avatar: "", game_skill_level: 4 }],
+          roster: [
+            {
+              player_id: "someone-else",
+              nickname: "Else",
+              avatar: "",
+              game_skill_level: 4,
+            },
+          ],
         },
         faction2: {
           faction_id: "f2",
@@ -1212,7 +1360,9 @@ describe("getLiveMatches", () => {
     faceitMocks.fetchPlayerHistory.mockResolvedValue([
       { match_id: "history-match", status: "FINISHED" },
     ]);
-    faceitMocks.pickRelevantHistoryMatch.mockReturnValue({ match_id: "history-match" });
+    faceitMocks.pickRelevantHistoryMatch.mockReturnValue({
+      match_id: "history-match",
+    });
     supabaseState.setStalePools([
       { faceit_match_id: "stale-finished" },
       { faceit_match_id: "stale-cancelled" },
@@ -1232,12 +1382,26 @@ describe("getLiveMatches", () => {
             faction1: {
               faction_id: "f1",
               leader: "Alpha",
-              roster: [{ player_id: "p1", nickname: "P1", avatar: "", game_skill_level: 8 }],
+              roster: [
+                {
+                  player_id: "p1",
+                  nickname: "P1",
+                  avatar: "",
+                  game_skill_level: 8,
+                },
+              ],
             },
             faction2: {
               faction_id: "f2",
               leader: "Bravo",
-              roster: [{ player_id: "pX", nickname: "PX", avatar: "", game_skill_level: 7 }],
+              roster: [
+                {
+                  player_id: "pX",
+                  nickname: "PX",
+                  avatar: "",
+                  game_skill_level: 7,
+                },
+              ],
             },
           },
         };
@@ -1255,12 +1419,26 @@ describe("getLiveMatches", () => {
             faction1: {
               faction_id: "f3",
               leader: "Charlie",
-              roster: [{ player_id: "p2", nickname: "P2", avatar: "", game_skill_level: 9 }],
+              roster: [
+                {
+                  player_id: "p2",
+                  nickname: "P2",
+                  avatar: "",
+                  game_skill_level: 9,
+                },
+              ],
             },
             faction2: {
               faction_id: "f4",
               leader: "Delta",
-              roster: [{ player_id: "pY", nickname: "PY", avatar: "", game_skill_level: 6 }],
+              roster: [
+                {
+                  player_id: "pY",
+                  nickname: "PY",
+                  avatar: "",
+                  game_skill_level: 6,
+                },
+              ],
             },
           },
         };
@@ -1379,7 +1557,14 @@ describe("getLiveMatches", () => {
             faction1: {
               faction_id: "f1",
               leader: "Alpha",
-              roster: [{ player_id: "p1", nickname: "P1", avatar: "", game_skill_level: 8 }],
+              roster: [
+                {
+                  player_id: "p1",
+                  nickname: "P1",
+                  avatar: "",
+                  game_skill_level: 8,
+                },
+              ],
             },
             faction2: {
               faction_id: "f2",

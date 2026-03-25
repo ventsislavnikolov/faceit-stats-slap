@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { PARTY_FRIEND_THRESHOLD, classifyKnownFriendQueue } from "~/lib/match-queue";
+import {
+  classifyKnownFriendQueue,
+  PARTY_FRIEND_THRESHOLD,
+} from "~/lib/match-queue";
 
 describe("classifyKnownFriendQueue", () => {
   it("classifies a match as party when the player queued with at least two known friends", () => {
@@ -75,10 +78,7 @@ describe("classifyKnownFriendQueue", () => {
         targetFriendIds: null,
         teams: [
           {
-            players: [
-              { player_id: "target" },
-              { player_id: "friend-1" },
-            ],
+            players: [{ player_id: "target" }, { player_id: "friend-1" }],
           },
         ],
       })

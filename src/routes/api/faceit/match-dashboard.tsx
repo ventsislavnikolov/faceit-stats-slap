@@ -17,7 +17,9 @@ export const Route = createFileRoute("/api/faceit/match-dashboard")({
           return Response.json(payload);
         } catch (error) {
           const message =
-            error instanceof Error ? error.message : "Unknown match dashboard error";
+            error instanceof Error
+              ? error.message
+              : "Unknown match dashboard error";
           return Response.json({ error: message }, { status: 500 });
         }
       },

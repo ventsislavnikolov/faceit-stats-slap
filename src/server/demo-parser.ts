@@ -1,11 +1,11 @@
+import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { extname } from "node:path";
-import { execFileSync } from "node:child_process";
-import { decompress } from "fzstd";
 import { parseEvents, parseHeader, parsePlayerInfo } from "@laihoe/demoparser2";
-import type { DemoMatchAnalytics, DemoAnalyticsSourceType } from "~/lib/types";
-import { buildRichDemoAnalytics } from "~/server/demo-analytics-builder";
+import { decompress } from "fzstd";
 import { createServerSupabase } from "~/lib/supabase.server";
+import type { DemoAnalyticsSourceType, DemoMatchAnalytics } from "~/lib/types";
+import { buildRichDemoAnalytics } from "~/server/demo-analytics-builder";
 import {
   type CreateIngestionInput,
   type IngestionRow,
@@ -59,81 +59,81 @@ export interface ParsedDemoPlayer {
 }
 
 export interface ParsedDemoRound {
+  reason: string | null;
   roundNumber: number;
   totalRoundsPlayed: number | null;
   winner: unknown;
-  reason: string | null;
 }
 
 export interface ParsedDemoKill {
-  tick: number;
-  roundNumber: number;
-  attackerSteamId: string;
-  attackerName: string;
-  victimSteamId: string;
-  victimName: string;
-  assisterSteamId: string | null;
   assistedFlash: boolean;
-  headshot: boolean;
-  weapon: string;
-  penetrated: boolean;
-  thruSmoke: boolean;
+  assisterSteamId: string | null;
   attackerBlind: boolean;
-  noscope: boolean;
+  attackerName: string;
+  attackerSteamId: string;
   distance: number;
+  headshot: boolean;
+  noscope: boolean;
+  penetrated: boolean;
+  roundNumber: number;
+  thruSmoke: boolean;
+  tick: number;
+  victimName: string;
+  victimSteamId: string;
+  weapon: string;
 }
 
 export interface ParsedDemoHurt {
-  tick: number;
-  roundNumber: number;
   attackerSteamId: string;
-  victimSteamId: string;
   damage: number;
+  roundNumber: number;
+  tick: number;
+  victimSteamId: string;
   weapon: string;
 }
 
 export interface ParsedDemoBombEvent {
-  tick: number;
-  roundNumber: number;
   playerSteamId: string;
-  type: "planted" | "defused";
+  roundNumber: number;
   site: number | null;
+  tick: number;
+  type: "planted" | "defused";
 }
 
 export interface ParsedDemoWeaponFire {
-  tick: number;
-  roundNumber: number;
   playerSteamId: string;
+  roundNumber: number;
+  tick: number;
   weapon: string;
 }
 
 export interface ParsedDemoBlind {
-  tick: number;
-  roundNumber: number;
   attackerSteamId: string;
-  victimSteamId: string;
   duration: number;
+  roundNumber: number;
+  tick: number;
+  victimSteamId: string;
 }
 
 export interface ParsedDemoRoundTiming {
-  roundNumber: number;
   freezeEndTick: number;
+  roundNumber: number;
 }
 
 export interface ParsedDemoItemPurchase {
-  tick: number;
+  cost: number;
+  itemName: string;
+  nickname: string;
   roundNumber: number;
   steamId: string;
-  nickname: string;
-  itemName: string;
-  cost: number;
+  tick: number;
 }
 
 export interface ParsedDemoGrenadeDetonate {
-  tick: number;
+  nickname: string;
   roundNumber: number;
   steamId: string;
-  nickname: string;
+  tick: number;
   type: "smoke" | "flash" | "he" | "molotov";
   x: number;
   y: number;
@@ -141,21 +141,21 @@ export interface ParsedDemoGrenadeDetonate {
 }
 
 export interface ParsedDemoFile {
+  blinds: ParsedDemoBlind[];
+  bombEvents: ParsedDemoBombEvent[];
+  grenadeDetonates: ParsedDemoGrenadeDetonate[];
   header: {
     mapName: string;
   };
+  hurts: ParsedDemoHurt[];
+  itemPurchases: ParsedDemoItemPurchase[];
+  kills: ParsedDemoKill[];
   playerInfo: {
     players: ParsedDemoPlayer[];
   };
   rounds: ParsedDemoRound[];
-  kills: ParsedDemoKill[];
-  hurts: ParsedDemoHurt[];
-  bombEvents: ParsedDemoBombEvent[];
-  weaponFires: ParsedDemoWeaponFire[];
-  blinds: ParsedDemoBlind[];
   roundTimings: ParsedDemoRoundTiming[];
-  itemPurchases: ParsedDemoItemPurchase[];
-  grenadeDetonates: ParsedDemoGrenadeDetonate[];
+  weaponFires: ParsedDemoWeaponFire[];
 }
 
 // ---------------------------------------------------------------------------
@@ -163,34 +163,44 @@ export interface ParsedDemoFile {
 // ---------------------------------------------------------------------------
 
 export interface DemoAnalyticsIngestionStore {
-  upsertDemoIngestion: (input: CreateIngestionInput) => Promise<IngestionRow>;
-  markDemoIngestionParsing: (ingestionId: string, startedAt?: string) => Promise<void>;
-  markDemoIngestionFailed: (ingestionId: string, errorMessage: string, finishedAt?: string) => Promise<void>;
-  markDemoIngestionParsed: (ingestionId: string, finishedAt?: string) => Promise<void>;
+  markDemoIngestionFailed: (
+    ingestionId: string,
+    errorMessage: string,
+    finishedAt?: string
+  ) => Promise<void>;
+  markDemoIngestionParsed: (
+    ingestionId: string,
+    finishedAt?: string
+  ) => Promise<void>;
+  markDemoIngestionParsing: (
+    ingestionId: string,
+    startedAt?: string
+  ) => Promise<void>;
   saveDemoAnalytics: (
     ingestionId: string,
-    analytics: DemoMatchAnalytics,
+    analytics: DemoMatchAnalytics
   ) => Promise<{ demoMatchId: string }>;
+  upsertDemoIngestion: (input: CreateIngestionInput) => Promise<IngestionRow>;
 }
 
 export interface IngestParsedDemoFileOptions {
-  matchId: string;
-  sourceType: DemoAnalyticsSourceType;
-  fileSha256: string;
-  fileName?: string | null;
-  fileSizeBytes?: number | null;
-  sourceUrl?: string | null;
-  compression?: "dem" | "zst";
-  parserVersion?: string | null;
-  demoPatchVersion?: string | null;
-  startedAt?: string;
-  store?: DemoAnalyticsIngestionStore;
-  parseDemoFile?: typeof parseDemoFile;
   buildAnalytics?: (
     matchId: string,
     sourceType: DemoAnalyticsSourceType,
-    parsed: ParsedDemoFile,
+    parsed: ParsedDemoFile
   ) => DemoMatchAnalytics;
+  compression?: "dem" | "zst";
+  demoPatchVersion?: string | null;
+  fileName?: string | null;
+  fileSha256: string;
+  fileSizeBytes?: number | null;
+  matchId: string;
+  parseDemoFile?: typeof parseDemoFile;
+  parserVersion?: string | null;
+  sourceType: DemoAnalyticsSourceType;
+  sourceUrl?: string | null;
+  startedAt?: string;
+  store?: DemoAnalyticsIngestionStore;
 }
 
 // ---------------------------------------------------------------------------
@@ -198,14 +208,20 @@ export interface IngestParsedDemoFileOptions {
 // ---------------------------------------------------------------------------
 
 function asArray<T>(value: unknown): T[] {
-  if (Array.isArray(value)) return value as T[];
-  if (!value || typeof value !== "object") return [];
+  if (Array.isArray(value)) {
+    return value as T[];
+  }
+  if (!value || typeof value !== "object") {
+    return [];
+  }
   return Object.values(value) as T[];
 }
 
 function readDemoBuffer(filePath: string) {
   const isCompressed = extname(filePath).toLowerCase() === ".zst";
-  if (!isCompressed) return readFileSync(filePath);
+  if (!isCompressed) {
+    return readFileSync(filePath);
+  }
 
   // Try native zstd first (handles large files), fall back to fzstd
   try {
@@ -223,18 +239,27 @@ function normalizePlayers(players: RawPlayerInfo[]): ParsedDemoPlayer[] {
     index,
     nickname: String(player.name ?? ""),
     steamId: String(player.steamid ?? ""),
-    teamNumber: typeof player.team_number === "number" ? player.team_number : null,
+    teamNumber:
+      typeof player.team_number === "number" ? player.team_number : null,
   }));
 }
 
-function normalizeRounds(roundEndEvents: RawDemoEvent[], roundStartEvents: RawDemoEvent[]): ParsedDemoRound[] {
-  const sourceRounds = roundEndEvents.length > 0 ? roundEndEvents : roundStartEvents;
+function normalizeRounds(
+  roundEndEvents: RawDemoEvent[],
+  roundStartEvents: RawDemoEvent[]
+): ParsedDemoRound[] {
+  const sourceRounds =
+    roundEndEvents.length > 0 ? roundEndEvents : roundStartEvents;
   const roundsByTotal = new Map<number, RawDemoEvent>();
 
   for (const event of sourceRounds) {
     const totalRoundsPlayed =
-      typeof event.total_rounds_played === "number" ? event.total_rounds_played : null;
-    if (totalRoundsPlayed === null || totalRoundsPlayed <= 0) continue;
+      typeof event.total_rounds_played === "number"
+        ? event.total_rounds_played
+        : null;
+    if (totalRoundsPlayed === null || totalRoundsPlayed <= 0) {
+      continue;
+    }
     roundsByTotal.set(totalRoundsPlayed, event);
   }
 
@@ -250,7 +275,12 @@ function normalizeRounds(roundEndEvents: RawDemoEvent[], roundStartEvents: RawDe
 
 function normalizeKills(events: RawDemoEvent[]): ParsedDemoKill[] {
   return events
-    .filter((e) => e.event_name === "player_death" && typeof e.total_rounds_played === "number" && e.total_rounds_played > 0)
+    .filter(
+      (e) =>
+        e.event_name === "player_death" &&
+        typeof e.total_rounds_played === "number" &&
+        e.total_rounds_played > 0
+    )
     .map((e) => ({
       tick: Number(e.tick ?? 0),
       roundNumber: Number(e.total_rounds_played),
@@ -272,7 +302,12 @@ function normalizeKills(events: RawDemoEvent[]): ParsedDemoKill[] {
 
 function normalizeHurts(events: RawDemoEvent[]): ParsedDemoHurt[] {
   return events
-    .filter((e) => e.event_name === "player_hurt" && typeof e.total_rounds_played === "number" && e.total_rounds_played > 0)
+    .filter(
+      (e) =>
+        e.event_name === "player_hurt" &&
+        typeof e.total_rounds_played === "number" &&
+        e.total_rounds_played > 0
+    )
     .map((e) => ({
       tick: Number(e.tick ?? 0),
       roundNumber: Number(e.total_rounds_played),
@@ -289,20 +324,28 @@ function normalizeBombEvents(events: RawDemoEvent[]): ParsedDemoBombEvent[] {
       (e) =>
         (e.event_name === "bomb_planted" || e.event_name === "bomb_defused") &&
         typeof e.total_rounds_played === "number" &&
-        e.total_rounds_played > 0,
+        e.total_rounds_played > 0
     )
     .map((e) => ({
       tick: Number(e.tick ?? 0),
       roundNumber: Number(e.total_rounds_played),
       playerSteamId: String(e.user_steamid ?? ""),
-      type: e.event_name === "bomb_planted" ? "planted" as const : "defused" as const,
+      type:
+        e.event_name === "bomb_planted"
+          ? ("planted" as const)
+          : ("defused" as const),
       site: typeof e.site === "number" ? e.site : null,
     }));
 }
 
 function normalizeWeaponFires(events: RawDemoEvent[]): ParsedDemoWeaponFire[] {
   return events
-    .filter((e) => e.event_name === "weapon_fire" && typeof e.total_rounds_played === "number" && e.total_rounds_played > 0)
+    .filter(
+      (e) =>
+        e.event_name === "weapon_fire" &&
+        typeof e.total_rounds_played === "number" &&
+        e.total_rounds_played > 0
+    )
     .map((e) => ({
       tick: Number(e.tick ?? 0),
       roundNumber: Number(e.total_rounds_played),
@@ -313,7 +356,12 @@ function normalizeWeaponFires(events: RawDemoEvent[]): ParsedDemoWeaponFire[] {
 
 function normalizeBlinds(events: RawDemoEvent[]): ParsedDemoBlind[] {
   return events
-    .filter((e) => e.event_name === "player_blind" && typeof e.total_rounds_played === "number" && e.total_rounds_played > 0)
+    .filter(
+      (e) =>
+        e.event_name === "player_blind" &&
+        typeof e.total_rounds_played === "number" &&
+        e.total_rounds_played > 0
+    )
     .map((e) => ({
       tick: Number(e.tick ?? 0),
       roundNumber: Number(e.total_rounds_played),
@@ -323,9 +371,16 @@ function normalizeBlinds(events: RawDemoEvent[]): ParsedDemoBlind[] {
     }));
 }
 
-function normalizeItemPurchases(events: RawDemoEvent[]): ParsedDemoItemPurchase[] {
+function normalizeItemPurchases(
+  events: RawDemoEvent[]
+): ParsedDemoItemPurchase[] {
   return events
-    .filter((e) => e.event_name === "item_purchase" && typeof e.total_rounds_played === "number" && e.total_rounds_played > 0)
+    .filter(
+      (e) =>
+        e.event_name === "item_purchase" &&
+        typeof e.total_rounds_played === "number" &&
+        e.total_rounds_played > 0
+    )
     .map((e) => ({
       tick: Number(e.tick ?? 0),
       roundNumber: Number(e.total_rounds_played),
@@ -336,16 +391,25 @@ function normalizeItemPurchases(events: RawDemoEvent[]): ParsedDemoItemPurchase[
     }));
 }
 
-const GRENADE_EVENT_TO_TYPE: Record<string, ParsedDemoGrenadeDetonate["type"]> = {
-  smokegrenade_detonate: "smoke",
-  flashbang_detonate: "flash",
-  hegrenade_detonate: "he",
-  inferno_startburn: "molotov",
-};
+const GRENADE_EVENT_TO_TYPE: Record<string, ParsedDemoGrenadeDetonate["type"]> =
+  {
+    smokegrenade_detonate: "smoke",
+    flashbang_detonate: "flash",
+    hegrenade_detonate: "he",
+    inferno_startburn: "molotov",
+  };
 
-function normalizeGrenadeDetonates(events: RawDemoEvent[]): ParsedDemoGrenadeDetonate[] {
+function normalizeGrenadeDetonates(
+  events: RawDemoEvent[]
+): ParsedDemoGrenadeDetonate[] {
   return events
-    .filter((e) => e.event_name && e.event_name in GRENADE_EVENT_TO_TYPE && typeof e.total_rounds_played === "number" && e.total_rounds_played > 0)
+    .filter(
+      (e) =>
+        e.event_name &&
+        e.event_name in GRENADE_EVENT_TO_TYPE &&
+        typeof e.total_rounds_played === "number" &&
+        e.total_rounds_played > 0
+    )
     .map((e) => ({
       tick: Number(e.tick ?? 0),
       roundNumber: Number(e.total_rounds_played),
@@ -358,12 +422,19 @@ function normalizeGrenadeDetonates(events: RawDemoEvent[]): ParsedDemoGrenadeDet
     }));
 }
 
-function normalizeRoundTimings(events: RawDemoEvent[]): ParsedDemoRoundTiming[] {
+function normalizeRoundTimings(
+  events: RawDemoEvent[]
+): ParsedDemoRoundTiming[] {
   const byRound = new Map<number, number>();
   for (const e of events) {
-    if (e.event_name !== "round_freeze_end") continue;
-    const rn = typeof e.total_rounds_played === "number" ? e.total_rounds_played : -1;
-    if (rn <= 0) continue;
+    if (e.event_name !== "round_freeze_end") {
+      continue;
+    }
+    const rn =
+      typeof e.total_rounds_played === "number" ? e.total_rounds_played : -1;
+    if (rn <= 0) {
+      continue;
+    }
     byRound.set(rn, Number(e.tick ?? 0));
   }
   return [...byRound.entries()]
@@ -374,7 +445,7 @@ function normalizeRoundTimings(events: RawDemoEvent[]): ParsedDemoRoundTiming[] 
 function parsedDemoToMinimalAnalytics(
   matchId: string,
   sourceType: DemoAnalyticsSourceType,
-  parsed: ParsedDemoFile,
+  parsed: ParsedDemoFile
 ): DemoMatchAnalytics {
   return {
     matchId,
@@ -407,10 +478,14 @@ function getDefaultDemoAnalyticsStore(): DemoAnalyticsIngestionStore {
   const supabase = createServerSupabase();
   return {
     upsertDemoIngestion: (input) => upsertDemoIngestion(supabase, input),
-    markDemoIngestionParsing: (id, startedAt) => markDemoIngestionParsing(supabase, id, startedAt),
-    markDemoIngestionFailed: (id, msg, finishedAt) => markDemoIngestionFailed(supabase, id, msg, finishedAt),
-    markDemoIngestionParsed: (id, finishedAt) => markDemoIngestionParsed(supabase, id, finishedAt),
-    saveDemoAnalytics: (id, analytics) => saveDemoAnalytics(supabase, id, analytics),
+    markDemoIngestionParsing: (id, startedAt) =>
+      markDemoIngestionParsing(supabase, id, startedAt),
+    markDemoIngestionFailed: (id, msg, finishedAt) =>
+      markDemoIngestionFailed(supabase, id, msg, finishedAt),
+    markDemoIngestionParsed: (id, finishedAt) =>
+      markDemoIngestionParsed(supabase, id, finishedAt),
+    saveDemoAnalytics: (id, analytics) =>
+      saveDemoAnalytics(supabase, id, analytics),
   };
 }
 
@@ -423,10 +498,19 @@ export async function parseDemoFile(filePath: string): Promise<ParsedDemoFile> {
   const header = parseHeader(buffer) as RawHeader;
   const playerInfo = asArray<RawPlayerInfo>(parsePlayerInfo(buffer));
   const rawEvents = asArray<RawDemoEvent>(
-    parseEvents(buffer, [...DEMO_EVENT_NAMES], ["X", "Y"], ["total_rounds_played"]),
+    parseEvents(
+      buffer,
+      [...DEMO_EVENT_NAMES],
+      ["X", "Y"],
+      ["total_rounds_played"]
+    )
   );
-  const roundStart = rawEvents.filter((event) => event.event_name === "round_start");
-  const roundEnd = rawEvents.filter((event) => event.event_name === "round_end");
+  const roundStart = rawEvents.filter(
+    (event) => event.event_name === "round_start"
+  );
+  const roundEnd = rawEvents.filter(
+    (event) => event.event_name === "round_end"
+  );
   const rounds = normalizeRounds(roundEnd, roundStart);
 
   return {
@@ -446,7 +530,7 @@ export async function parseDemoFile(filePath: string): Promise<ParsedDemoFile> {
 
 export async function ingestParsedDemoFile(
   filePath: string,
-  options: IngestParsedDemoFileOptions,
+  options: IngestParsedDemoFileOptions
 ): Promise<ParsedDemoFile> {
   const store = options.store ?? getDefaultDemoAnalyticsStore();
   const parseFile = options.parseDemoFile ?? parseDemoFile;
@@ -474,7 +558,11 @@ export async function ingestParsedDemoFile(
     const parsed = await parseFile(filePath);
 
     // 4. Build analytics and save
-    const analytics = buildAnalyticsFn(options.matchId, options.sourceType, parsed);
+    const analytics = buildAnalyticsFn(
+      options.matchId,
+      options.sourceType,
+      parsed
+    );
     await store.saveDemoAnalytics(ingestionId, analytics);
 
     // 5. Mark as parsed
@@ -483,7 +571,11 @@ export async function ingestParsedDemoFile(
     return parsed;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    await store.markDemoIngestionFailed(ingestionId, message, new Date().toISOString());
+    await store.markDemoIngestionFailed(
+      ingestionId,
+      message,
+      new Date().toISOString()
+    );
     throw error;
   }
 }

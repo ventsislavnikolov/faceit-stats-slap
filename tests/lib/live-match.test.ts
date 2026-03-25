@@ -21,15 +21,30 @@ describe("getLiveMatchTeamLabels", () => {
           teamId: "ecfa7489-28c0-453a-9918-851f57bd2622",
           name: "ecfa7489-28c0-453a-9918-851f57bd2622",
           roster: [
-            { playerId: "friend-1", nickname: "TibaBG", avatar: "", skillLevel: 10 },
-            { playerId: "friend-2", nickname: "Rebo0unD", avatar: "", skillLevel: 10 },
+            {
+              playerId: "friend-1",
+              nickname: "TibaBG",
+              avatar: "",
+              skillLevel: 10,
+            },
+            {
+              playerId: "friend-2",
+              nickname: "Rebo0unD",
+              avatar: "",
+              skillLevel: 10,
+            },
           ],
         },
         faction2: {
           teamId: "a201078d-454e-4f29-a919-3a9f93d63126",
           name: "a201078d-454e-4f29-a919-3a9f93d63126",
           roster: [
-            { playerId: "enemy-1", nickname: "EnemyOne", avatar: "", skillLevel: 10 },
+            {
+              playerId: "enemy-1",
+              nickname: "EnemyOne",
+              avatar: "",
+              skillLevel: 10,
+            },
           ],
         },
       },
@@ -54,12 +69,26 @@ describe("getLiveMatchTeamLabels", () => {
         faction1: {
           teamId: "team-1",
           name: "Team 1",
-          roster: [{ playerId: "enemy-1", nickname: "EnemyOne", avatar: "", skillLevel: 8 }],
+          roster: [
+            {
+              playerId: "enemy-1",
+              nickname: "EnemyOne",
+              avatar: "",
+              skillLevel: 8,
+            },
+          ],
         },
         faction2: {
           teamId: "team-2",
           name: "Team 2",
-          roster: [{ playerId: "enemy-2", nickname: "EnemyTwo", avatar: "", skillLevel: 7 }],
+          roster: [
+            {
+              playerId: "enemy-2",
+              nickname: "EnemyTwo",
+              avatar: "",
+              skillLevel: 7,
+            },
+          ],
         },
       },
     };
@@ -113,7 +142,10 @@ describe("getLiveMatchDisplayScore", () => {
       competitionName: "Ranked",
     };
 
-    expect(getLiveMatchDisplayScore(match, detail)).toEqual({ faction1: 9, faction2: 6 });
+    expect(getLiveMatchDisplayScore(match, detail)).toEqual({
+      faction1: 9,
+      faction2: 6,
+    });
   });
 
   it("falls back to the live match score when detail scores are empty", () => {
@@ -149,7 +181,10 @@ describe("getLiveMatchDisplayScore", () => {
       competitionName: "Ranked",
     };
 
-    expect(getLiveMatchDisplayScore(match, detail)).toEqual({ faction1: 5, faction2: 3 });
+    expect(getLiveMatchDisplayScore(match, detail)).toEqual({
+      faction1: 5,
+      faction2: 3,
+    });
   });
 
   it("falls back to the live match score when details are unavailable", () => {
@@ -167,7 +202,10 @@ describe("getLiveMatchDisplayScore", () => {
       },
     };
 
-    expect(getLiveMatchDisplayScore(match)).toEqual({ faction1: 7, faction2: 4 });
+    expect(getLiveMatchDisplayScore(match)).toEqual({
+      faction1: 7,
+      faction2: 4,
+    });
   });
 });
 
@@ -219,6 +257,9 @@ describe("getFriendScoreboardPlayers", () => {
       ["friend-1", "friend-2"]
     );
 
-    expect(result.map((player) => player.playerId)).toEqual(["friend-2", "friend-1"]);
+    expect(result.map((player) => player.playerId)).toEqual([
+      "friend-2",
+      "friend-1",
+    ]);
   });
 });

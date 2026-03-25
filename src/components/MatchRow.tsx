@@ -2,16 +2,16 @@ import { Link } from "@tanstack/react-router";
 import { MapBadge } from "./MapBadge";
 
 interface MatchRowProps {
-  nickname: string;
-  matchId?: string;
-  map: string;
-  score: string;
-  kdRatio: number;
   adr: number;
-  hsPercent: number;
-  win: boolean;
   eloDelta?: number | null;
+  hsPercent: number;
+  kdRatio: number;
+  map: string;
+  matchId?: string;
+  nickname: string;
   queueBucket?: "solo" | "party" | "unknown";
+  score: string;
+  win: boolean;
 }
 
 export function MatchRow({
@@ -28,23 +28,23 @@ export function MatchRow({
 }: MatchRowProps) {
   const content = (
     <div
-      className={`flex items-center bg-bg-card rounded px-2.5 py-2 text-xs border-l-[3px] ${
+      className={`flex items-center rounded border-l-[3px] bg-bg-card px-2.5 py-2 text-xs ${
         win ? "border-accent" : "border-error"
-      } ${matchId ? "hover:bg-bg-elevated cursor-pointer transition-colors" : ""}`}
+      } ${matchId ? "cursor-pointer transition-colors hover:bg-bg-elevated" : ""}`}
     >
-      <span className={`font-bold w-5 ${win ? "text-accent" : "text-error"}`}>
+      <span className={`w-5 font-bold ${win ? "text-accent" : "text-error"}`}>
         {win ? "W" : "L"}
       </span>
-      <span className="text-text w-20 truncate">{nickname}</span>
+      <span className="w-20 truncate text-text">{nickname}</span>
       <span className="w-20">
         <MapBadge map={map} />
       </span>
-      <span className="text-text-muted w-14">{score}</span>
-      <span className="text-text-muted flex-1">
+      <span className="w-14 text-text-muted">{score}</span>
+      <span className="flex-1 text-text-muted">
         K/D {kdRatio.toFixed(1)} · ADR {adr.toFixed(0)} · HS {hsPercent}%
       </span>
       {queueBucket && queueBucket !== "unknown" && (
-        <span className="text-[10px] uppercase tracking-wide text-text-muted mr-2">
+        <span className="mr-2 text-[10px] text-text-muted uppercase tracking-wide">
           {queueBucket}
         </span>
       )}
@@ -59,7 +59,7 @@ export function MatchRow({
 
   if (matchId) {
     return (
-      <Link to="/match/$matchId" params={{ matchId }}>
+      <Link params={{ matchId }} to="/match/$matchId">
         {content}
       </Link>
     );

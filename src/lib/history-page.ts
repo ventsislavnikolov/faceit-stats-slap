@@ -16,7 +16,10 @@ export function getHistoryTabs(isSignedIn: boolean): HistoryTab[] {
   return isSignedIn ? ["matches", "bets"] : ["matches"];
 }
 
-export function normalizeHistoryTab(tab: HistoryTab, isSignedIn: boolean): HistoryTab {
+export function normalizeHistoryTab(
+  tab: HistoryTab,
+  isSignedIn: boolean
+): HistoryTab {
   if (!isSignedIn && tab === "bets") {
     return "matches";
   }
@@ -26,7 +29,7 @@ export function normalizeHistoryTab(tab: HistoryTab, isSignedIn: boolean): Histo
 
 export function shouldEnableHistoryLookups(
   tab: HistoryTab,
-  authResolved: boolean,
+  authResolved: boolean
 ): boolean {
   return authResolved && tab === "matches";
 }
@@ -45,7 +48,9 @@ export function normalizeHistoryMatchCount(value: unknown): HistoryMatchCount {
 
   const numericValue = typeof value === "number" ? value : Number(value);
 
-  return HISTORY_MATCH_COUNT_OPTIONS.some((option) => option.value === numericValue)
+  return HISTORY_MATCH_COUNT_OPTIONS.some(
+    (option) => option.value === numericValue
+  )
     ? (numericValue as Exclude<HistoryMatchCount, "yesterday">)
     : "yesterday";
 }
@@ -61,7 +66,9 @@ export function getHistoryQueueOptions(): Array<{
   ];
 }
 
-export function normalizeHistoryQueueFilter(value: unknown): HistoryQueueFilter {
+export function normalizeHistoryQueueFilter(
+  value: unknown
+): HistoryQueueFilter {
   return value === "solo" || value === "party" || value === "all"
     ? value
     : "party";

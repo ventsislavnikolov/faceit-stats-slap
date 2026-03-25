@@ -9,11 +9,11 @@ export function StreakBar({ results }: StreakBarProps) {
     <div className="flex items-center gap-1">
       {results.map((win, i) => (
         <span
+          className={`h-1.5 w-3.5 rounded-sm ${win ? "bg-accent" : "bg-error"}`}
           key={i}
-          className={`w-3.5 h-1.5 rounded-sm ${win ? "bg-accent" : "bg-error"}`}
         />
       ))}
-      <span className="text-text-dim text-[10px] ml-1">
+      <span className="ml-1 text-[10px] text-text-dim">
         {wins}W {losses}L
       </span>
     </div>

@@ -1,10 +1,10 @@
 import type {
+  DemoAnalyticsSourceType,
+  DemoIngestionStatus,
   DemoMatchAnalytics,
   DemoPlayerAnalytics,
   DemoRoundAnalytics,
   DemoTeamAnalytics,
-  DemoAnalyticsSourceType,
-  DemoIngestionStatus,
   DemoTeamKey,
 } from "~/lib/types";
 
@@ -26,7 +26,7 @@ interface SupabaseLike {
     };
     upsert(
       rows: Record<string, unknown>[],
-      options?: { onConflict?: string },
+      options?: { onConflict?: string }
     ): PromiseLike<SupabaseResult>;
     update(row: Record<string, unknown>): {
       eq(column: string, value: string): PromiseLike<SupabaseResult>;
@@ -39,15 +39,15 @@ interface SupabaseLike {
 // ---------------------------------------------------------------------------
 
 export interface CreateIngestionInput {
+  compression?: "dem" | "zst";
+  demoPatchVersion?: string | null;
   faceitMatchId: string;
+  fileName?: string | null;
+  fileSha256: string;
+  fileSizeBytes?: number | null;
+  parserVersion?: string | null;
   sourceType: DemoAnalyticsSourceType;
   sourceUrl?: string | null;
-  fileName?: string | null;
-  fileSizeBytes?: number | null;
-  fileSha256: string;
-  compression?: "dem" | "zst";
-  parserVersion?: string | null;
-  demoPatchVersion?: string | null;
 }
 
 export interface IngestionRow {
@@ -60,7 +60,7 @@ export interface IngestionRow {
 
 export async function upsertDemoIngestion(
   supabase: SupabaseLike,
-  input: CreateIngestionInput,
+  input: CreateIngestionInput
 ): Promise<IngestionRow> {
   const { data, error } = await supabase
     .from("demo_ingestions")
@@ -81,14 +81,16 @@ export async function upsertDemoIngestion(
     .select("id")
     .single();
 
-  if (error) throw new Error(`upsertDemoIngestion failed: ${error.message}`);
+  if (error) {
+    throw new Error(`upsertDemoIngestion failed: ${error.message}`);
+  }
   return { id: data!.id };
 }
 
 export async function markDemoIngestionParsing(
   supabase: SupabaseLike,
   ingestionId: string,
-  startedAt?: string,
+  startedAt?: string
 ): Promise<void> {
   const { error } = await supabase
     .from("demo_ingestions")
@@ -99,14 +101,16 @@ export async function markDemoIngestionParsing(
     })
     .eq("id", ingestionId);
 
-  if (error) throw new Error(`markDemoIngestionParsing failed: ${error.message}`);
+  if (error) {
+    throw new Error(`markDemoIngestionParsing failed: ${error.message}`);
+  }
 }
 
 export async function markDemoIngestionFailed(
   supabase: SupabaseLike,
   ingestionId: string,
   errorMessage: string,
-  finishedAt?: string,
+  finishedAt?: string
 ): Promise<void> {
   const { error } = await supabase
     .from("demo_ingestions")
@@ -118,13 +122,15 @@ export async function markDemoIngestionFailed(
     })
     .eq("id", ingestionId);
 
-  if (error) throw new Error(`markDemoIngestionFailed failed: ${error.message}`);
+  if (error) {
+    throw new Error(`markDemoIngestionFailed failed: ${error.message}`);
+  }
 }
 
 export async function markDemoIngestionParsed(
   supabase: SupabaseLike,
   ingestionId: string,
-  finishedAt?: string,
+  finishedAt?: string
 ): Promise<void> {
   const { error } = await supabase
     .from("demo_ingestions")
@@ -135,7 +141,9 @@ export async function markDemoIngestionParsed(
     })
     .eq("id", ingestionId);
 
-  if (error) throw new Error(`markDemoIngestionParsed failed: ${error.message}`);
+  if (error) {
+    throw new Error(`markDemoIngestionParsed failed: ${error.message}`);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -145,9 +153,15 @@ export async function markDemoIngestionParsed(
 function deriveWinner(teams: DemoTeamAnalytics[]): DemoTeamKey | null {
   const t1 = teams.find((t) => t.teamKey === "team1");
   const t2 = teams.find((t) => t.teamKey === "team2");
-  if (!t1 || !t2) return null;
-  if (t1.roundsWon > t2.roundsWon) return "team1";
-  if (t2.roundsWon > t1.roundsWon) return "team2";
+  if (!(t1 && t2)) {
+    return null;
+  }
+  if (t1.roundsWon > t2.roundsWon) {
+    return "team1";
+  }
+  if (t2.roundsWon > t1.roundsWon) {
+    return "team2";
+  }
   return null;
 }
 
@@ -176,7 +190,11 @@ function buildMatchRow(ingestionId: string, a: DemoMatchAnalytics) {
   };
 }
 
-function buildTeamRow(demoMatchId: string, matchId: string, team: DemoTeamAnalytics) {
+function buildTeamRow(
+  demoMatchId: string,
+  matchId: string,
+  team: DemoTeamAnalytics
+) {
   return {
     demo_match_id: demoMatchId,
     faceit_match_id: matchId,
@@ -192,7 +210,11 @@ function buildTeamRow(demoMatchId: string, matchId: string, team: DemoTeamAnalyt
   };
 }
 
-function buildPlayerRow(demoMatchId: string, matchId: string, player: DemoPlayerAnalytics) {
+function buildPlayerRow(
+  demoMatchId: string,
+  matchId: string,
+  player: DemoPlayerAnalytics
+) {
   return {
     demo_match_id: demoMatchId,
     faceit_match_id: matchId,
@@ -261,7 +283,11 @@ function buildPlayerRow(demoMatchId: string, matchId: string, player: DemoPlayer
   };
 }
 
-function buildRoundRow(demoMatchId: string, matchId: string, round: DemoRoundAnalytics) {
+function buildRoundRow(
+  demoMatchId: string,
+  matchId: string,
+  round: DemoRoundAnalytics
+) {
   return {
     demo_match_id: demoMatchId,
     faceit_match_id: matchId,
@@ -287,7 +313,7 @@ function buildRoundRow(demoMatchId: string, matchId: string, round: DemoRoundAna
 export async function saveDemoAnalytics(
   supabase: SupabaseLike,
   ingestionId: string,
-  analytics: DemoMatchAnalytics,
+  analytics: DemoMatchAnalytics
 ): Promise<{ demoMatchId: string }> {
   // 1. Insert match analytics → get id for FK chain
   const { data: matchData, error: matchError } = await supabase
@@ -296,32 +322,56 @@ export async function saveDemoAnalytics(
     .select("id")
     .single();
 
-  if (matchError) throw new Error(`saveDemoAnalytics match insert failed: ${matchError.message}`);
+  if (matchError) {
+    throw new Error(
+      `saveDemoAnalytics match insert failed: ${matchError.message}`
+    );
+  }
   const demoMatchId = matchData!.id;
 
   // 2. Teams
   if (analytics.teams.length > 0) {
     const { error } = await supabase.from("demo_team_analytics").upsert(
-      analytics.teams.map((t) => buildTeamRow(demoMatchId, analytics.matchId, t)),
-      { onConflict: "faceit_match_id,team_key" },
+      analytics.teams.map((t) =>
+        buildTeamRow(demoMatchId, analytics.matchId, t)
+      ),
+      { onConflict: "faceit_match_id,team_key" }
     );
-    if (error) throw new Error(`saveDemoAnalytics team upsert failed: ${error.message}`);
+    if (error) {
+      throw new Error(`saveDemoAnalytics team upsert failed: ${error.message}`);
+    }
   }
 
   // 3. Players
   if (analytics.players.length > 0) {
     const { error } = await supabase
       .from("demo_player_analytics")
-      .insert(analytics.players.map((p) => buildPlayerRow(demoMatchId, analytics.matchId, p)));
-    if (error) throw new Error(`saveDemoAnalytics player insert failed: ${error.message}`);
+      .insert(
+        analytics.players.map((p) =>
+          buildPlayerRow(demoMatchId, analytics.matchId, p)
+        )
+      );
+    if (error) {
+      throw new Error(
+        `saveDemoAnalytics player insert failed: ${error.message}`
+      );
+    }
   }
 
   // 4. Rounds
   if (analytics.rounds.length > 0) {
     const { error } = await supabase
       .from("demo_round_analytics")
-      .insert(analytics.rounds.map((r) => buildRoundRow(demoMatchId, analytics.matchId, r)));
-    if (error) throw new Error(`saveDemoAnalytics round insert failed: ${error.message}`);
+      .insert(
+        analytics.rounds.map((r) =>
+          buildRoundRow(demoMatchId, analytics.matchId, r)
+        )
+      );
+    if (error) {
+      throw new Error(
+        `saveDemoAnalytics round insert failed: ${error.message}`
+      );
+    }
   }
 
   return { demoMatchId };

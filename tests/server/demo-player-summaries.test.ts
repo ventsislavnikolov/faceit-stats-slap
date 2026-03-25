@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   aggregatePlayerDemoSummary,
-  type DemoPlayerSummary,
   type DemoPlayerRow,
 } from "~/server/demo-player-summaries";
 
@@ -123,7 +122,9 @@ describe("aggregatePlayerDemoSummary", () => {
 
 describe("getPlayerDemoSummary", () => {
   it("queries demo_player_analytics and aggregates results", async () => {
-    const { getPlayerDemoSummary } = await import("~/server/demo-player-summaries");
+    const { getPlayerDemoSummary } = await import(
+      "~/server/demo-player-summaries"
+    );
 
     const mockRows = [buildRow(), buildRow({ kills: 30, rws: 18 })];
 
@@ -131,8 +132,7 @@ describe("getPlayerDemoSummary", () => {
       from: () => ({
         select: () => ({
           eq: () => ({
-            order: () =>
-              Promise.resolve({ data: mockRows, error: null }),
+            order: () => Promise.resolve({ data: mockRows, error: null }),
           }),
         }),
       }),
@@ -145,14 +145,15 @@ describe("getPlayerDemoSummary", () => {
   });
 
   it("returns null when no rows found", async () => {
-    const { getPlayerDemoSummary } = await import("~/server/demo-player-summaries");
+    const { getPlayerDemoSummary } = await import(
+      "~/server/demo-player-summaries"
+    );
 
     const sb = {
       from: () => ({
         select: () => ({
           eq: () => ({
-            order: () =>
-              Promise.resolve({ data: [], error: null }),
+            order: () => Promise.resolve({ data: [], error: null }),
           }),
         }),
       }),
