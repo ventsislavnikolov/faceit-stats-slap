@@ -5,7 +5,10 @@ import { useQuery } from "@tanstack/react-query";
 import { usePlayerStats } from "~/hooks/usePlayerStats";
 import { HistoryMatchesTable } from "~/components/HistoryMatchesTable";
 import { BetHistoryTab } from "~/components/BetHistoryTab";
-import { PageSectionTabs } from "~/components/PageSectionTabs";
+import {
+  PageSectionTabs,
+  shouldRenderPageSectionTabs,
+} from "~/components/PageSectionTabs";
 import { PlayerSearchHeader } from "~/components/PlayerSearchHeader";
 import { resolveFaceitSearchTarget } from "~/lib/faceit-search";
 import {
@@ -117,6 +120,10 @@ function HistoryPage() {
     : showBetsTab
       ? ["bets"]
       : ["matches"];
+  const sectionTabs = tabs.map((tab) => ({
+    key: tab,
+    label: tab === "matches" ? "Matches" : "Bets",
+  }));
 
   const updateSearch = (next: {
     player?: string;
@@ -180,14 +187,13 @@ function HistoryPage() {
 
       <div className="flex-1 overflow-y-auto" style={{ scrollbarGutter: "stable" }}>
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6">
-          <PageSectionTabs
-            tabs={tabs.map((tab) => ({
-              key: tab,
-              label: tab === "matches" ? "Matches" : "Bets",
-            }))}
-            activeKey={normalizedSelectedTab}
-            onChange={(tab) => updateSearch({ tab: tab as HistoryTab })}
-          />
+          {shouldRenderPageSectionTabs(sectionTabs) ? (
+            <PageSectionTabs
+              tabs={sectionTabs}
+              activeKey={normalizedSelectedTab}
+              onChange={(tab) => updateSearch({ tab: tab as HistoryTab })}
+            />
+          ) : null}
 
           {normalizedSelectedTab === "matches" && urlPlayer && !resolveError && (
             <div className="flex flex-wrap items-center gap-6 text-xs">

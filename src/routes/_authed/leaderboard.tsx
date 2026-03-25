@@ -4,7 +4,10 @@ import { createIsomorphicFn } from "@tanstack/react-start";
 import { useStatsLeaderboard } from "~/hooks/useStatsLeaderboard";
 import { useSyncPlayerHistory } from "~/hooks/useSyncPlayerHistory";
 import { BetsLeaderboardTab } from "~/components/BetsLeaderboardTab";
-import { PageSectionTabs } from "~/components/PageSectionTabs";
+import {
+  PageSectionTabs,
+  shouldRenderPageSectionTabs,
+} from "~/components/PageSectionTabs";
 import { PlayerSearchHeader } from "~/components/PlayerSearchHeader";
 import { MY_FACEIT_ID } from "~/lib/constants";
 import { resolveFaceitSearchTarget } from "~/lib/faceit-search";
@@ -482,6 +485,10 @@ function LeaderboardPage() {
     : showBetsTab
       ? ["bets"]
       : ["stats"];
+  const sectionTabs = tabs.map((tab) => ({
+    key: tab,
+    label: tab === "stats" ? "Stats" : "Bets",
+  }));
   const shouldRenderBetsTab = shouldRenderLeaderboardBetsTab({
     authResolved,
     isSignedIn,
@@ -533,24 +540,23 @@ function LeaderboardPage() {
         style={{ scrollbarGutter: "stable" }}
       >
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6">
-          <PageSectionTabs
-            tabs={tabs.map((tab) => ({
-              key: tab,
-              label: tab === "stats" ? "Stats" : "Bets",
-            }))}
-            activeKey={normalizedSelectedTab}
-            onChange={(tab) => {
-              const nextTab = tab as LeaderboardTab;
-              navigate({
-                to: "/leaderboard",
-                search: {
-                  player: urlPlayer,
-                  tab: normalizeLeaderboardTab(nextTab, isSignedIn),
-                },
-                replace: true,
-              });
-            }}
-          />
+          {shouldRenderPageSectionTabs(sectionTabs) ? (
+            <PageSectionTabs
+              tabs={sectionTabs}
+              activeKey={normalizedSelectedTab}
+              onChange={(tab) => {
+                const nextTab = tab as LeaderboardTab;
+                navigate({
+                  to: "/leaderboard",
+                  search: {
+                    player: urlPlayer,
+                    tab: normalizeLeaderboardTab(nextTab, isSignedIn),
+                  },
+                  replace: true,
+                });
+              }}
+            />
+          ) : null}
 
           {showBetsTab ? (
             shouldRenderBetsTab ? (

@@ -10,6 +10,10 @@ interface PageSectionTabsProps {
   className?: string;
 }
 
+export function shouldRenderPageSectionTabs(tabs: PageSectionTab[]): boolean {
+  return tabs.length > 1;
+}
+
 export function PageSectionTabs({
   tabs,
   activeKey,
