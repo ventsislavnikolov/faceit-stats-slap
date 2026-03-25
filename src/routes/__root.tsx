@@ -14,7 +14,8 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "FaceitFriendsLive" },
+      { title: "Faceit Friends Tracker — CS2 stats, demo analytics & live match tracking for your FACEIT squad" },
+      { name: "description", content: "Track your FACEIT friends' CS2 performance in real time. Deep demo analytics, match history, leaderboards, economy breakdowns, utility stats, and side-split insights — all in one place." },
     ],
     links: [
       {
