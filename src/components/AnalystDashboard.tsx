@@ -46,7 +46,7 @@ function KastCircle({ kast }: { kast: number }) {
   else if (kast >= 55) color = "#fb923c";
   return (
     <div
-      className="flex items-center justify-center rounded-full text-[10px] font-bold"
+      className="inline-flex items-center justify-center rounded-full text-[10px] font-bold"
       style={{ width: 32, height: 32, border: `2px solid ${color}`, color }}
     >
       {Math.round(kast)}
@@ -106,7 +106,6 @@ export function AnalystDashboard({ matchData, demoAnalytics }: AnalystDashboardP
 
   const tabs = [
     { id: "overview", label: "Overview" },
-    { id: "scoreboard", label: "Scoreboard" },
     { id: "rounds", label: "Rounds" },
     { id: "compare", label: "Team Compare" },
   ];
@@ -152,17 +151,7 @@ export function AnalystDashboard({ matchData, demoAnalytics }: AnalystDashboardP
           selectedFaceit={selectedFaceit}
         />
       )}
-      {activeTab === "scoreboard" && (
-        <ScoreboardTab
-          demoAnalytics={demoAnalytics}
-          matchData={matchData}
-          selectedPlayer={selectedPlayer}
-          onSelectPlayer={setSelectedPlayer}
-          selectedDemo={selectedDemo}
-          selectedFaceit={selectedFaceit}
-        />
-      )}
-      {activeTab === "rounds" && <RoundsTab demoAnalytics={demoAnalytics} matchData={matchData} />}
+{activeTab === "rounds" && <RoundsTab demoAnalytics={demoAnalytics} matchData={matchData} />}
       {activeTab === "compare" && <CompareTab demoAnalytics={demoAnalytics} />}
     </div>
   );
@@ -249,39 +238,26 @@ function OverviewTab({
 }
 
 // ---------------------------------------------------------------------------
-// Scoreboard Tab
-// ---------------------------------------------------------------------------
-
-function ScoreboardTab({
-  demoAnalytics, matchData, selectedPlayer, onSelectPlayer, selectedDemo, selectedFaceit,
-}: {
-  demoAnalytics: DemoMatchAnalytics;
-  matchData: AnalystDashboardProps["matchData"];
-  selectedPlayer: string | null;
-  onSelectPlayer: (id: string) => void;
-  selectedDemo: DemoPlayerAnalytics | null;
-  selectedFaceit: MatchPlayerStats | null;
-}) {
-  return (
-    <div className="space-y-4">
-      <Card>
-        <ScoreboardTable
-          demoAnalytics={demoAnalytics}
-          matchData={matchData}
-          selectedPlayer={selectedPlayer}
-          onSelectPlayer={onSelectPlayer}
-        />
-      </Card>
-      {selectedDemo && selectedFaceit && (
-        <PlayerDetailCard demo={selectedDemo} faceit={selectedFaceit} totalRounds={demoAnalytics.totalRounds} />
-      )}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // Rounds Tab
 // ---------------------------------------------------------------------------
+
+function formatBuyType(buy: string | undefined): string {
+  if (buy === "full_buy") return "Full Buy";
+  if (buy === "force_buy") return "Force Buy";
+  if (buy === "eco") return "Eco";
+  return buy ?? "?";
+}
+
+function formatEndReason(reason: string): string {
+  const map: Record<string, string> = {
+    ct_killed: "CT Eliminated",
+    t_killed: "T Eliminated",
+    bomb_exploded: "Bomb Exploded",
+    bomb_defused: "Bomb Defused",
+    time_ran_out: "Time Ran Out",
+  };
+  return map[reason] ?? reason.replace(/_/g, " ");
+}
 
 function RoundsTab({ demoAnalytics, matchData }: { demoAnalytics: DemoMatchAnalytics; matchData: AnalystDashboardProps["matchData"] }) {
   const buyColor = (buy: string | undefined) => {
@@ -313,11 +289,11 @@ function RoundsTab({ demoAnalytics, matchData }: { demoAnalytics: DemoMatchAnaly
                 </span>
               </div>
               <div className="text-[10px] text-text-muted">
-                <div>T: <span style={{ color: buyColor(r.tBuyType) }}>{r.tBuyType ?? "?"}</span></div>
-                <div>CT: <span style={{ color: buyColor(r.ctBuyType) }}>{r.ctBuyType ?? "?"}</span></div>
+                <div>T: <span style={{ color: buyColor(r.tBuyType) }}>{formatBuyType(r.tBuyType)}</span></div>
+                <div>CT: <span style={{ color: buyColor(r.ctBuyType) }}>{formatBuyType(r.ctBuyType)}</span></div>
               </div>
               {r.endReason && (
-                <div className="text-[9px] text-text-dim mt-1">{r.endReason.replace(/_/g, " ")}</div>
+                <div className="text-[9px] text-text-dim mt-1">{formatEndReason(r.endReason)}</div>
               )}
               {r.isPistolRound && <div className="text-[9px] font-semibold mt-1" style={{ color: GOLD }}>PISTOL</div>}
               {r.bombPlanted && (
@@ -465,7 +441,17 @@ function ScoreboardTable({
   const team1 = allPlayers.filter((p) => p.teamKey === "team1").sort((a, b) => (b.demo?.rating ?? 0) - (a.demo?.rating ?? 0));
   const team2 = allPlayers.filter((p) => p.teamKey === "team2").sort((a, b) => (b.demo?.rating ?? 0) - (a.demo?.rating ?? 0));
 
-  const headers = ["Player", "RTG", "K", "D", "A", "K/D", "ADR", "HS%", "KAST"];
+  const headers: { label: string; tooltip?: string }[] = [
+    { label: "Player" },
+    { label: "RTG", tooltip: "Rating — composite performance score" },
+    { label: "K", tooltip: "Kills" },
+    { label: "D", tooltip: "Deaths" },
+    { label: "A", tooltip: "Assists" },
+    { label: "K/D", tooltip: "Kill/Death ratio" },
+    { label: "ADR", tooltip: "Average Damage per Round" },
+    { label: "HS%", tooltip: "Headshot percentage" },
+    { label: "KAST", tooltip: "Kill, Assist, Survived, or Traded — % of rounds with contribution" },
+  ];
 
   const Row = ({ faceit, demo, teamKey }: { faceit: MatchPlayerStats; demo?: DemoPlayerAnalytics; teamKey: string }) => {
     const isSelected = selectedPlayer === faceit.playerId;
@@ -504,8 +490,13 @@ function ScoreboardTable({
         <thead>
           <tr style={{ borderBottom: `2px solid ${BORDER}` }}>
             {headers.map((h) => (
-              <th key={h} className={`py-2 px-2 text-[10px] uppercase tracking-wider font-medium ${h === "Player" ? "text-left" : "text-center"}`} style={{ color: TEXT_MUTED }}>
-                {h}
+              <th key={h.label} className={`py-2 px-2 text-[10px] uppercase tracking-wider font-medium ${h.label === "Player" ? "text-left" : "text-center"} ${h.tooltip ? "group/th relative cursor-help" : ""}`} style={{ color: TEXT_MUTED }}>
+                {h.label}
+                {h.tooltip && (
+                  <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-1 z-50 hidden group-hover/th:block whitespace-nowrap rounded bg-bg-card border border-border px-2 py-1 text-[9px] normal-case tracking-normal font-normal text-text shadow-lg">
+                    {h.tooltip}
+                  </span>
+                )}
               </th>
             ))}
           </tr>

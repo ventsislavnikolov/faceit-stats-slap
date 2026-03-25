@@ -2,7 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { createIsomorphicFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { AnalystDashboard } from "~/components/AnalystDashboard";
-import { DemoAnalyticsStatusPanel } from "~/components/DemoAnalyticsStatusPanel";
 import { MatchAnalyticsScoreboard } from "~/components/MatchAnalyticsScoreboard";
 import { useMatchDetail } from "~/hooks/useMatchDetail";
 import type { DemoMatchAnalytics } from "~/lib/types";
@@ -63,12 +62,6 @@ function MatchDetailPage() {
           teams={data.teams}
           competitionName={data.competitionName}
           region={data.region}
-        />
-
-        {/* Demo analytics status */}
-        <DemoAnalyticsStatusPanel
-          demoAnalytics={demoAnalytics}
-          demoUrl={data.demoUrl}
         />
 
         {/* Content — key forces clean remount when switching between dashboard and fallback */}
