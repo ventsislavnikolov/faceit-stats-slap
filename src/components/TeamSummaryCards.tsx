@@ -124,6 +124,20 @@ function TeamCard({
         <StatRow label="Flash assists" value={totalFlashAssists} />
         <StatRow label="Flashed" value={totalEnemiesFlashed} />
       </div>
+      <div className="grid grid-cols-3 gap-2 text-[10px] mb-2">
+        <StatRow label="Total thrown" value={
+          players.reduce((s, p) => s + (p.smokesThrown ?? 0) + (p.flashesThrown ?? 0) + (p.hesThrown ?? 0) + (p.molotovsThrown ?? 0), 0)
+        } />
+        <StatRow label="Team flashes" value={
+          players.reduce((s, p) => s + (p.teamFlashes ?? 0), 0)
+        } negative />
+        <StatRow label="Avg blind" value={
+          (() => {
+            const durations = players.map(p => p.avgFlashBlindDuration ?? 0).filter(d => d > 0);
+            return durations.length > 0 ? `${(durations.reduce((s, d) => s + d, 0) / durations.length).toFixed(1)}s` : "-";
+          })()
+        } />
+      </div>
 
       {/* Momentum */}
       <SectionLabel label="Momentum" />
