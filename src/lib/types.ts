@@ -174,6 +174,34 @@ export interface DemoPlayerAnalytics {
   rating?: number;
   multiKills?: { threeK: number; fourK: number; ace: number };
   killTimings?: { early: number; mid: number; late: number };
+  // Utility mastery
+  smokesThrown?: number;
+  flashesThrown?: number;
+  hesThrown?: number;
+  molotovsThrown?: number;
+  utilityPerRound?: number;
+  avgFlashBlindDuration?: number;
+  teamFlashes?: number;
+  effectiveFlashRate?: number;
+  // Kill quality
+  wallbangKills?: number;
+  thrusmokeKills?: number;
+  noscopeKills?: number;
+  avgKillDistance?: number;
+  weaponKills?: Record<string, number>;
+  // Economy
+  totalSpend?: number;
+  economyEfficiency?: number;
+  weaponRounds?: Record<string, number>;
+  // Side-split
+  ctKills?: number;
+  ctDeaths?: number;
+  ctAdr?: number;
+  ctRating?: number;
+  tKills?: number;
+  tDeaths?: number;
+  tAdr?: number;
+  tRating?: number;
 }
 
 export interface DemoTeamAnalytics {
@@ -203,6 +231,8 @@ export interface DemoRoundAnalytics {
   bombDefused?: boolean;
   planterSteamId?: string | null;
   defuserSteamId?: string | null;
+  tEquipValue?: number;
+  ctEquipValue?: number;
 }
 
 export interface DemoMatchAnalytics {
