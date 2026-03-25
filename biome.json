@@ -6,10 +6,17 @@
         "noForEach": "off",
         "useDateNow": "off",
         "useOptionalChain": "off",
-        "noExcessiveCognitiveComplexity": "off"
+        "noExcessiveCognitiveComplexity": "off",
+        "useLiteralKeys": "off",
+        "noFlatMapIdentity": "off"
       },
       "correctness": {
-        "noUndeclaredVariables": "off"
+        "noUndeclaredVariables": "off",
+        "useParseIntRadix": "off",
+        "noUnusedVariables": "off",
+        "noUnusedFunctionParameters": "off",
+        "useExhaustiveDependencies": "off",
+        "noNestedComponentDefinitions": "off"
       },
       "nursery": {
         "noShadow": "off",
@@ -19,7 +26,8 @@
       "performance": {
         "noBarrelFile": "off",
         "useTopLevelRegex": "off",
-        "noNamespaceImport": "off"
+        "noNamespaceImport": "off",
+        "noDelete": "off"
       },
       "suspicious": {
         "useAwait": "off",
@@ -30,13 +38,32 @@
         "noUnknownAtRules": "off",
         "noAssignInExpressions": "off",
         "noEmptyBlockStatements": "off",
-        "noTemplateCurlyInString": "off"
+        "noTemplateCurlyInString": "off",
+        "noBitwiseOperators": "off"
+      },
+      "a11y": {
+        "noNoninteractiveElementInteractions": "off",
+        "noStaticElementInteractions": "off",
+        "noSvgWithoutTitle": "off",
+        "useButtonType": "off",
+        "useKeyWithClickEvents": "off"
       },
       "style": {
         "noMagicNumbers": "off",
         "noNestedTernary": "off",
-        "noNonNullAssertion": "off"
+        "noNonNullAssertion": "off",
+        "useFilenamingConvention": "off",
+        "useConsistentTypeDefinitions": "off",
+        "useAtIndex": "off",
+        "useTemplate": "off",
+        "useDefaultSwitchClause": "off",
+        "useCollapsedIf": "off"
       }
     }
-  }
+  },
+  "extends": [
+    "ultracite/biome/core",
+    "ultracite/biome/react",
+    "ultracite/biome/remix"
+  ]
 }
