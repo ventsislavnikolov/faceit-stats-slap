@@ -24,7 +24,9 @@ import type {
   ParsedDemoBlind,
   ParsedDemoBombEvent,
   ParsedDemoFile,
+  ParsedDemoGrenadeDetonate,
   ParsedDemoHurt,
+  ParsedDemoItemPurchase,
   ParsedDemoKill,
   ParsedDemoPlayer,
   ParsedDemoRound,
@@ -404,10 +406,295 @@ function classifyKillTiming(killTick: number, freezeEndTick: number): KillTiming
 }
 
 // ---------------------------------------------------------------------------
+// Utility mastery
+// ---------------------------------------------------------------------------
+
+interface UtilityMasteryResult {
+  smokesThrown: number;
+  flashesThrown: number;
+  hesThrown: number;
+  molotovsThrown: number;
+  utilityPerRound: number;
+  avgFlashBlindDuration: number;
+  teamFlashes: number;
+  effectiveFlashRate: number;
+}
+
+function computeUtilityMastery(
+  grenadeDetonates: ParsedDemoGrenadeDetonate[],
+  blinds: ParsedDemoBlind[],
+  steamToTeam: Map<string, DemoTeamKey>,
+  totalRounds: number,
+): Map<string, UtilityMasteryResult> {
+  const result = new Map<string, UtilityMasteryResult>();
+
+  for (const g of grenadeDetonates) {
+    if (!g.steamId) continue;
+    let entry = result.get(g.steamId);
+    if (!entry) {
+      entry = { smokesThrown: 0, flashesThrown: 0, hesThrown: 0, molotovsThrown: 0, utilityPerRound: 0, avgFlashBlindDuration: 0, teamFlashes: 0, effectiveFlashRate: 0 };
+      result.set(g.steamId, entry);
+    }
+    if (g.type === "smoke") entry.smokesThrown++;
+    else if (g.type === "flash") entry.flashesThrown++;
+    else if (g.type === "he") entry.hesThrown++;
+    else if (g.type === "molotov") entry.molotovsThrown++;
+  }
+
+  const blindsByAttacker = new Map<string, ParsedDemoBlind[]>();
+  for (const b of blinds) {
+    const arr = blindsByAttacker.get(b.attackerSteamId) ?? [];
+    arr.push(b);
+    blindsByAttacker.set(b.attackerSteamId, arr);
+  }
+
+  for (const [steamId, entry] of result) {
+    const totalUtil = entry.smokesThrown + entry.flashesThrown + entry.hesThrown + entry.molotovsThrown;
+    entry.utilityPerRound = totalRounds > 0 ? Math.round((totalUtil / totalRounds) * 10) / 10 : 0;
+
+    const playerBlinds = blindsByAttacker.get(steamId) ?? [];
+    const flasherTeam = steamToTeam.get(steamId);
+
+    const enemyBlinds = playerBlinds.filter(b => steamToTeam.get(b.victimSteamId) !== flasherTeam);
+    if (enemyBlinds.length > 0) {
+      entry.avgFlashBlindDuration = Math.round((enemyBlinds.reduce((s, b) => s + b.duration, 0) / enemyBlinds.length) * 100) / 100;
+    }
+
+    entry.teamFlashes = playerBlinds.filter(b => {
+      const blindedTeam = steamToTeam.get(b.victimSteamId);
+      return flasherTeam && blindedTeam && flasherTeam === blindedTeam;
+    }).length;
+
+    if (entry.flashesThrown > 0) {
+      const flashDetonates = grenadeDetonates.filter(g => g.type === "flash" && g.steamId === steamId);
+      let effectiveFlashes = 0;
+      for (const fd of flashDetonates) {
+        const hasEnemyBlind = playerBlinds.some(b =>
+          Math.abs(b.tick - fd.tick) <= 64 &&
+          steamToTeam.get(b.victimSteamId) !== flasherTeam
+        );
+        if (hasEnemyBlind) effectiveFlashes++;
+      }
+      entry.effectiveFlashRate = Math.round((effectiveFlashes / entry.flashesThrown) * 100);
+    }
+  }
+
+  return result;
+}
+
+// ---------------------------------------------------------------------------
+// Kill quality
+// ---------------------------------------------------------------------------
+
+interface KillQualityResult {
+  wallbangKills: number;
+  thrusmokeKills: number;
+  noscopeKills: number;
+  avgKillDistance: number;
+  weaponKills: Record<string, number>;
+}
+
+function computeKillQuality(kills: ParsedDemoKill[]): Map<string, KillQualityResult> {
+  const result = new Map<string, KillQualityResult>();
+
+  for (const k of kills) {
+    if (!k.attackerSteamId) continue;
+    let entry = result.get(k.attackerSteamId);
+    if (!entry) {
+      entry = { wallbangKills: 0, thrusmokeKills: 0, noscopeKills: 0, avgKillDistance: 0, weaponKills: {} };
+      result.set(k.attackerSteamId, entry);
+    }
+    if (k.penetrated) entry.wallbangKills++;
+    if (k.thruSmoke) entry.thrusmokeKills++;
+    if (k.noscope) entry.noscopeKills++;
+    const weapon = stripWeaponPrefix(k.weapon);
+    entry.weaponKills[weapon] = (entry.weaponKills[weapon] ?? 0) + 1;
+  }
+
+  for (const [steamId, entry] of result) {
+    const playerKills = kills.filter(k => k.attackerSteamId === steamId && k.distance > 0);
+    if (playerKills.length > 0) {
+      entry.avgKillDistance = Math.round((playerKills.reduce((s, k) => s + k.distance, 0) / playerKills.length) * 10) / 10;
+    }
+  }
+
+  return result;
+}
+
+// ---------------------------------------------------------------------------
+// Economy
+// ---------------------------------------------------------------------------
+
+interface EconomyResult {
+  totalSpend: number;
+  economyEfficiency: number;
+  weaponRounds: Record<string, number>;
+}
+
+function classifyWeaponRound(purchases: ParsedDemoItemPurchase[]): string {
+  const weapons = purchases.map(p => p.itemName.toLowerCase().replace(/[- ]/g, ""));
+  for (const w of weapons) {
+    if (w === "awp") return "awp";
+  }
+  for (const p of purchases) {
+    if (p.cost >= 2700) return "rifle";
+  }
+  for (const p of purchases) {
+    if (p.cost >= 1050 && p.cost < 2700) return "smg";
+  }
+  return "pistol";
+}
+
+function computeEconomy(
+  itemPurchases: ParsedDemoItemPurchase[],
+  totalDamageByPlayer: Map<string, number>,
+): Map<string, EconomyResult> {
+  const result = new Map<string, EconomyResult>();
+
+  const byPlayer = new Map<string, ParsedDemoItemPurchase[]>();
+  for (const p of itemPurchases) {
+    if (!p.steamId) continue;
+    const arr = byPlayer.get(p.steamId) ?? [];
+    arr.push(p);
+    byPlayer.set(p.steamId, arr);
+  }
+
+  for (const [steamId, purchases] of byPlayer) {
+    const totalSpend = purchases.reduce((s, p) => s + p.cost, 0);
+    const totalDamage = totalDamageByPlayer.get(steamId) ?? 0;
+    const economyEfficiency = totalSpend > 0 ? Math.round((totalDamage / totalSpend) * 1000 * 10) / 10 : 0;
+
+    const byRound = new Map<number, ParsedDemoItemPurchase[]>();
+    for (const p of purchases) {
+      const arr = byRound.get(p.roundNumber) ?? [];
+      arr.push(p);
+      byRound.set(p.roundNumber, arr);
+    }
+    const weaponRounds: Record<string, number> = {};
+    for (const [, roundPurchases] of byRound) {
+      const cat = classifyWeaponRound(roundPurchases);
+      weaponRounds[cat] = (weaponRounds[cat] ?? 0) + 1;
+    }
+
+    result.set(steamId, { totalSpend, economyEfficiency, weaponRounds });
+  }
+
+  return result;
+}
+
+function computeRoundEquipValues(
+  itemPurchases: ParsedDemoItemPurchase[],
+  steamToTeam: Map<string, DemoTeamKey>,
+  roundNumber: number,
+  tTeamKey: DemoTeamKey,
+): { tEquipValue: number; ctEquipValue: number } {
+  const roundPurchases = itemPurchases.filter(p => p.roundNumber === roundNumber);
+  let tEquipValue = 0;
+  let ctEquipValue = 0;
+  for (const p of roundPurchases) {
+    const team = steamToTeam.get(p.steamId);
+    if (team === tTeamKey) tEquipValue += p.cost;
+    else ctEquipValue += p.cost;
+  }
+  return { tEquipValue, ctEquipValue };
+}
+
+// ---------------------------------------------------------------------------
+// Side split
+// ---------------------------------------------------------------------------
+
+interface SideSplitResult {
+  ctKills: number;
+  ctDeaths: number;
+  ctAdr: number;
+  ctRating: number;
+  tKills: number;
+  tDeaths: number;
+  tAdr: number;
+  tRating: number;
+}
+
+function computeSideSplit(
+  kills: ParsedDemoKill[],
+  hurts: ParsedDemoHurt[],
+  rounds: ParsedDemoRound[],
+  steamToTeam: Map<string, DemoTeamKey>,
+  team1FirstHalfSide: "CT" | "T",
+  allSteamIds: string[],
+): Map<string, SideSplitResult> {
+  const result = new Map<string, SideSplitResult>();
+  const sideAccum = new Map<string, { ct: { kills: number; deaths: number; damage: number; rounds: number }; t: { kills: number; deaths: number; damage: number; rounds: number } }>();
+
+  for (const steamId of allSteamIds) {
+    result.set(steamId, { ctKills: 0, ctDeaths: 0, ctAdr: 0, ctRating: 0, tKills: 0, tDeaths: 0, tAdr: 0, tRating: 0 });
+    sideAccum.set(steamId, { ct: { kills: 0, deaths: 0, damage: 0, rounds: 0 }, t: { kills: 0, deaths: 0, damage: 0, rounds: 0 } });
+  }
+
+  function getPlayerSide(steamId: string, roundNumber: number): "CT" | "T" {
+    const teamKey = steamToTeam.get(steamId);
+    const { tTeamKey } = getTeamSidesForRound(roundNumber, rounds.length, team1FirstHalfSide);
+    return teamKey === tTeamKey ? "T" : "CT";
+  }
+
+  for (const round of rounds) {
+    for (const steamId of allSteamIds) {
+      const side = getPlayerSide(steamId, round.roundNumber);
+      const acc = sideAccum.get(steamId)!;
+      if (side === "CT") acc.ct.rounds++; else acc.t.rounds++;
+    }
+  }
+
+  for (const k of kills) {
+    if (!k.attackerSteamId || !k.victimSteamId) continue;
+    const attackerSide = getPlayerSide(k.attackerSteamId, k.roundNumber);
+    const victimSide = getPlayerSide(k.victimSteamId, k.roundNumber);
+    const ae = result.get(k.attackerSteamId);
+    const ve = result.get(k.victimSteamId);
+    const aa = sideAccum.get(k.attackerSteamId);
+    const va = sideAccum.get(k.victimSteamId);
+    if (ae && aa) {
+      if (attackerSide === "CT") { ae.ctKills++; aa.ct.kills++; } else { ae.tKills++; aa.t.kills++; }
+    }
+    if (ve && va) {
+      if (victimSide === "CT") { ve.ctDeaths++; va.ct.deaths++; } else { ve.tDeaths++; va.t.deaths++; }
+    }
+  }
+
+  for (const h of hurts) {
+    if (!h.attackerSteamId) continue;
+    const side = getPlayerSide(h.attackerSteamId, h.roundNumber);
+    const acc = sideAccum.get(h.attackerSteamId);
+    if (acc) {
+      if (side === "CT") acc.ct.damage += h.damage; else acc.t.damage += h.damage;
+    }
+  }
+
+  for (const [steamId, entry] of result) {
+    const acc = sideAccum.get(steamId)!;
+    entry.ctAdr = acc.ct.rounds > 0 ? Math.round((acc.ct.damage / acc.ct.rounds) * 10) / 10 : 0;
+    entry.tAdr = acc.t.rounds > 0 ? Math.round((acc.t.damage / acc.t.rounds) * 10) / 10 : 0;
+    entry.ctRating = computeRating({ kills: acc.ct.kills, deaths: acc.ct.deaths, totalDamage: acc.ct.damage, kastRounds: 0, roundsPlayed: acc.ct.rounds, entryKills: 0, clutchWins: 0 });
+    entry.tRating = computeRating({ kills: acc.t.kills, deaths: acc.t.deaths, totalDamage: acc.t.damage, kastRounds: 0, roundsPlayed: acc.t.rounds, entryKills: 0, clutchWins: 0 });
+  }
+
+  return result;
+}
+
+// ---------------------------------------------------------------------------
 // Composite rating (approximation of HLTV 2.0)
 // ---------------------------------------------------------------------------
 
-function computeRating(a: PlayerAccum): number {
+interface RatingInput {
+  kills: number;
+  deaths: number;
+  totalDamage: number;
+  kastRounds: number;
+  roundsPlayed: number;
+  entryKills: number;
+  clutchWins: number;
+}
+
+function computeRating(a: RatingInput): number {
   if (a.roundsPlayed === 0) return 0;
 
   const kpr = a.kills / a.roundsPlayed;
@@ -715,6 +1002,7 @@ export function buildRichDemoAnalytics(
       bombDefused: !!defused,
       planterSteamId: planted?.playerSteamId ?? null,
       defuserSteamId: defused?.playerSteamId ?? null,
+      ...computeRoundEquipValues(parsed.itemPurchases ?? [], steamToTeam, rn, tTeamKey),
     });
   }
 
@@ -723,6 +1011,14 @@ export function buildRichDemoAnalytics(
   for (let i = 0; i < roundAnalytics.length; i++) {
     roundAnalytics[i].scoreAfterRound = fullScoreProgression[i]?.scoreAfterRound ?? { team1: 0, team2: 0 };
   }
+
+  // Extended analytics
+  const utilityMastery = computeUtilityMastery(parsed.grenadeDetonates ?? [], parsed.blinds, steamToTeam, totalRounds);
+  const killQuality = computeKillQuality(parsed.kills);
+  const totalDamageByPlayer = new Map<string, number>();
+  for (const a of accums.values()) totalDamageByPlayer.set(a.steamId, a.totalDamage);
+  const economy = computeEconomy(parsed.itemPurchases ?? [], totalDamageByPlayer);
+  const sideSplit = computeSideSplit(parsed.kills, parsed.hurts, parsed.rounds, steamToTeam, team1Side, allSteamIds);
 
   // ---- Build player analytics ----
   const streaks = buildWinLossStreaks(roundWinners);
@@ -768,6 +1064,10 @@ export function buildRichDemoAnalytics(
       rating,
       multiKills: a.multiKills,
       killTimings: a.killTimings,
+      ...(utilityMastery.get(a.steamId) ?? {}),
+      ...(killQuality.get(a.steamId) ?? {}),
+      ...(economy.get(a.steamId) ?? {}),
+      ...(sideSplit.get(a.steamId) ?? {}),
     };
   });
 
