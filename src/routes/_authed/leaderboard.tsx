@@ -127,10 +127,14 @@ function StatsTab({
   targetPlayerId,
   targetNickname,
   playerIds,
+  hasSearchTarget,
+  isResolvingTarget,
 }: {
   targetPlayerId: string;
   targetNickname: string;
   playerIds: string[];
+  hasSearchTarget: boolean;
+  isResolvingTarget: boolean;
 }) {
   const [n, setN] = useState<HistoryMatchCount>("yesterday");
   const [days, setDays] = useState<30 | 90 | 180 | 365 | 730>(30);
@@ -322,10 +326,14 @@ function StatsTab({
         }}
       />
 
-      {!targetPlayerId ? (
+      {isResolvingTarget ? (
+        <div className="text-accent animate-pulse text-center py-8">
+          Loading...
+        </div>
+      ) : !targetPlayerId && !hasSearchTarget ? (
         <div className="text-text-dim text-center py-12">
-          Search a player above to see who they queued with recently and how
-          each friend is performing across their own recent matches
+          Search a player above to see how their friends are performing across
+          their own recent matches
         </div>
       ) : isLoading ? (
         <div className="text-accent animate-pulse text-center py-8">
@@ -479,6 +487,13 @@ function LeaderboardPage() {
   const friendIds = searchResult?.friends.map((f) => f.faceitId) ?? [];
   const targetPlayerId = searchResult?.player.faceitId ?? "";
   const targetNickname = searchResult?.player.nickname ?? "";
+  const hasSearchTarget = Boolean(urlPlayer);
+  const isResolvingTarget =
+    normalizedSelectedTab === "stats" &&
+    hasSearchTarget &&
+    searchLoading &&
+    !searchError &&
+    !targetPlayerId;
   const showBetsTab = normalizedSelectedTab === "bets";
   const tabs = authResolved
     ? getLeaderboardTabs(isSignedIn)
@@ -561,6 +576,8 @@ function LeaderboardPage() {
               targetPlayerId={targetPlayerId}
               targetNickname={targetNickname}
               playerIds={friendIds}
+              hasSearchTarget={hasSearchTarget}
+              isResolvingTarget={isResolvingTarget}
             />
           )}
         </div>

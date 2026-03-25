@@ -7,13 +7,13 @@ import {
 describe("stats leaderboard copy", () => {
   it("formats the personal-form summary copy", () => {
     expect(getStatsLeaderboardSummaryCopy("soavarice", 9, 90, 20)).toBe(
-      "Showing players you queued with in the last 90 days. Stats are from each player's own last 20 matches."
+      "Showing friends of soavarice in the last 90 days. Stats are from each player's own last 20 matches."
     );
   });
 
   it("formats the yesterday summary and empty-state copy", () => {
     expect(getStatsLeaderboardSummaryCopy("soavarice", 9, 30, "yesterday")).toBe(
-      "Showing players you queued with yesterday. Stats are from yesterday's matches only."
+      "Showing friends of soavarice who played yesterday. Stats are from yesterday's matches only."
     );
 
     expect(
@@ -24,7 +24,7 @@ describe("stats leaderboard copy", () => {
         days: 30,
         n: "yesterday",
       })
-    ).toBe("No matches for Target yesterday.");
+    ).toBe("No friends of Target played yesterday.");
 
     expect(
       getStatsLeaderboardEmptyStateCopy({
@@ -35,12 +35,12 @@ describe("stats leaderboard copy", () => {
         n: "yesterday",
         queue: "party",
       })
-    ).toBe("No queued friends for Target in party matches yesterday.");
+    ).toBe("No friends of Target played party matches yesterday.");
   });
 
   it("supports the 730-day preset in summary and empty-state copy", () => {
     expect(getStatsLeaderboardSummaryCopy("soavarice", 9, 730, 50)).toBe(
-      "Showing players you queued with in the last 730 days. Stats are from each player's own last 50 matches."
+      "Showing friends of soavarice in the last 730 days. Stats are from each player's own last 50 matches."
     );
 
     expect(
@@ -51,12 +51,12 @@ describe("stats leaderboard copy", () => {
         days: 730,
         n: 50,
       })
-    ).toBe("No recently queued friends for Target in the last 730 days.");
+    ).toBe("No friends of Target played in the last 730 days.");
   });
 
   it("formats queue-specific summary and empty-state copy", () => {
     expect(getStatsLeaderboardSummaryCopy("soavarice", 9, 90, 20, "party")).toBe(
-      "Showing players from party matches in the last 90 days. Stats are from each player's own last 20 matches."
+      "Showing friends of soavarice from party matches in the last 90 days. Stats are from each player's own last 20 matches."
     );
 
     expect(
@@ -68,7 +68,7 @@ describe("stats leaderboard copy", () => {
         n: 20,
         queue: "solo",
       })
-    ).toBe("No recent solo matches for Target in the last 30 days.");
+    ).toBe("No friends of Target played solo matches in the last 30 days.");
 
     expect(
       getStatsLeaderboardEmptyStateCopy({
@@ -79,10 +79,10 @@ describe("stats leaderboard copy", () => {
         n: 20,
         queue: "party",
       })
-    ).toBe("No recently queued friends for Target in party matches in the last 30 days.");
+    ).toBe("No friends of Target played party matches in the last 30 days.");
   });
 
-  it("formats the no recent matches empty state", () => {
+  it("formats the no recent friends empty state", () => {
     expect(
       getStatsLeaderboardEmptyStateCopy({
         targetNickname: "Target",
@@ -91,10 +91,10 @@ describe("stats leaderboard copy", () => {
         days: 30,
         n: 20,
       })
-    ).toBe("No recent matches for Target in the last 30 days.");
+    ).toBe("No friends of Target played in the last 30 days.");
   });
 
-  it("formats the no recently-queued-friends empty state", () => {
+  it("formats the no recent friends empty state for longer windows", () => {
     expect(
       getStatsLeaderboardEmptyStateCopy({
         targetNickname: "Target",
@@ -103,7 +103,7 @@ describe("stats leaderboard copy", () => {
         days: 365,
         n: 20,
       })
-    ).toBe("No recently queued friends for Target in the last 365 days.");
+    ).toBe("No friends of Target played in the last 365 days.");
   });
 
   it("returns null when the leaderboard has recent matches and shared friends", () => {

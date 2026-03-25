@@ -741,15 +741,9 @@ export const getStatsLeaderboard = createServerFn({ method: "GET" })
           (row: any) => typeof row.played_at === "string" && row.played_at < yesterdayRange.endIso
         )
       : targetRows;
-    const targetMatchIds = [...new Set(filteredTargetRows.map((row: any) => row.match_id).filter(Boolean))];
-    const eligibleFriendIds = await fetchEligibleStatsLeaderboardFriendIds({
-      supabase,
-      targetMatchIds,
-      friendIds: playerIds,
-    });
     const recentRows = await fetchRecentStatsLeaderboardRows({
       supabase,
-      playerIds: targetMatchIds.length > 0 ? [targetPlayerId, ...eligibleFriendIds] : [],
+      playerIds: [...new Set([targetPlayerId, ...playerIds])],
       n: n === "yesterday" ? undefined : n,
       cutoffIso: yesterdayRange?.startIso,
     });
@@ -782,7 +776,6 @@ export const getStatsLeaderboard = createServerFn({ method: "GET" })
       rows: rowsForLeaderboard,
       targetPlayerId,
       friendIds: playerIds,
-      eligibleFriendIds,
       n: n === "yesterday" ? Number.MAX_SAFE_INTEGER : n,
       days: yesterdayRange ? 1 : days,
       now: yesterdayRange?.end,
@@ -810,25 +803,12 @@ export const getStatsLeaderboard = createServerFn({ method: "GET" })
 export const syncAllPlayerHistory = createServerFn({ method: "POST" })
   .inputValidator((input: { targetPlayerId: string; playerIds: string[]; n: number; days: 30 | 90 | 180 | 365 | 730 }) => input)
   .handler(async ({ data: { targetPlayerId, playerIds, n, days } }): Promise<void> => {
-    const targetHistory = await syncPlayerHistoryWindow(targetPlayerId, n, days);
-    const targetMatchIds = [...new Set(targetHistory.map((item) => item.match_id).filter(Boolean))];
-    if (targetMatchIds.length === 0 || playerIds.length === 0) return;
+    await syncPlayerHistoryWindow(targetPlayerId, n, days);
+    if (playerIds.length === 0) return;
 
-    const supabase = createServerSupabase();
-    const { data: sharedRows } = await supabase
-      .from("match_player_stats")
-      .select("match_id, faceit_player_id")
-      .in("match_id", targetMatchIds);
-
-    const friendSet = new Set(playerIds);
-    const eligibleFriendIds = [...new Set(
-      (sharedRows || [])
-        .map((row: any) => row.faceit_player_id)
-        .filter((faceitId: string) => friendSet.has(faceitId))
-    )];
-
-    for (const faceitId of eligibleFriendIds) {
-      await syncPlayerRecentHistory(faceitId, n);
+    const sampleSize = Math.max(n, 100);
+    for (const faceitId of playerIds) {
+      await syncPlayerRecentHistory(faceitId, sampleSize);
     }
   });
 

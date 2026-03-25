@@ -372,7 +372,7 @@ describe("buildPersonalFormLeaderboard", () => {
     expect(result.sharedFriendCount).toBe(1);
   });
 
-  it("uses personal recent matches after a friend qualifies via one shared match", () => {
+  it("uses personal recent matches for every active friend in the selected window", () => {
     const result = buildPersonalFormLeaderboard({
       rows: [
         makeRow({
@@ -455,9 +455,31 @@ describe("buildPersonalFormLeaderboard", () => {
     });
 
     expect(result.targetMatchCount).toBe(2);
-    expect(result.sharedFriendCount).toBe(1);
-    expect(result.entries.map((entry) => entry.faceitId)).toEqual(["friend-a", "target"]);
+    expect(result.sharedFriendCount).toBe(2);
+    expect(result.entries.map((entry) => entry.faceitId)).toEqual([
+      "friend-b",
+      "friend-a",
+      "target",
+    ]);
     expect(result.entries[0]).toMatchObject({
+      faceitId: "friend-b",
+      gamesPlayed: 1,
+      avgKills: 0,
+      avgImpact: 193.3,
+      avgKd: 2.8,
+      avgAdr: 120,
+      winRate: 0,
+      avgHsPercent: 0,
+      avgKrRatio: 0,
+      avgFirstKills: 0,
+      avgClutchKills: 0,
+      avgUtilityDamage: 0,
+      avgEnemiesFlashed: 0,
+      avgEntryRate: 0,
+      avgSniperKills: 0,
+    });
+    expect(result.entries[1]).toMatchObject({
+      faceitId: "friend-a",
       gamesPlayed: 3,
       avgKills: 22.67,
       avgImpact: 158.1,
@@ -834,12 +856,55 @@ describe("buildPersonalFormLeaderboard", () => {
 
     expect(noSharedFriends.entries).toEqual([
       expect.objectContaining({
+        faceitId: "friend-a",
+        gamesPlayed: 1,
+      }),
+      expect.objectContaining({
         faceitId: "target",
         gamesPlayed: 1,
       }),
     ]);
     expect(noSharedFriends.targetMatchCount).toBe(1);
-    expect(noSharedFriends.sharedFriendCount).toBe(0);
+    expect(noSharedFriends.sharedFriendCount).toBe(1);
+  });
+
+  it("includes friends with recent matches even when they did not queue with the target", () => {
+    const result = buildPersonalFormLeaderboard({
+      rows: [
+        makeRow({
+          matchId: "friend-a-personal-1",
+          faceitId: "friend-a",
+          playedAt: "2026-03-21T10:00:00.000Z",
+          kills: 24,
+          kdRatio: 1.6,
+          adr: 99,
+          hsPercent: 41,
+          krRatio: 0.82,
+          win: true,
+        }),
+        makeRow({
+          matchId: "target-old",
+          faceitId: "target",
+          playedAt: "2026-03-01T10:00:00.000Z",
+          kills: 10,
+        }),
+      ],
+      targetPlayerId: "target",
+      friendIds: ["friend-a"],
+      n: 20,
+      days: 7,
+      now: "2026-03-22T12:00:00.000Z",
+    });
+
+    expect(result.entries).toEqual([
+      expect.objectContaining({
+        faceitId: "friend-a",
+        gamesPlayed: 1,
+        avgKills: 24,
+      }),
+    ]);
+    expect(result.targetMatchCount).toBe(0);
+    expect(result.sharedFriendCount).toBe(1);
   });
 
   it("falls back to the faceit id when the latest row has no nickname", () => {
@@ -973,7 +1038,7 @@ describe("buildPersonalFormLeaderboard", () => {
     ]);
   });
 
-  it("returns the searched player plus recently queued friends scored by personal recent matches", async () => {
+  it("returns the searched player's active friend network scored by personal recent matches", async () => {
     const result = await runWithStartContext(
       {
         contextAfterGlobalMiddlewares: {},
@@ -995,10 +1060,10 @@ describe("buildPersonalFormLeaderboard", () => {
         faceitId: "friend-a",
         nickname: "Friend A",
         elo: 2010,
-        gamesPlayed: 3,
-        avgKills: 22.33,
-        avgImpact: 132.8,
-        avgKd: 1.5,
+        gamesPlayed: 1,
+        avgKills: 22,
+        avgImpact: 117.2,
+        avgKd: 1.2,
       }),
       expect.objectContaining({
         faceitId: "target",
@@ -1668,7 +1733,7 @@ describe("buildPersonalFormLeaderboard", () => {
     expect(result.sharedFriendCount).toBe(2);
   });
 
-  it("drops shared friends when only solo-classified target matches remain", async () => {
+  it("keeps solo-active friends when only their own solo matches remain", async () => {
     mockSupabase.setLeaderboardRows("target", [
       {
         match_id: "match-target-solo",
@@ -1743,12 +1808,17 @@ describe("buildPersonalFormLeaderboard", () => {
 
     expect(result.entries).toEqual([
       expect.objectContaining({
+        faceitId: "friend-a",
+        gamesPlayed: 1,
+        avgKills: 40,
+      }),
+      expect.objectContaining({
         faceitId: "target",
         gamesPlayed: 1,
         avgKills: 15,
       }),
     ]);
     expect(result.targetMatchCount).toBe(1);
-    expect(result.sharedFriendCount).toBe(0);
+    expect(result.sharedFriendCount).toBe(1);
   });
 });
