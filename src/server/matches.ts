@@ -489,6 +489,34 @@ async function fetchDemoAnalyticsForMatch(
           mid: Number(p.kill_timing_mid ?? 0),
           late: Number(p.kill_timing_late ?? 0),
         },
+        // Utility mastery
+        smokesThrown: Number(p.smokes_thrown ?? 0),
+        flashesThrown: Number(p.flashes_thrown ?? 0),
+        hesThrown: Number(p.hes_thrown ?? 0),
+        molotovsThrown: Number(p.molotovs_thrown ?? 0),
+        utilityPerRound: Number(p.utility_per_round ?? 0),
+        avgFlashBlindDuration: Number(p.avg_flash_blind_duration ?? 0),
+        teamFlashes: Number(p.team_flashes ?? 0),
+        effectiveFlashRate: Number(p.effective_flash_rate ?? 0),
+        // Kill quality
+        wallbangKills: Number(p.wallbang_kills ?? 0),
+        thrusmokeKills: Number(p.thrusmoke_kills ?? 0),
+        noscopeKills: Number(p.noscope_kills ?? 0),
+        avgKillDistance: Number(p.avg_kill_distance ?? 0),
+        weaponKills: typeof p.weapon_kills === "object" && p.weapon_kills !== null ? (p.weapon_kills as Record<string, number>) : {},
+        // Economy
+        totalSpend: Number(p.total_spend ?? 0),
+        economyEfficiency: Number(p.economy_efficiency ?? 0),
+        weaponRounds: typeof p.weapon_rounds === "object" && p.weapon_rounds !== null ? (p.weapon_rounds as Record<string, number>) : {},
+        // Side-split
+        ctKills: Number(p.ct_kills ?? 0),
+        ctDeaths: Number(p.ct_deaths ?? 0),
+        ctAdr: Number(p.ct_adr ?? 0),
+        ctRating: Number(p.ct_rating ?? 0),
+        tKills: Number(p.t_kills ?? 0),
+        tDeaths: Number(p.t_deaths ?? 0),
+        tAdr: Number(p.t_adr ?? 0),
+        tRating: Number(p.t_rating ?? 0),
       }),
     );
 
@@ -510,6 +538,8 @@ async function fetchDemoAnalyticsForMatch(
         endReason: (r.end_reason as string) ?? null,
         bombPlanted: Boolean(r.bomb_planted),
         bombDefused: Boolean(r.bomb_defused),
+        tEquipValue: Number(r.t_equip_value ?? 0),
+        ctEquipValue: Number(r.ct_equip_value ?? 0),
       }),
     );
 
