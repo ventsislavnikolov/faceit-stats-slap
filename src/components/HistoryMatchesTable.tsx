@@ -14,18 +14,30 @@ interface HistoryMatchRow {
   hsPercent: number;
   result: boolean;
   queueBucket?: MatchQueueBucket;
+  hasDemoAnalytics?: boolean;
 }
 
 interface HistoryMatchesTableProps {
   matches: HistoryMatchRow[];
 }
 
-const HISTORY_MATCHES_GRID_TEMPLATE = "3rem 26.5rem repeat(7, 5rem)";
+const HISTORY_MATCHES_GRID_TEMPLATE = "3rem 24rem 2.5rem repeat(7, 5rem)";
 
 function getQueueLabel(queueBucket?: MatchQueueBucket) {
   if (queueBucket === "solo") return "SOLO";
   if (queueBucket === "party") return "PARTY";
   return "—";
+}
+
+function HeaderWithTooltip({ children, tooltip, align = "left" }: { children: React.ReactNode; tooltip: string; align?: "left" | "right" | "center" }) {
+  return (
+    <span className={`relative group/hdr cursor-help ${align === "right" ? "text-right" : align === "center" ? "text-center" : ""}`}>
+      {children}
+      <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-1 z-50 hidden group-hover/hdr:block whitespace-nowrap rounded bg-bg-card border border-border px-2 py-1 text-[9px] normal-case tracking-normal font-normal text-text shadow-lg">
+        {tooltip}
+      </span>
+    </span>
+  );
 }
 
 export function HistoryMatchesTable({ matches }: HistoryMatchesTableProps) {
@@ -44,13 +56,14 @@ export function HistoryMatchesTable({ matches }: HistoryMatchesTableProps) {
         >
           <span>Result</span>
           <span>Map</span>
-          <span className="text-right">Score</span>
-          <span className="text-right">Kills</span>
-          <span className="text-right">K/D</span>
-          <span className="text-right">K/R</span>
-          <span className="text-right">ADR</span>
-          <span className="text-right">HS%</span>
-          <span className="text-right">Queue</span>
+          <HeaderWithTooltip align="center" tooltip="Demo analytics parsed from match replay">Demo</HeaderWithTooltip>
+          <HeaderWithTooltip align="right" tooltip="Match score">Score</HeaderWithTooltip>
+          <HeaderWithTooltip align="right" tooltip="Total kills">Kills</HeaderWithTooltip>
+          <HeaderWithTooltip align="right" tooltip="Kill/Death ratio">K/D</HeaderWithTooltip>
+          <HeaderWithTooltip align="right" tooltip="Kill/Round ratio">K/R</HeaderWithTooltip>
+          <HeaderWithTooltip align="right" tooltip="Average Damage per Round">ADR</HeaderWithTooltip>
+          <HeaderWithTooltip align="right" tooltip="Headshot percentage">HS%</HeaderWithTooltip>
+          <HeaderWithTooltip align="right" tooltip="Queue type — Solo or Party">Queue</HeaderWithTooltip>
         </div>
 
         <div className="flex flex-col gap-1">
@@ -71,6 +84,12 @@ export function HistoryMatchesTable({ matches }: HistoryMatchesTableProps) {
               </span>
               <span className="min-w-0">
                 <MapBadge map={match.map} />
+              </span>
+              <span className="text-center" title={match.hasDemoAnalytics ? "Demo analytics available" : "No demo analytics"}>
+                {match.hasDemoAnalytics
+                  ? <span className="text-accent text-xs">&#x2713;</span>
+                  : <span className="text-text-dim/40 text-xs">&#x2717;</span>
+                }
               </span>
               <span className="text-right text-text-muted">{match.score}</span>
               <span className="text-right text-text-muted">{match.kills}</span>

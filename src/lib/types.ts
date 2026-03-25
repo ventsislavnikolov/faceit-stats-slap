@@ -111,6 +111,7 @@ export interface PlayerHistoryMatch extends MatchPlayerStats {
   knownQueuedFriendCount: number;
   knownQueuedFriendIds: string[];
   partySize: number | null;
+  hasDemoAnalytics?: boolean;
 }
 
 export interface MatchWithStats {

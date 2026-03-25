@@ -168,6 +168,7 @@ function HistoryPage() {
     result: m.result,
     eloDelta: null,
     queueBucket: m.queueBucket,
+    hasDemoAnalytics: m.hasDemoAnalytics,
   }));
 
   return (

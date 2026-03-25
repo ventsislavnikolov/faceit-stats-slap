@@ -1076,5 +1076,26 @@ export const getPlayerStats = createServerFn({ method: "GET" })
       if (historyForYesterday || history.length < pageSize) break;
     }
 
-    return typeof n === "number" ? matches.slice(0, n) : matches;
+    const result = typeof n === "number" ? matches.slice(0, n) : matches;
+
+    // Batch-check which matches have parsed demo analytics
+    if (result.length > 0) {
+      try {
+        const supabase = createServerSupabase();
+        const matchIds = result.map((m) => m.matchId);
+        const { data: demoRows } = await supabase
+          .from("demo_ingestions")
+          .select("faceit_match_id")
+          .in("faceit_match_id", matchIds)
+          .eq("status", "parsed");
+        const parsedSet = new Set((demoRows ?? []).map((r: { faceit_match_id: string }) => r.faceit_match_id));
+        for (const m of result) {
+          m.hasDemoAnalytics = parsedSet.has(m.matchId);
+        }
+      } catch {
+        // Non-critical — leave flags undefined
+      }
+    }
+
+    return result;
   });
