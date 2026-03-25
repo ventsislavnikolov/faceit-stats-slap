@@ -46,7 +46,7 @@ The UI must never silently present demo-derived numbers as if they were full-his
 
 ### Baseline Match Flow
 
-The current server path in [src/server/matches.ts](/Users/ventsislav.nikolov/Projects/ventsislavnikolov/faceit-friends-live/src/server/matches.ts) already fetches:
+The current server path in [src/server/matches.ts](/Users/ventsislav.nikolov/Projects/ventsislavnikolov/faceit-stats-slap/src/server/matches.ts) already fetches:
 
 - `GET /matches/{matchId}`
 - `GET /matches/{matchId}/stats`
@@ -263,7 +263,7 @@ Where both sources can produce a metric, FACEIT remains the primary displayed ba
 
 ## Match Page UX
 
-The route in [src/routes/_authed/match.$matchId.tsx](/Users/ventsislav.nikolov/Projects/ventsislavnikolov/faceit-friends-live/src/routes/_authed/match.$matchId.tsx) should become a dedicated post-match analytics page, not a live-match shell.
+The route in [src/routes/_authed/match.$matchId.tsx](/Users/ventsislav.nikolov/Projects/ventsislavnikolov/faceit-stats-slap/src/routes/_authed/match.$matchId.tsx) should become a dedicated post-match analytics page, not a live-match shell.
 
 ### Render phases
 

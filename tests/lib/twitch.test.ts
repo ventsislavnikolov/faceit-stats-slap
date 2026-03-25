@@ -52,7 +52,7 @@ describe("buildTwitchEmbedUrl", () => {
   it("includes sanitized parent domains and playback params", () => {
     const url = new URL(
       buildTwitchEmbedUrl("bachiyski", "preview.example.com:3000", [
-        "https://faceit-friends-live.vercel.app",
+        "https://faceit-stats-slap.vercel.app",
         " localhost ",
       ])
     );
@@ -61,7 +61,7 @@ describe("buildTwitchEmbedUrl", () => {
     expect(url.searchParams.get("channel")).toBe("bachiyski");
     expect(url.searchParams.getAll("parent")).toEqual([
       "preview.example.com",
-      "faceit-friends-live.vercel.app",
+      "faceit-stats-slap.vercel.app",
       "localhost",
     ]);
     expect(url.searchParams.get("autoplay")).toBe("true");

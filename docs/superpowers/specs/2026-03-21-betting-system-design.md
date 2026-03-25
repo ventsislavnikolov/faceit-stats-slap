@@ -1,4 +1,4 @@
-# FaceitFriendsLive — Betting System Design
+# FACEIT Stats Slap — Betting System Design
 
 ## Overview
 

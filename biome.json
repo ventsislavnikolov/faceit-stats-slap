@@ -1,0 +1,42 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "linter": {
+    "rules": {
+      "complexity": {
+        "noForEach": "off",
+        "useDateNow": "off",
+        "useOptionalChain": "off",
+        "noExcessiveCognitiveComplexity": "off"
+      },
+      "correctness": {
+        "noUndeclaredVariables": "off"
+      },
+      "nursery": {
+        "noShadow": "off",
+        "noLeakedRender": "off",
+        "noUnnecessaryConditions": "off"
+      },
+      "performance": {
+        "noBarrelFile": "off",
+        "useTopLevelRegex": "off",
+        "noNamespaceImport": "off"
+      },
+      "suspicious": {
+        "useAwait": "off",
+        "noExplicitAny": "off",
+        "noEvolvingTypes": "off",
+        "noArrayIndexKey": "off",
+        "noImplicitAnyLet": "off",
+        "noUnknownAtRules": "off",
+        "noAssignInExpressions": "off",
+        "noEmptyBlockStatements": "off",
+        "noTemplateCurlyInString": "off"
+      },
+      "style": {
+        "noMagicNumbers": "off",
+        "noNestedTernary": "off",
+        "noNonNullAssertion": "off"
+      }
+    }
+  }
+}
