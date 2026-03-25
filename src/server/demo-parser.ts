@@ -27,6 +27,11 @@ const DEMO_EVENT_NAMES = [
   "bomb_planted",
   "bomb_defused",
   "bomb_exploded",
+  "item_purchase",
+  "smokegrenade_detonate",
+  "flashbang_detonate",
+  "hegrenade_detonate",
+  "inferno_startburn",
 ] as const;
 
 type RawHeader = Record<string, unknown> & {
@@ -74,6 +79,8 @@ export interface ParsedDemoKill {
   penetrated: boolean;
   thruSmoke: boolean;
   attackerBlind: boolean;
+  noscope: boolean;
+  distance: number;
 }
 
 export interface ParsedDemoHurt {
@@ -113,6 +120,26 @@ export interface ParsedDemoRoundTiming {
   freezeEndTick: number;
 }
 
+export interface ParsedDemoItemPurchase {
+  tick: number;
+  roundNumber: number;
+  steamId: string;
+  nickname: string;
+  itemName: string;
+  cost: number;
+}
+
+export interface ParsedDemoGrenadeDetonate {
+  tick: number;
+  roundNumber: number;
+  steamId: string;
+  nickname: string;
+  type: "smoke" | "flash" | "he" | "molotov";
+  x: number;
+  y: number;
+  z: number;
+}
+
 export interface ParsedDemoFile {
   header: {
     mapName: string;
@@ -127,6 +154,8 @@ export interface ParsedDemoFile {
   weaponFires: ParsedDemoWeaponFire[];
   blinds: ParsedDemoBlind[];
   roundTimings: ParsedDemoRoundTiming[];
+  itemPurchases: ParsedDemoItemPurchase[];
+  grenadeDetonates: ParsedDemoGrenadeDetonate[];
 }
 
 // ---------------------------------------------------------------------------
@@ -236,6 +265,8 @@ function normalizeKills(events: RawDemoEvent[]): ParsedDemoKill[] {
       penetrated: Number(e.penetrated ?? 0) > 0,
       thruSmoke: Boolean(e.thrusmoke),
       attackerBlind: Boolean(e.attackerblind),
+      noscope: Boolean(e.noscope),
+      distance: Number(e.distance ?? 0),
     }));
 }
 
@@ -289,6 +320,41 @@ function normalizeBlinds(events: RawDemoEvent[]): ParsedDemoBlind[] {
       attackerSteamId: String(e.attacker_steamid ?? ""),
       victimSteamId: String(e.user_steamid ?? ""),
       duration: Number(e.blind_duration ?? 0),
+    }));
+}
+
+function normalizeItemPurchases(events: RawDemoEvent[]): ParsedDemoItemPurchase[] {
+  return events
+    .filter((e) => e.event_name === "item_purchase" && typeof e.total_rounds_played === "number" && e.total_rounds_played > 0)
+    .map((e) => ({
+      tick: Number(e.tick ?? 0),
+      roundNumber: Number(e.total_rounds_played),
+      steamId: String(e.steamid ?? ""),
+      nickname: String(e.name ?? ""),
+      itemName: String(e.item_name ?? ""),
+      cost: Number(e.cost ?? 0),
+    }));
+}
+
+const GRENADE_EVENT_TO_TYPE: Record<string, ParsedDemoGrenadeDetonate["type"]> = {
+  smokegrenade_detonate: "smoke",
+  flashbang_detonate: "flash",
+  hegrenade_detonate: "he",
+  inferno_startburn: "molotov",
+};
+
+function normalizeGrenadeDetonates(events: RawDemoEvent[]): ParsedDemoGrenadeDetonate[] {
+  return events
+    .filter((e) => e.event_name && e.event_name in GRENADE_EVENT_TO_TYPE && typeof e.total_rounds_played === "number" && e.total_rounds_played > 0)
+    .map((e) => ({
+      tick: Number(e.tick ?? 0),
+      roundNumber: Number(e.total_rounds_played),
+      steamId: String(e.user_steamid ?? ""),
+      nickname: String(e.user_name ?? ""),
+      type: GRENADE_EVENT_TO_TYPE[e.event_name!]!,
+      x: Number(e.x ?? 0),
+      y: Number(e.y ?? 0),
+      z: Number(e.z ?? 0),
     }));
 }
 
@@ -373,6 +439,8 @@ export async function parseDemoFile(filePath: string): Promise<ParsedDemoFile> {
     weaponFires: normalizeWeaponFires(rawEvents),
     blinds: normalizeBlinds(rawEvents),
     roundTimings: normalizeRoundTimings(rawEvents),
+    itemPurchases: normalizeItemPurchases(rawEvents),
+    grenadeDetonates: normalizeGrenadeDetonates(rawEvents),
   };
 }
 
