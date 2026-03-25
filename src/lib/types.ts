@@ -148,6 +148,21 @@ export interface BettingPool {
   resolvedAt: string | null;
 }
 
+export interface BetAuditEvent {
+  id: string;
+  betId: string;
+  poolId: string;
+  faceitMatchId: string;
+  userId: string;
+  side: BetSide;
+  amount: number;
+  betCreatedAt: string;
+  matchStartedAt: string | null;
+  secondsSinceMatchStart: number | null;
+  capturedPoolStatus: BettingPoolStatus;
+  createdAt: string;
+}
+
 export interface Bet {
   id: string;
   poolId: string;
@@ -160,6 +175,7 @@ export interface Bet {
 
 export interface BetWithPool extends Bet {
   pool: BettingPool;
+  audit?: BetAuditEvent | null;
 }
 
 export interface BettingLeaderboardEntry {

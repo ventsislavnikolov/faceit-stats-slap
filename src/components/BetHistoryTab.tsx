@@ -1,6 +1,7 @@
 import { useCoinBalance } from "~/hooks/useCoinBalance";
 import { useUserBets } from "~/hooks/useUserBets";
 import { buildBetHistorySummary, getBetOutcomeLabel } from "~/lib/betting-stats";
+import { formatBetTiming } from "~/lib/betting";
 
 interface BetHistoryTabProps {
   userId: string | null;
@@ -102,6 +103,7 @@ export function BetHistoryTab({ userId }: BetHistoryTabProps) {
         {bets.map((bet) => {
           const statusLabel = getBetOutcomeLabel(bet);
           const sideName = bet.side === "team1" ? bet.pool.team1Name : bet.pool.team2Name;
+          const timingLabel = formatBetTiming(bet.audit?.secondsSinceMatchStart);
 
           return (
             <div
@@ -109,8 +111,13 @@ export function BetHistoryTab({ userId }: BetHistoryTabProps) {
               className="grid gap-2 rounded bg-bg-elevated px-3 py-2 text-sm"
               style={{ gridTemplateColumns: "1.6fr 0.9fr 0.7fr 0.7fr 0.7fr 0.8fr" }}
             >
-              <span className="truncate text-text">
-                {bet.pool.team1Name} vs {bet.pool.team2Name}
+              <span className="flex min-w-0 flex-col">
+                <span className="truncate text-text">
+                  {bet.pool.team1Name} vs {bet.pool.team2Name}
+                </span>
+                {timingLabel ? (
+                  <span className="truncate text-[10px] text-text-dim">{timingLabel}</span>
+                ) : null}
               </span>
               <span className="text-right text-xs text-text-muted">{sideName}</span>
               <span className="text-right text-xs text-text-muted">{bet.amount}</span>

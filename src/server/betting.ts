@@ -7,6 +7,7 @@ import {
 import type {
   BettingPool,
   Bet,
+  BetAuditEvent,
   BetWithPool,
   BettingLeaderboardEntry,
 } from "~/lib/types";
@@ -34,6 +35,23 @@ function rowToPool(r: any): BettingPool {
   };
 }
 
+function rowToBetAuditEvent(row: any): BetAuditEvent {
+  return {
+    id: row.id,
+    betId: row.bet_id,
+    poolId: row.pool_id,
+    faceitMatchId: row.faceit_match_id,
+    userId: row.user_id,
+    side: row.side,
+    amount: row.amount,
+    betCreatedAt: row.bet_created_at,
+    matchStartedAt: row.match_started_at ?? null,
+    secondsSinceMatchStart: row.seconds_since_match_start ?? null,
+    capturedPoolStatus: row.captured_pool_status,
+    createdAt: row.created_at,
+  };
+}
+
 // ── createBettingPool ─────────────────────────────────────────
 
 export const createBettingPool = createServerFn({ method: "POST" })
@@ -56,6 +74,7 @@ export const createBettingPool = createServerFn({ method: "POST" })
       team2_name: data.team2Name,
       opens_at: opensAt,
       closes_at: closesAt,
+      match_started_at: opensAt,
     });
     // Conflict (already exists) is silently ignored
     if (error && error.code !== "23505") {
@@ -273,6 +292,17 @@ export const getUserBetHistory = createServerFn({ method: "GET" })
       .eq("user_id", userId)
       .order("created_at", { ascending: false });
 
+    const betIds = (data ?? []).map((row: any) => row.id).filter(Boolean);
+    const { data: auditRows } = betIds.length
+      ? await supabase
+          .from("bet_audit_events")
+          .select("*")
+          .in("bet_id", betIds)
+      : { data: [] };
+    const auditByBetId = new Map(
+      (auditRows ?? []).map((row: any) => [row.bet_id, rowToBetAuditEvent(row)])
+    );
+
     return (data ?? []).map((row: any) => ({
       id: row.id,
       poolId: row.pool_id,
@@ -282,5 +312,30 @@ export const getUserBetHistory = createServerFn({ method: "GET" })
       payout: row.payout,
       createdAt: row.created_at,
       pool: rowToPool(row.betting_pools),
+      audit: auditByBetId.get(row.id) ?? null,
     }));
+  });
+
+export const getBetAuditLog = createServerFn({ method: "GET" })
+  .inputValidator(
+    (input: {
+      faceitMatchId?: string;
+      userId?: string;
+      limit?: number;
+    }) => input
+  )
+  .handler(async ({ data }): Promise<BetAuditEvent[]> => {
+    const supabase = createServerSupabase();
+    const limit = Math.max(1, Math.min(data.limit ?? 100, 500));
+
+    let query = supabase.from("bet_audit_events").select("*");
+
+    if (data.faceitMatchId) {
+      query = query.eq("faceit_match_id", data.faceitMatchId);
+    } else if (data.userId) {
+      query = query.eq("user_id", data.userId);
+    }
+
+    const { data: rows } = await query.order("created_at", { ascending: false });
+    return (rows ?? []).slice(0, limit).map(rowToBetAuditEvent);
   });

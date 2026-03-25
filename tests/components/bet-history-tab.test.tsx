@@ -35,6 +35,20 @@ function makeBet(overrides: Record<string, unknown> = {}) {
       closesAt: "2026-03-24T12:05:00.000Z",
       resolvedAt: "2026-03-24T13:00:00.000Z",
     },
+    audit: {
+      id: "audit-1",
+      betId: "bet-1",
+      poolId: "pool-1",
+      faceitMatchId: "match-1",
+      userId: "user-1",
+      side: "team1",
+      amount: 100,
+      betCreatedAt: "2026-03-24T12:01:00.000Z",
+      matchStartedAt: "2026-03-24T12:00:00.000Z",
+      secondsSinceMatchStart: 60,
+      capturedPoolStatus: "OPEN",
+      createdAt: "2026-03-24T12:01:00.000Z",
+    },
     ...overrides,
   };
 }
@@ -118,6 +132,19 @@ describe("BetHistoryTab", () => {
     expect(html).toContain("Pending");
     expect(html).toContain("-90");
     expect(html).toContain(">0<");
+  });
+
+  it("renders match-relative timing when audit metadata is available", () => {
+    vi.mocked(useCoinBalance).mockReturnValue({ data: 1240 } as any);
+    vi.mocked(useUserBets).mockReturnValue({
+      data: [makeBet()],
+      isLoading: false,
+      isError: false,
+    } as any);
+
+    const html = renderToStaticMarkup(<BetHistoryTab userId="user-1" />);
+
+    expect(html).toContain("Placed 1m 00s after match start");
   });
 
   it("shows sign-in and error states clearly", () => {

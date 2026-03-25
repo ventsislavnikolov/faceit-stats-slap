@@ -366,6 +366,7 @@ export const getLiveMatches = createServerFn({ method: "GET" })
           team2_name: liveMatch.teams.faction2.name,
           opens_at: new Date(liveMatch.startedAt * 1000).toISOString(),
           closes_at: new Date(liveMatch.startedAt * 1000 + 5 * 60 * 1000).toISOString(),
+          match_started_at: new Date(liveMatch.startedAt * 1000).toISOString(),
         }).onConflict("faceit_match_id").ignore();
       }
     }
