@@ -145,14 +145,35 @@ export interface DemoPlayerAnalytics {
   nickname: string;
   teamKey: DemoTeamKey;
   tradeKills: number;
+  tradedDeaths: number;
   untradedDeaths: number;
   rws: number;
   playerId?: string;
+  steamId?: string;
   kills?: number;
   deaths?: number;
   assists?: number;
+  headshots?: number;
   adr?: number;
+  hsPercent?: number;
   damage?: number;
+  entryKills?: number;
+  entryDeaths?: number;
+  openingDuelAttempts?: number;
+  openingDuelWins?: number;
+  exitKills?: number;
+  clutchAttempts?: number;
+  clutchWins?: number;
+  lastAliveRounds?: number;
+  bombPlants?: number;
+  bombDefuses?: number;
+  utilityDamage?: number;
+  flashAssists?: number;
+  enemiesFlashed?: number;
+  kastPercent?: number;
+  rating?: number;
+  multiKills?: { threeK: number; fourK: number; ace: number };
+  killTimings?: { early: number; mid: number; late: number };
 }
 
 export interface DemoTeamAnalytics {
@@ -173,6 +194,15 @@ export interface DemoRoundAnalytics {
   isPistolRound: boolean;
   isBombRound: boolean;
   scoreAfterRound: Record<DemoTeamKey, number>;
+  tTeamKey?: DemoTeamKey;
+  ctTeamKey?: DemoTeamKey;
+  tBuyType?: string;
+  ctBuyType?: string;
+  endReason?: string | null;
+  bombPlanted?: boolean;
+  bombDefused?: boolean;
+  planterSteamId?: string | null;
+  defuserSteamId?: string | null;
 }
 
 export interface DemoMatchAnalytics {
