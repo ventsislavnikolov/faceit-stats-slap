@@ -25,7 +25,15 @@ import {
 import { filterUnsyncedHistoryItems } from "~/lib/history-sync";
 import { createServerSupabase } from "~/lib/supabase.server";
 import { getPreviousCalendarDayRange } from "~/lib/time";
-import type { LiveMatch, PlayerHistoryMatch, StatsLeaderboardResult } from "~/lib/types";
+import type {
+  DemoMatchAnalytics,
+  DemoPlayerAnalytics,
+  DemoRoundAnalytics,
+  DemoTeamAnalytics,
+  LiveMatch,
+  PlayerHistoryMatch,
+  StatsLeaderboardResult,
+} from "~/lib/types";
 import { getWebhookLiveMatchMap } from "~/server/faceit-webhooks";
 
 function getHistoryTimestamp(item: any): number | null {
@@ -407,6 +415,143 @@ export const getLiveMatches = createServerFn({ method: "GET" })
   }
 );
 
+async function fetchDemoAnalyticsForMatch(
+  supabase: ReturnType<typeof createServerSupabase>,
+  faceitMatchId: string,
+): Promise<DemoMatchAnalytics | null> {
+  // Try parsed match analytics first
+  const { data: matchRow } = await supabase
+    .from("demo_match_analytics")
+    .select("*")
+    .eq("faceit_match_id", faceitMatchId)
+    .single();
+
+  if (matchRow) {
+    const [teamsResult, playersResult, roundsResult] = await Promise.all([
+      supabase.from("demo_team_analytics").select("*").eq("faceit_match_id", faceitMatchId),
+      supabase.from("demo_player_analytics").select("*").eq("faceit_match_id", faceitMatchId),
+      supabase
+        .from("demo_round_analytics")
+        .select("*")
+        .eq("faceit_match_id", faceitMatchId)
+        .order("round_number", { ascending: true }),
+    ]);
+
+    const teams: DemoTeamAnalytics[] = (teamsResult.data ?? []).map((t: Record<string, unknown>) => ({
+      teamKey: t.team_key as "team1" | "team2",
+      name: String(t.name ?? ""),
+      side: (t.first_half_side ?? "unknown") as "CT" | "T" | "unknown",
+      roundsWon: Number(t.rounds_won ?? 0),
+      roundsLost: Number(t.rounds_lost ?? 0),
+      tradeKills: 0,
+      untradedDeaths: 0,
+      rws: 0,
+    }));
+
+    const players: DemoPlayerAnalytics[] = (playersResult.data ?? []).map(
+      (p: Record<string, unknown>) => ({
+        nickname: String(p.nickname ?? ""),
+        teamKey: p.team_key as "team1" | "team2",
+        tradeKills: Number(p.trade_kills ?? 0),
+        tradedDeaths: Number(p.traded_deaths ?? 0),
+        untradedDeaths: Number(p.untraded_deaths ?? 0),
+        rws: Number(p.rws ?? 0),
+        playerId: (p.faceit_player_id as string) ?? undefined,
+        steamId: (p.steam_id as string) ?? undefined,
+        kills: Number(p.kills ?? 0),
+        deaths: Number(p.deaths ?? 0),
+        assists: Number(p.assists ?? 0),
+        headshots: 0,
+        adr: Number(p.adr_demo ?? 0),
+        hsPercent: Number(p.hs_percent_demo ?? 0),
+        entryKills: Number(p.entry_kills ?? 0),
+        entryDeaths: Number(p.entry_deaths ?? 0),
+        openingDuelAttempts: Number(p.opening_duel_attempts ?? 0),
+        openingDuelWins: Number(p.opening_duel_wins ?? 0),
+        exitKills: Number(p.exit_kills ?? 0),
+        clutchAttempts: Number(p.clutch_attempts ?? 0),
+        clutchWins: Number(p.clutch_wins ?? 0),
+        lastAliveRounds: Number(p.last_alive_rounds ?? 0),
+        bombPlants: Number(p.bomb_plants ?? 0),
+        bombDefuses: Number(p.bomb_defuses ?? 0),
+        utilityDamage: Number(p.utility_damage_demo ?? 0),
+        flashAssists: Number(p.flash_assists_demo ?? 0),
+        enemiesFlashed: Number(p.enemies_flashed ?? 0),
+        kastPercent: Number(p.kast_percent ?? 0),
+        rating: p.rating_demo != null ? Number(p.rating_demo) : undefined,
+        multiKills: {
+          threeK: Number(p.multi_kill_3k ?? 0),
+          fourK: Number(p.multi_kill_4k ?? 0),
+          ace: Number(p.multi_kill_ace ?? 0),
+        },
+        killTimings: {
+          early: Number(p.kill_timing_early ?? 0),
+          mid: Number(p.kill_timing_mid ?? 0),
+          late: Number(p.kill_timing_late ?? 0),
+        },
+      }),
+    );
+
+    const rounds: DemoRoundAnalytics[] = (roundsResult.data ?? []).map(
+      (r: Record<string, unknown>) => ({
+        roundNumber: Number(r.round_number ?? 0),
+        winnerTeamKey: (r.winner_team_key as "team1" | "team2") ?? null,
+        winnerSide: null,
+        isPistolRound: Boolean(r.is_pistol),
+        isBombRound: Boolean(r.bomb_planted),
+        scoreAfterRound: {
+          team1: Number(r.score_team1 ?? 0),
+          team2: Number(r.score_team2 ?? 0),
+        },
+        tTeamKey: (r.t_team_key as "team1" | "team2") ?? undefined,
+        ctTeamKey: (r.ct_team_key as "team1" | "team2") ?? undefined,
+        tBuyType: String(r.t_buy_type ?? "unknown"),
+        ctBuyType: String(r.ct_buy_type ?? "unknown"),
+        endReason: (r.end_reason as string) ?? null,
+        bombPlanted: Boolean(r.bomb_planted),
+        bombDefused: Boolean(r.bomb_defused),
+      }),
+    );
+
+    return {
+      matchId: faceitMatchId,
+      sourceType: String(matchRow.demo_source_type) as "faceit_demo_url" | "manual_upload",
+      availability: "available",
+      ingestionStatus: String(matchRow.ingestion_status) as DemoMatchAnalytics["ingestionStatus"],
+      mapName: String(matchRow.map_name ?? ""),
+      totalRounds: Number(matchRow.total_rounds ?? 0),
+      teams,
+      players,
+      rounds,
+    };
+  }
+
+  // No parsed analytics — check if there's an in-progress ingestion
+  const { data: ingestion } = await supabase
+    .from("demo_ingestions")
+    .select("*")
+    .eq("faceit_match_id", faceitMatchId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .single();
+
+  if (ingestion) {
+    return {
+      matchId: faceitMatchId,
+      sourceType: String(ingestion.source_type) as "faceit_demo_url" | "manual_upload",
+      availability: "unavailable",
+      ingestionStatus: String(ingestion.status) as DemoMatchAnalytics["ingestionStatus"],
+      mapName: "",
+      totalRounds: 0,
+      teams: [],
+      players: [],
+      rounds: [],
+    };
+  }
+
+  return null;
+}
+
 export const getMatchDetails = createServerFn({ method: "GET" })
   .inputValidator((matchId: string) => matchId)
   .handler(async ({ data: matchId }) => {
@@ -457,8 +602,12 @@ export const getMatchDetails = createServerFn({ method: "GET" })
       competitionName: match.competition_name || "",
     };
 
+    const supabase = createServerSupabase();
+
+    // Fetch demo analytics (works for any match status, returns null if none)
+    const demoAnalytics = await fetchDemoAnalyticsForMatch(supabase, matchId);
+
     if (match.status === "FINISHED") {
-      const supabase = createServerSupabase();
       await supabase.from("matches").upsert(
         {
           faceit_match_id: matchId,
@@ -525,7 +674,7 @@ export const getMatchDetails = createServerFn({ method: "GET" })
       }
     }
 
-    return result;
+    return { ...result, demoAnalytics };
   });
 
 function buildLeaderboardQueueKey(matchId: string, faceitId: string): string {

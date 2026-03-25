@@ -82,6 +82,22 @@ const supabaseState = vi.hoisted(() => {
       };
     }
 
+    // Demo analytics tables — return empty results by default
+    if (table === "demo_match_analytics" || table === "demo_ingestions") {
+      return {
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            single: vi.fn(async () => ({ data: null, error: { message: "not found", code: "PGRST116" } })),
+            order: vi.fn(() => ({
+              limit: vi.fn(() => ({
+                single: vi.fn(async () => ({ data: null, error: { message: "not found", code: "PGRST116" } })),
+              })),
+            })),
+          })),
+        })),
+      };
+    }
+
     throw new Error(`Unexpected table: ${table}`);
   });
 
