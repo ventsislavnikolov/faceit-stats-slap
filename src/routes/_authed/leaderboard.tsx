@@ -86,26 +86,26 @@ const STAT_GROUPS: { key: StatGroup; label: string }[] = [
 
 const STATS_COLS: Record<
   StatGroup,
-  { key: SortKey; label: string; decimals: number; suffix?: string }[]
+  { key: SortKey; label: string; decimals: number; suffix?: string; tooltip?: string }[]
 > = {
   combat: [
-    { key: "avgImpact", label: "Impact", decimals: 1 },
-    { key: "avgKills", label: "Kills", decimals: 2 },
-    { key: "avgKd", label: "K/D", decimals: 2 },
-    { key: "avgAdr", label: "ADR", decimals: 1 },
-    { key: "winRate", label: "WIN%", decimals: 0, suffix: "%" },
-    { key: "avgHsPercent", label: "HS%", decimals: 0, suffix: "%" },
-    { key: "avgKrRatio", label: "K/R", decimals: 2 },
+    { key: "avgImpact", label: "Impact", decimals: 1, tooltip: "Composite impact rating per match" },
+    { key: "avgKills", label: "Kills", decimals: 2, tooltip: "Average kills per match" },
+    { key: "avgKd", label: "K/D", decimals: 2, tooltip: "Average Kill/Death ratio" },
+    { key: "avgAdr", label: "ADR", decimals: 1, tooltip: "Average Damage per Round" },
+    { key: "winRate", label: "WIN%", decimals: 0, suffix: "%", tooltip: "Win rate percentage" },
+    { key: "avgHsPercent", label: "HS%", decimals: 0, suffix: "%", tooltip: "Average headshot percentage" },
+    { key: "avgKrRatio", label: "K/R", decimals: 2, tooltip: "Average Kill/Round ratio" },
   ],
   entry: [
-    { key: "avgFirstKills", label: "FK", decimals: 2 },
-    { key: "avgEntryRate", label: "ER", decimals: 2 },
-    { key: "avgClutchKills", label: "CK", decimals: 2 },
-    { key: "avgSniperKills", label: "AWP", decimals: 2 },
+    { key: "avgFirstKills", label: "FK", decimals: 2, tooltip: "Average first kills per match" },
+    { key: "avgEntryRate", label: "ER", decimals: 2, tooltip: "Average entry rate — opening duel win ratio" },
+    { key: "avgClutchKills", label: "CK", decimals: 2, tooltip: "Average clutch kills per match" },
+    { key: "avgSniperKills", label: "AWP", decimals: 2, tooltip: "Average AWP kills per match" },
   ],
   utility: [
-    { key: "avgUtilityDamage", label: "UD", decimals: 0 },
-    { key: "avgEnemiesFlashed", label: "EF", decimals: 1 },
+    { key: "avgUtilityDamage", label: "UD", decimals: 0, tooltip: "Average utility damage per match" },
+    { key: "avgEnemiesFlashed", label: "EF", decimals: 1, tooltip: "Average enemies flashed per match" },
   ],
 };
 
@@ -358,12 +358,15 @@ function StatsTab({
               >
                 <span>#</span>
                 <span>Player</span>
-                <span className="text-right">GP</span>
+                <span className="text-right group/hdr relative cursor-help">
+                  GP
+                  <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-1 z-50 hidden group-hover/hdr:block whitespace-nowrap rounded bg-bg-card border border-border px-2 py-1 text-[9px] normal-case tracking-normal font-normal text-text shadow-lg">Games played</span>
+                </span>
                 {activeCols.map((col) => (
                   <button
                     key={col.key}
                     onClick={() => handleSort(col.key)}
-                    className={`text-right hover:text-text transition-colors ${
+                    className={`text-right hover:text-text transition-colors group/col relative ${
                       sortKey === col.key ? "text-accent" : ""
                     }`}
                   >
@@ -373,6 +376,11 @@ function StatsTab({
                         ? " ↓"
                         : " ↑"
                       : ""}
+                    {col.tooltip && (
+                      <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-1 z-50 hidden group-hover/col:block whitespace-nowrap rounded bg-bg-card border border-border px-2 py-1 text-[9px] normal-case tracking-normal font-normal text-text shadow-lg">
+                        {col.tooltip}
+                      </span>
+                    )}
                   </button>
                 ))}
               </div>

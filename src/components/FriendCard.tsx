@@ -49,13 +49,16 @@ export function FriendCard({ friend, isSelected, isLive, onClick }: FriendCardPr
 
       <div className="grid grid-cols-2 gap-1 mb-1.5">
         {[
-          { label: "K/D", value: friend.lifetimeKd.toFixed(2), highlight: friend.lifetimeKd >= 1.2 },
-          { label: "HS%", value: `${friend.lifetimeHs}%`, highlight: friend.lifetimeHs >= 55 },
-          { label: "ADR", value: friend.lifetimeAdr.toFixed(0), highlight: false },
-          { label: "WR", value: `${friend.winRate}%`, highlight: friend.winRate >= 55 },
+          { label: "K/D", value: friend.lifetimeKd.toFixed(2), highlight: friend.lifetimeKd >= 1.2, tooltip: "Kill/Death ratio" },
+          { label: "HS%", value: `${friend.lifetimeHs}%`, highlight: friend.lifetimeHs >= 55, tooltip: "Headshot percentage" },
+          { label: "ADR", value: friend.lifetimeAdr.toFixed(0), highlight: false, tooltip: "Average Damage per Round" },
+          { label: "WR", value: `${friend.winRate}%`, highlight: friend.winRate >= 55, tooltip: "Win rate percentage" },
         ].map((stat) => (
-          <div key={stat.label} className="bg-bg-card rounded px-1.5 py-1">
+          <div key={stat.label} className="bg-bg-card rounded px-1.5 py-1 group/stat relative cursor-help">
             <div className="text-[9px] text-text-dim uppercase">{stat.label}</div>
+            <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-full mb-1 z-50 hidden group-hover/stat:block whitespace-nowrap rounded bg-bg-card border border-border px-2 py-1 text-[9px] normal-case tracking-normal font-normal text-text shadow-lg">
+              {stat.tooltip}
+            </span>
             <div className={`text-sm font-bold ${stat.highlight ? "text-accent" : "text-text"}`}>
               {stat.value}
             </div>
