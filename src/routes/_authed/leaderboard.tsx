@@ -138,7 +138,7 @@ function StatsTab({
 }) {
   const [n, setN] = useState<HistoryMatchCount>("yesterday");
   const [days, setDays] = useState<30 | 90 | 180 | 365 | 730>(30);
-  const [queue, setQueue] = useState<"all" | "solo" | "party">("all");
+  const [queue, setQueue] = useState<"all" | "solo" | "party">("party");
   const [sortKey, setSortKey] = useState<SortKey>("avgImpact");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [statGroup, setStatGroup] = useState<StatGroup>("combat");

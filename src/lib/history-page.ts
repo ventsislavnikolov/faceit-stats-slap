@@ -55,12 +55,14 @@ export function getHistoryQueueOptions(): Array<{
   label: string;
 }> {
   return [
-    { value: "all", label: "All" },
-    { value: "solo", label: "Solo" },
     { value: "party", label: "Party" },
+    { value: "solo", label: "Solo" },
+    { value: "all", label: "All" },
   ];
 }
 
 export function normalizeHistoryQueueFilter(value: unknown): HistoryQueueFilter {
-  return value === "solo" || value === "party" || value === "all" ? value : "all";
+  return value === "solo" || value === "party" || value === "all"
+    ? value
+    : "party";
 }

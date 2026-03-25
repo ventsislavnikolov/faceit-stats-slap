@@ -31,14 +31,15 @@ describe("history page access", () => {
     expect(normalizeHistoryMatchCount(undefined)).toBe("yesterday");
   });
 
-  it("locks queue filters to all while solo and party are unsupported", () => {
+  it("defaults queue filters to party and lists party first", () => {
     expect(normalizeHistoryQueueFilter("all")).toBe("all");
     expect(normalizeHistoryQueueFilter("solo")).toBe("solo");
     expect(normalizeHistoryQueueFilter("party")).toBe("party");
+    expect(normalizeHistoryQueueFilter(undefined)).toBe("party");
     expect(getHistoryQueueOptions()).toEqual([
-      { value: "all", label: "All" },
-      { value: "solo", label: "Solo" },
       { value: "party", label: "Party" },
+      { value: "solo", label: "Solo" },
+      { value: "all", label: "All" },
     ]);
   });
 

@@ -17,7 +17,7 @@ describe("player view shell", () => {
       search: {
         player: "soavarice",
         matches: "yesterday",
-        queue: "all",
+        queue: "party",
       },
     });
 
