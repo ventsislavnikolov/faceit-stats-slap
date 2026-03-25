@@ -19,7 +19,7 @@
   "dependencies": {
     "@laihoe/demoparser2": "^0.41.1",
     "@supabase/supabase-js": "^2.99.3",
-    "@tanstack/react-query": "^5.91.3",
+    "@tanstack/react-query": "^5.95.2",
     "@tanstack/react-router": "^1.168.1",
     "@tanstack/react-start": "^1.167.2",
     "fzstd": "^0.1.1",
