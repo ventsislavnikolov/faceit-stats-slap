@@ -10,3 +10,4 @@ coverage/
 .superpowers/
 src/routeTree.gen.ts
 .vercel
+.playwright-cli/
