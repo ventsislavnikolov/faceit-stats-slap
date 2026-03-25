@@ -128,6 +128,64 @@ export function PlayerAnalyticsDetail({
             <StatBlock label="4K" value={String(d.multiKills?.fourK ?? 0)} accent={(d.multiKills?.fourK ?? 0) > 0} />
             <StatBlock label="ACE" value={String(d.multiKills?.ace ?? 0)} accent={(d.multiKills?.ace ?? 0) > 0} />
           </div>
+
+          {/* Utility thrown */}
+          <SectionLabel label="Utility thrown" />
+          <div className="grid grid-cols-6 gap-2 mb-3">
+            <StatBlock label="Smokes" value={String(d.smokesThrown ?? 0)} />
+            <StatBlock label="Flashes" value={String(d.flashesThrown ?? 0)} />
+            <StatBlock label="HEs" value={String(d.hesThrown ?? 0)} />
+            <StatBlock label="Molotovs" value={String(d.molotovsThrown ?? 0)} />
+            <StatBlock label="Util/round" value={String(d.utilityPerRound ?? 0)} />
+            <StatBlock label="Avg blind" value={`${(d.avgFlashBlindDuration ?? 0).toFixed(1)}s`} />
+          </div>
+          <div className="grid grid-cols-6 gap-2 mb-3">
+            <StatBlock label="Team flashes" value={String(d.teamFlashes ?? 0)} negative={(d.teamFlashes ?? 0) > 5} />
+            <StatBlock label="Eff. flash%" value={`${d.effectiveFlashRate ?? 0}%`} accent={(d.effectiveFlashRate ?? 0) >= 50} />
+            <StatBlock label="" value="" />
+            <StatBlock label="" value="" />
+            <StatBlock label="" value="" />
+            <StatBlock label="" value="" />
+          </div>
+
+          {/* Kill quality */}
+          <SectionLabel label="Kill quality" />
+          <div className="grid grid-cols-6 gap-2 mb-3">
+            <StatBlock label="Wallbangs" value={String(d.wallbangKills ?? 0)} accent={(d.wallbangKills ?? 0) > 0} />
+            <StatBlock label="Thru smoke" value={String(d.thrusmokeKills ?? 0)} accent={(d.thrusmokeKills ?? 0) > 0} />
+            <StatBlock label="No-scopes" value={String(d.noscopeKills ?? 0)} accent={(d.noscopeKills ?? 0) > 0} />
+            <StatBlock label="Avg dist" value={(d.avgKillDistance ?? 0).toFixed(1)} />
+            {(() => {
+              const wk = d.weaponKills ?? {};
+              const top = Object.entries(wk).sort(([,a],[,b]) => b - a).slice(0, 2);
+              return top.map(([w, c]) => (
+                <StatBlock key={w} label={w.replace(/_/g, " ")} value={String(c)} />
+              ));
+            })()}
+          </div>
+
+          {/* Side performance */}
+          <SectionLabel label="Side performance" />
+          <div className="grid grid-cols-2 gap-4 mb-3">
+            <div className="border border-border rounded p-2">
+              <div className="text-[9px] text-text-dim uppercase mb-1">CT side</div>
+              <div className="grid grid-cols-4 gap-1 text-[10px]">
+                <div><div className="text-text-dim">K</div><div className="text-text font-medium">{d.ctKills ?? 0}</div></div>
+                <div><div className="text-text-dim">D</div><div className="text-text font-medium">{d.ctDeaths ?? 0}</div></div>
+                <div><div className="text-text-dim">ADR</div><div className="text-text font-medium">{(d.ctAdr ?? 0).toFixed(1)}</div></div>
+                <div><div className="text-text-dim">RTG</div><div className="text-accent font-medium">{(d.ctRating ?? 0).toFixed(2)}</div></div>
+              </div>
+            </div>
+            <div className="border border-border rounded p-2">
+              <div className="text-[9px] text-text-dim uppercase mb-1">T side</div>
+              <div className="grid grid-cols-4 gap-1 text-[10px]">
+                <div><div className="text-text-dim">K</div><div className="text-text font-medium">{d.tKills ?? 0}</div></div>
+                <div><div className="text-text-dim">D</div><div className="text-text font-medium">{d.tDeaths ?? 0}</div></div>
+                <div><div className="text-text-dim">ADR</div><div className="text-text font-medium">{(d.tAdr ?? 0).toFixed(1)}</div></div>
+                <div><div className="text-text-dim">RTG</div><div className="text-accent font-medium">{(d.tRating ?? 0).toFixed(2)}</div></div>
+              </div>
+            </div>
+          </div>
         </>
       )}
 
