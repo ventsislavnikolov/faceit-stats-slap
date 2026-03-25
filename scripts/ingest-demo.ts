@@ -11,8 +11,8 @@ import {
   saveDemoAnalytics,
 } from "~/server/demo-analytics-store";
 
-const MATCH_ID = "1-d01c76f4-6b94-4091-8ae1-b32148d4d8c3";
-const DEMO_PATH = "/Users/ventsislav.nikolov/Downloads/1-d01c76f4-6b94-4091-8ae1-b32148d4d8c3-1-1.dem.zst";
+const MATCH_ID = process.argv[2] || "1-a53ffc73-83d0-4e0a-9515-831cbfbd1e24";
+const DEMO_PATH = process.argv[3] || "/Users/ventsislav.nikolov/Downloads/1-a53ffc73-83d0-4e0a-9515-831cbfbd1e24-1-1.dem.zst";
 
 async function main() {
   const supabase = createClient(
@@ -30,7 +30,7 @@ async function main() {
   const { id: ingestionId } = await upsertDemoIngestion(supabase as any, {
     faceitMatchId: MATCH_ID,
     sourceType: "manual_upload",
-    fileName: "1-d01c76f4-6b94-4091-8ae1-b32148d4d8c3-1-1.dem.zst",
+    fileName: DEMO_PATH.split("/").pop() ?? "unknown.dem.zst",
     fileSizeBytes: fileSize,
     fileSha256: sha256,
     compression: "zst",

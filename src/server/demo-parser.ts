@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { extname } from "node:path";
+import { execFileSync } from "node:child_process";
 import { decompress } from "fzstd";
 import { parseEvents, parseHeader, parsePlayerInfo } from "@laihoe/demoparser2";
 import type { DemoMatchAnalytics, DemoAnalyticsSourceType } from "~/lib/types";
@@ -174,10 +175,18 @@ function asArray<T>(value: unknown): T[] {
 }
 
 function readDemoBuffer(filePath: string) {
-  const fileBytes = readFileSync(filePath);
   const isCompressed = extname(filePath).toLowerCase() === ".zst";
-  if (!isCompressed) return fileBytes;
-  return Buffer.from(decompress(fileBytes));
+  if (!isCompressed) return readFileSync(filePath);
+
+  // Try native zstd first (handles large files), fall back to fzstd
+  try {
+    return execFileSync("zstd", ["-d", "--stdout", filePath], {
+      maxBuffer: 2 * 1024 * 1024 * 1024,
+    });
+  } catch {
+    const fileBytes = readFileSync(filePath);
+    return Buffer.from(decompress(fileBytes));
+  }
 }
 
 function normalizePlayers(players: RawPlayerInfo[]): ParsedDemoPlayer[] {
