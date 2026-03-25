@@ -16,8 +16,7 @@ export function LoginForm({ redirectTo = "/" }: { redirectTo?: string }) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const inputClass =
-    "bg-bg-elevated border border-border rounded px-3 py-2 text-text focus:border-accent outline-none";
+  const inputClass = "bg-bg-elevated border border-border rounded px-3 py-2 text-text focus:border-accent outline-none";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

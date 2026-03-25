@@ -17,8 +17,7 @@ export function ForgotPasswordForm() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const inputClass =
-    "bg-bg-elevated border border-border rounded px-3 py-2 text-text focus:border-accent outline-none";
+  const inputClass = "bg-bg-elevated border border-border rounded px-3 py-2 text-text focus:border-accent outline-none";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

@@ -805,10 +805,13 @@ export const syncAllPlayerHistory = createServerFn({ method: "POST" })
   .inputValidator((input: { targetPlayerId: string; playerIds: string[]; n: number; days: 30 | 90 | 180 | 365 | 730 }) => input)
   .handler(async ({ data: { targetPlayerId, playerIds, n, days } }): Promise<void> => {
     await syncPlayerHistoryWindow(targetPlayerId, n, days);
-    if (playerIds.length === 0) return;
+    const uniqueFriendIds = [...new Set(playerIds)].filter(
+      (faceitId) => faceitId !== targetPlayerId
+    );
+    if (uniqueFriendIds.length === 0) return;
 
     const sampleSize = Math.max(n, 100);
-    for (const faceitId of playerIds) {
+    for (const faceitId of uniqueFriendIds) {
       await syncPlayerRecentHistory(faceitId, sampleSize);
     }
   });

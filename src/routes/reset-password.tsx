@@ -6,9 +6,7 @@ const subscribeToRecovery = createIsomorphicFn()
   .server(() => ({ unsubscribe: () => {} }))
   .client(async (onRecovery: () => void) => {
     const { getSupabaseClient } = await import("~/lib/supabase.client");
-    const {
-      data: { subscription },
-    } = getSupabaseClient().auth.onAuthStateChange((event) => {
+    const { data: { subscription } } = getSupabaseClient().auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY") onRecovery();
     });
     return { unsubscribe: () => subscription.unsubscribe() };
@@ -76,8 +74,7 @@ function ResetPasswordPage() {
     setSuccess(true);
   }
 
-  const inputClass =
-    "bg-bg-elevated border border-border rounded px-3 py-2 text-text focus:border-accent outline-none";
+  const inputClass = "bg-bg-elevated border border-border rounded px-3 py-2 text-text focus:border-accent outline-none";
 
   if (success) {
     return (
