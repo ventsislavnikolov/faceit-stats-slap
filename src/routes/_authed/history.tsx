@@ -177,11 +177,6 @@ function HistoryPage() {
         onValueChange={setInput}
         onSubmit={handleSearch}
         placeholder="FACEIT nickname, profile link, player UUID, or match ID..."
-        status={player ? (
-          <span>
-            Showing history for <span className="text-accent">{player.nickname}</span>
-          </span>
-        ) : null}
         error={resolveError ? "Player not found." : null}
       />
 

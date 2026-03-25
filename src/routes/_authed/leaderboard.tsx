@@ -522,16 +522,6 @@ function LeaderboardPage() {
         onSubmit={handleSearch}
         placeholder="FACEIT nickname, profile link, player UUID, or match ID..."
         isSearching={searchLoading}
-        status={
-          searchResult ? (
-            <span>
-              Showing leaderboard for{" "}
-              <span className="text-accent">
-                {searchResult.player.nickname}
-              </span>
-            </span>
-          ) : null
-        }
         error={searchError ? "Player not found." : null}
       />
 
