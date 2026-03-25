@@ -205,7 +205,6 @@ function buildPlayerRow(demoMatchId: string, matchId: string, player: DemoPlayer
     assists: player.assists ?? 0,
     adr_demo: player.adr ?? 0,
     hs_percent_demo: player.hsPercent ?? 0,
-    rating_demo: null,
     entry_kills: player.entryKills ?? 0,
     entry_deaths: player.entryDeaths ?? 0,
     opening_duel_attempts: player.openingDuelAttempts ?? 0,
@@ -231,6 +230,34 @@ function buildPlayerRow(demoMatchId: string, matchId: string, player: DemoPlayer
     multi_kill_3k: player.multiKills?.threeK ?? 0,
     multi_kill_4k: player.multiKills?.fourK ?? 0,
     multi_kill_ace: player.multiKills?.ace ?? 0,
+    // Utility mastery
+    smokes_thrown: player.smokesThrown ?? 0,
+    flashes_thrown: player.flashesThrown ?? 0,
+    hes_thrown: player.hesThrown ?? 0,
+    molotovs_thrown: player.molotovsThrown ?? 0,
+    utility_per_round: player.utilityPerRound ?? 0,
+    avg_flash_blind_duration: player.avgFlashBlindDuration ?? 0,
+    team_flashes: player.teamFlashes ?? 0,
+    effective_flash_rate: player.effectiveFlashRate ?? 0,
+    // Kill quality
+    wallbang_kills: player.wallbangKills ?? 0,
+    thrusmoke_kills: player.thrusmokeKills ?? 0,
+    noscope_kills: player.noscopeKills ?? 0,
+    avg_kill_distance: player.avgKillDistance ?? 0,
+    weapon_kills: JSON.stringify(player.weaponKills ?? {}),
+    // Economy
+    total_spend: player.totalSpend ?? 0,
+    economy_efficiency: player.economyEfficiency ?? 0,
+    weapon_rounds: JSON.stringify(player.weaponRounds ?? {}),
+    // Side-split
+    ct_kills: player.ctKills ?? 0,
+    ct_deaths: player.ctDeaths ?? 0,
+    ct_adr: player.ctAdr ?? 0,
+    ct_rating: player.ctRating ?? 0,
+    t_kills: player.tKills ?? 0,
+    t_deaths: player.tDeaths ?? 0,
+    t_adr: player.tAdr ?? 0,
+    t_rating: player.tRating ?? 0,
   };
 }
 
@@ -252,6 +279,8 @@ function buildRoundRow(demoMatchId: string, matchId: string, round: DemoRoundAna
     bomb_defused: round.bombDefused ?? false,
     planter_steam_id: round.planterSteamId ?? null,
     defuser_steam_id: round.defuserSteamId ?? null,
+    t_equip_value: round.tEquipValue ?? 0,
+    ct_equip_value: round.ctEquipValue ?? 0,
   };
 }
 
