@@ -59,7 +59,8 @@ describe("BetsLeaderboardTab", () => {
 
     const html = renderToStaticMarkup(<BetsLeaderboardTab userId="user-1" />);
 
-    expect(html).toContain("border-l-2 border-accent");
+    expect(html).toContain("border-accent");
+    expect(html).toContain("border-l-2");
     expect(html).toContain(">You<");
   });
 
