@@ -116,7 +116,7 @@ export function AppLayout() {
             className="font-bold text-accent text-base hover:opacity-80"
             to="/"
           >
-            FaceitFriends<span className="text-text">Live</span>
+            FACEIT Stats<span className="text-text">Slap</span>
           </Link>
           <div className="flex gap-3 text-xs">
             <Link

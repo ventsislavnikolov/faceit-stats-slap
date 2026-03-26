@@ -4,6 +4,8 @@ package-lock.json
 .output/
 dist/
 coverage/
+.coverage-virtual/
+test-results/
 .env.local
 .env*.local
 .vinxi/
@@ -11,3 +13,4 @@ coverage/
 src/routeTree.gen.ts
 .vercel
 .playwright-cli/
+playwright-report
