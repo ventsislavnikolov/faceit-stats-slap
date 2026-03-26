@@ -428,6 +428,7 @@ export interface PartySessionData {
   awards: SessionAward[];
   date: string;
   demoMatches: Record<string, DemoMatchAnalytics>;
+  eloMap: Record<string, number>;
   lossCount: number;
   mapDistribution: MapStats[];
   matches: PlayerHistoryMatch[];

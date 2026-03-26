@@ -154,6 +154,7 @@ function LastPartyPage() {
               <MapDistribution maps={session.mapDistribution} />
               <MatchAccordion
                 demoMatches={session.demoMatches}
+                eloMap={session.eloMap}
                 matches={session.matches}
                 matchStats={session.matchStats}
                 partyMemberIds={session.partyMembers.map((p) => p.faceitId)}

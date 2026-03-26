@@ -1480,6 +1480,7 @@ export const getPartySessionStats = createServerFn({ method: "GET" })
       matches: partyMatches.sort((a, b) => a.startedAt - b.startedAt),
       matchStats: allMatchStats,
       demoMatches,
+      eloMap,
       allHaveDemo,
       partyMembers,
       aggregateStats,

@@ -2,6 +2,10 @@ import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { getBanterLine } from "~/lib/banter";
 import { MAP_COLORS, mapDisplayName } from "~/lib/last-party";
+import {
+  computeImpactScore,
+  type SharedStatsLeaderboardRow,
+} from "~/lib/stats-leaderboard";
 import type {
   DemoMatchAnalytics,
   MatchPlayerStats,
@@ -10,15 +14,41 @@ import type {
 
 interface MatchAccordionProps {
   demoMatches: Record<string, DemoMatchAnalytics>;
+  eloMap: Record<string, number>;
   matches: PlayerHistoryMatch[];
   matchStats: Record<string, MatchPlayerStats[]>;
   partyMemberIds: string[];
+}
+
+function getPlayerImpact(p: MatchPlayerStats, elo: number): number {
+  const row: SharedStatsLeaderboardRow = {
+    matchId: "",
+    playedAt: null,
+    faceitId: p.playerId,
+    nickname: p.nickname,
+    elo,
+    kills: p.kills,
+    kdRatio: p.kdRatio,
+    adr: p.adr,
+    hsPercent: p.hsPercent,
+    krRatio: p.krRatio,
+    win: p.result,
+    firstKills: p.firstKills,
+    clutchKills: p.clutchKills,
+    utilityDamage: p.utilityDamage,
+    enemiesFlashed: p.enemiesFlashed,
+    entryCount: p.entryCount,
+    entryWins: p.entryWins,
+    sniperKills: p.sniperKills,
+  };
+  return computeImpactScore(row);
 }
 
 export function MatchAccordion({
   matches,
   matchStats,
   demoMatches,
+  eloMap,
   partyMemberIds,
 }: MatchAccordionProps) {
   const [openMatchId, setOpenMatchId] = useState<string | null>(null);
@@ -34,7 +64,11 @@ export function MatchAccordion({
           const isOpen = openMatchId === match.matchId;
           const players = (matchStats[match.matchId] ?? [])
             .filter((p) => partySet.has(p.playerId))
-            .sort((a, b) => b.kills - a.kills);
+            .sort(
+              (a, b) =>
+                getPlayerImpact(b, eloMap[b.playerId] ?? 1225) -
+                getPlayerImpact(a, eloMap[a.playerId] ?? 1225)
+            );
           const hasDemoData = match.matchId in demoMatches;
           const demoPlayers = hasDemoData
             ? demoMatches[match.matchId].players
@@ -78,6 +112,9 @@ export function MatchAccordion({
                       <thead>
                         <tr className="text-[9px] text-text-dim">
                           <th className="py-1 text-left font-normal">Player</th>
+                          <th className="px-1.5 py-1 text-center font-normal">
+                            Impact
+                          </th>
                           <th className="px-1.5 py-1 text-center font-normal">
                             K
                           </th>
@@ -132,6 +169,12 @@ export function MatchAccordion({
                             >
                               <td className="py-1 font-semibold text-text">
                                 {p.nickname}
+                              </td>
+                              <td className="px-1.5 text-center font-bold text-accent">
+                                {getPlayerImpact(
+                                  p,
+                                  eloMap[p.playerId] ?? 1225
+                                ).toFixed(1)}
                               </td>
                               <td className="px-1.5 text-center text-text-muted">
                                 {p.kills}
