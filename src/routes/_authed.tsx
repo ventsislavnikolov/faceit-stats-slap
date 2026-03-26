@@ -91,6 +91,7 @@ export function AppLayout() {
     pathSegments.length === 1 &&
     pathname !== "/history" &&
     pathname !== "/leaderboard" &&
+    pathname !== "/last-party" &&
     pathname !== "/sign-in";
   const navLinkBaseClass = "border-b pb-0.5";
   const navLinkActiveClass = `${navLinkBaseClass} text-accent border-accent`;
