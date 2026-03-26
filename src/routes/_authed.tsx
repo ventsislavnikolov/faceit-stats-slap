@@ -18,10 +18,10 @@ const subscribeToAuthSession = createIsomorphicFn()
       const { getSupabaseClient } = await import("~/lib/supabase.client");
       const cleanup = await initializeAuthSession(
         getSupabaseClient(),
-        onSession
+        onSession,
       );
       return { unsubscribe: cleanup };
-    }
+    },
   );
 
 const doSignOut = createIsomorphicFn()
@@ -37,7 +37,7 @@ export const Route = createFileRoute("/_authed")({
 
 function getCurrentNickname(
   pathname: string,
-  search: Record<string, unknown>
+  search: Record<string, unknown>,
 ): string | null {
   if (pathname === "/history" || pathname === "/leaderboard") {
     return typeof search.player === "string" && search.player.length > 0
@@ -116,7 +116,7 @@ export function AppLayout() {
             className="font-bold text-accent text-base hover:opacity-80"
             to="/"
           >
-            FACEIT Stats<span className="text-text">Slap</span>
+            FACEIT Stats <span className="text-text">Slap</span>
           </Link>
           <div className="flex gap-3 text-xs">
             <Link
