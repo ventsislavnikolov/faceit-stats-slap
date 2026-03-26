@@ -76,6 +76,42 @@ const ROAST_LINES = [
   "{name} was out there building character instead of stats",
 ];
 
+const SESSION_CARRY_LINES = [
+  "{name} owned the whole session, not just one map",
+  "{name} was the main character all night",
+  "{name} carried the party like it was their birthday",
+  "The squad owes {name} dinner after that session",
+  "{name} was built different today — every single map",
+  "{name} didn't just show up, they showed out all session",
+  "{name} was on a heater that lasted hours",
+  "{name} turned a gaming session into a masterclass",
+  "Somebody check {name}'s contract — they went overtime on frags",
+  "{name} was the reason the lobby kept queuing",
+  "{name} made every map look like their home turf",
+  "{name} ran the session like a shift manager at the frag factory",
+  "{name} put the team on their back for the whole night",
+  "{name} was farming MVPs across multiple time zones",
+  "{name} turned the session into a personal highlight tape",
+];
+
+const SESSION_ROAST_LINES = [
+  "{name} was consistently inconsistent all session",
+  "{name} attended every map but participated in none",
+  "{name} was the session's designated spectator",
+  "{name} brought their C game and it still wasn't enough",
+  "At least {name} was there for morale... all night long",
+  "{name} set a new personal worst — across multiple maps",
+  "{name} was the anchor of the team, and not the good kind",
+  "{name} contributed loading screen energy all session",
+  "The squad carried {name} like checked luggage",
+  "{name} played every map like it was their first time on a mouse",
+  "{name} was on a cold streak that could freeze the server room",
+  "{name} was the reason the party almost stopped queuing",
+  "{name} got their money's worth from the respawn button",
+  "{name} had a long night — unfortunately so did the team",
+  "{name} was speedrunning the bottom of every scoreboard",
+];
+
 function hashMatchId(matchId: string): number {
   let hash = 0;
   for (let i = 0; i < matchId.length; i++) {
@@ -96,4 +132,15 @@ export function getBanterLine(
 
 export function getBanterCatalogSize(type: BanterType): number {
   return (type === "carry" ? CARRY_LINES : ROAST_LINES).length;
+}
+
+export function getSessionBanterLine(
+  type: BanterType,
+  name: string,
+  playerId: string,
+  date: string
+): string {
+  const lines = type === "carry" ? SESSION_CARRY_LINES : SESSION_ROAST_LINES;
+  const index = hashMatchId(playerId + date + type) % lines.length;
+  return lines[index].replace("{name}", name);
 }
