@@ -1,3 +1,27 @@
+# [1.1.0](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.0.0...v1.1.0) (2026-03-26)
+
+
+### Bug Fixes
+
+* **last-party:** exclude /last-party from Friends active state ([ad925b4](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/ad925b46460a5c6b059380599d79e0015a032d95))
+
+
+### Features
+
+* **last-party:** add aggregation, awards, and map distribution logic ([5297376](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/529737686412d552bd8dcfd58bcc20e7796d2339))
+* **last-party:** add date helpers ([6c4e02e](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/6c4e02e6d3149d9c34f7e902460ffa29b6186ea2))
+* **last-party:** add getPartySessionStats server function ([eb1671f](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/eb1671f88036929687bbcce9552860d611f0b3b2))
+* **last-party:** add header, awards, and stats table components ([6daa2cd](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/6daa2cd397b254a38070ccd701204d8b18882786))
+* **last-party:** add Impact column sorted by default ([4e3e5f8](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/4e3e5f89b94ad40c810b07fa10264828865fd928))
+* **last-party:** add Impact column to per-match accordion ([c4de448](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/c4de448ee32e2285898d28571f464938909f6a7e))
+* **last-party:** add map distribution and match accordion components ([dc311cf](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/dc311cf7a7296480fa02e36e5d66ac04848b301f))
+* **last-party:** add navigation link ([627834e](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/627834eb6f16b2665745301b079afcea8dd8ded3))
+* **last-party:** add route page with full session recap UI ([f32c66e](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/f32c66e7be6cdb9ab97bb0a1c82902af4bf60388))
+* **last-party:** add session analyst radar chart component ([fa70966](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/fa70966d3823624a065fce8ce2ebdfa1bde9c5a1))
+* **last-party:** add session data types ([3d84f31](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/3d84f31a323501da11aa788942ff947771d213f5))
+* **last-party:** add session-level banter lines ([05584a3](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/05584a30566cfaa1aa8e6da17251fbf11b67fd54))
+* **last-party:** add usePartySession React Query hook ([b807409](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/b8074097089b4c8a21ece690bd8de9ec26bc09ad))
+
 # 1.0.0 (2026-03-25)
 
 
