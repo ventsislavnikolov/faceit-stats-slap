@@ -18,10 +18,10 @@ const subscribeToAuthSession = createIsomorphicFn()
       const { getSupabaseClient } = await import("~/lib/supabase.client");
       const cleanup = await initializeAuthSession(
         getSupabaseClient(),
-        onSession,
+        onSession
       );
       return { unsubscribe: cleanup };
-    },
+    }
   );
 
 const doSignOut = createIsomorphicFn()
@@ -37,9 +37,13 @@ export const Route = createFileRoute("/_authed")({
 
 function getCurrentNickname(
   pathname: string,
-  search: Record<string, unknown>,
+  search: Record<string, unknown>
 ): string | null {
-  if (pathname === "/history" || pathname === "/leaderboard") {
+  if (
+    pathname === "/history" ||
+    pathname === "/leaderboard" ||
+    pathname === "/last-party"
+  ) {
     return typeof search.player === "string" && search.player.length > 0
       ? search.player
       : null;
@@ -79,6 +83,9 @@ export function AppLayout() {
   const leaderboardHref = currentNickname
     ? getPlayerViewHref("leaderboard", currentNickname)
     : { to: "/leaderboard", search: { player: undefined } };
+  const lastPartyHref = currentNickname
+    ? getPlayerViewHref("last-party", currentNickname)
+    : { to: "/last-party", search: { player: undefined } };
   const pathSegments = pathname.split("/").filter(Boolean);
   const isFriendsActive =
     pathSegments.length === 1 &&
@@ -146,6 +153,15 @@ export function AppLayout() {
               to={historyHref.to as never}
             >
               History
+            </Link>
+            <Link
+              activeProps={{ className: navLinkActiveClass }}
+              inactiveProps={{ className: navLinkInactiveClass }}
+              params={lastPartyHref.params as never}
+              search={lastPartyHref.search as never}
+              to={lastPartyHref.to as never}
+            >
+              Last Party
             </Link>
           </div>
         </div>

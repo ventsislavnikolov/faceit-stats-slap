@@ -1,17 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { buildRichDemoAnalytics } from "~/server/demo-analytics-builder";
 import type {
-  ParsedDemoBlind,
   ParsedDemoBombEvent,
   ParsedDemoFile,
-  ParsedDemoGrenadeDetonate,
   ParsedDemoHurt,
-  ParsedDemoItemPurchase,
   ParsedDemoKill,
   ParsedDemoPlayer,
   ParsedDemoRound,
   ParsedDemoRoundTiming,
-  ParsedDemoWeaponFire,
 } from "~/server/demo-parser";
 
 // ---------------------------------------------------------------------------

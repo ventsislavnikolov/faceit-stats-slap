@@ -1,4 +1,4 @@
-export type PlayerView = "friends" | "history" | "leaderboard";
+export type PlayerView = "friends" | "history" | "leaderboard" | "last-party";
 
 export interface PlayerViewHref {
   params?: Record<string, string>;
@@ -40,6 +40,13 @@ export function getPlayerViewHref(
           player: nickname,
         },
       };
+    case "last-party":
+      return {
+        to: "/last-party",
+        search: {
+          player: nickname,
+        },
+      };
   }
 }
 
@@ -54,6 +61,7 @@ export function getPlayerViewTabs({
     { view: "friends", label: "Friends" },
     { view: "history", label: "History" },
     { view: "leaderboard", label: "Leaderboard" },
+    { view: "last-party", label: "Last Party" },
   ];
 
   return views.map(({ view, label }) => ({
