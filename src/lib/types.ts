@@ -378,3 +378,60 @@ export interface LeaderboardEntry {
   nickname: string;
   userId: string;
 }
+
+export interface AggregatePlayerStats {
+  avgAdr: number;
+  avgEconomyEfficiency?: number;
+  avgEnemiesFlashed?: number;
+  avgEntryRate?: number;
+  avgHsPercent: number;
+  avgKast?: number;
+  avgKd: number;
+  avgKrRatio: number;
+  // Demo-only (present when allHaveDemo)
+  avgRating?: number;
+  avgRws?: number;
+  avgTradeKills?: number;
+  avgUtilityDamage?: number;
+  faceitId: string;
+  gamesPlayed: number;
+  nickname: string;
+  totalClutchWins?: number;
+  totalMvps: number;
+  totalPentaKills: number;
+  totalQuadroKills: number;
+  totalTripleKills: number;
+  wins: number;
+}
+
+export interface SessionAward {
+  banter?: string;
+  id: string;
+  recipient: string;
+  requiresDemo: boolean;
+  title: string;
+  value: string;
+}
+
+export interface MapStats {
+  gamesPlayed: number;
+  losses: number;
+  map: string;
+  winRate: number;
+  wins: number;
+}
+
+export interface PartySessionData {
+  aggregateStats: Record<string, AggregatePlayerStats>;
+  allHaveDemo: boolean;
+  awards: SessionAward[];
+  date: string;
+  demoMatches: Record<string, DemoMatchAnalytics>;
+  lossCount: number;
+  mapDistribution: MapStats[];
+  matches: PlayerHistoryMatch[];
+  matchStats: Record<string, MatchPlayerStats[]>;
+  partyMembers: Array<Pick<FaceitPlayer, "faceitId" | "nickname">>;
+  totalHoursPlayed: number;
+  winCount: number;
+}
