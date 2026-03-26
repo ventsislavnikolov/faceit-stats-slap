@@ -32,6 +32,8 @@ import type {
   DemoRoundAnalytics,
   DemoTeamAnalytics,
   LiveMatch,
+  MatchPlayerStats,
+  PartySessionData,
   PlayerHistoryMatch,
   StatsLeaderboardResult,
 } from "~/lib/types";
@@ -1299,3 +1301,171 @@ export const getPlayerStats = createServerFn({ method: "GET" })
       return result;
     }
   );
+
+export const getPartySessionStats = createServerFn({ method: "GET" })
+  .inputValidator((input: { playerId: string; date: string }) => input)
+  .handler(async ({ data: { playerId, date } }): Promise<PartySessionData> => {
+    const { getCalendarDayRange } = await import("~/lib/time");
+    const { computeAggregateStats, computeAwards, computeMapDistribution } =
+      await import("~/lib/last-party");
+
+    // 1. Resolve friend list
+    const targetFriendIds = await fetchPlayer(playerId)
+      .then((player) => player.friendsIds)
+      .catch(() => null);
+
+    // 2. Fetch all matches for the date
+    const { startUnix, endUnix } = getCalendarDayRange(date);
+    const history = await fetchPlayerHistoryRange({
+      faceitId: playerId,
+      startUnix,
+      endUnix,
+    });
+
+    // 3. Fetch stats for each match and classify queue
+    const partyMatches: PlayerHistoryMatch[] = [];
+    const allMatchStats: Record<string, MatchPlayerStats[]> = {};
+
+    for (let i = 0; i < history.length; i += 5) {
+      if (i > 0) {
+        await sleep(BATCH_DELAY_MS);
+      }
+      const batch = history.slice(i, i + 5);
+      const settled = await Promise.allSettled(
+        batch.map(async (h: any) => {
+          const stats = await fetchMatchStats(h.match_id);
+          const round = stats.rounds?.[0];
+          if (!round) {
+            return null;
+          }
+
+          const queueInfo = classifyKnownFriendQueue({
+            targetPlayerId: playerId,
+            targetFriendIds,
+            teams: round.teams || [],
+          });
+
+          if (queueInfo.queueBucket !== "party") {
+            return null;
+          }
+
+          // Collect all players' stats for this match
+          const matchPlayers: MatchPlayerStats[] = [];
+          let targetPlayerMatch: PlayerHistoryMatch | null = null;
+
+          for (const team of round.teams || []) {
+            for (const player of team.players || []) {
+              const parsed = parseMatchStats(player);
+              matchPlayers.push(parsed);
+              if (parsed.playerId === playerId) {
+                targetPlayerMatch = {
+                  matchId: h.match_id,
+                  map: round.round_stats?.Map || "unknown",
+                  score: round.round_stats?.Score || "",
+                  startedAt: h.started_at,
+                  finishedAt: h.finished_at,
+                  queueBucket: queueInfo.queueBucket,
+                  knownQueuedFriendCount: queueInfo.knownQueuedFriendCount,
+                  knownQueuedFriendIds: queueInfo.knownQueuedFriendIds,
+                  partySize: queueInfo.partySize,
+                  ...parsed,
+                };
+              }
+            }
+          }
+
+          return targetPlayerMatch
+            ? { match: targetPlayerMatch, players: matchPlayers }
+            : null;
+        })
+      );
+
+      for (const result of settled) {
+        if (result.status === "fulfilled" && result.value) {
+          partyMatches.push(result.value.match);
+          allMatchStats[result.value.match.matchId] = result.value.players;
+        }
+      }
+    }
+
+    // 4. Collect party member IDs (union across all matches)
+    const partyMemberIdSet = new Set<string>();
+    for (const m of partyMatches) {
+      partyMemberIdSet.add(playerId);
+      for (const fid of m.knownQueuedFriendIds) {
+        partyMemberIdSet.add(fid);
+      }
+    }
+    const partyMemberIds = [...partyMemberIdSet];
+
+    // 5. Fetch demo analytics for each match
+    const supabase = createServerSupabase();
+    const demoMatches: Record<string, DemoMatchAnalytics> = {};
+    for (const m of partyMatches) {
+      const demo = await fetchDemoAnalyticsForMatch(supabase, m.matchId);
+      if (demo && demo.ingestionStatus === "parsed") {
+        demoMatches[m.matchId] = demo;
+      }
+    }
+    const allHaveDemo =
+      partyMatches.length > 0 &&
+      partyMatches.every((m) => m.matchId in demoMatches);
+
+    // 6. Resolve party member nicknames
+    const nicknameMap = new Map<string, string>();
+    for (const stats of Object.values(allMatchStats)) {
+      for (const p of stats) {
+        if (partyMemberIdSet.has(p.playerId)) {
+          nicknameMap.set(p.playerId, p.nickname);
+        }
+      }
+    }
+    const partyMembers = partyMemberIds.map((id) => ({
+      faceitId: id,
+      nickname: nicknameMap.get(id) ?? id,
+    }));
+
+    // 7. Compute aggregates, awards, map distribution
+    const matchIds = partyMatches.map((m) => m.matchId);
+    const aggregateStats = computeAggregateStats({
+      matchIds,
+      matchStats: allMatchStats,
+      partyMemberIds,
+      demoMatches,
+      allHaveDemo,
+    });
+    const mapDistribution = computeMapDistribution(partyMatches);
+    const awards = computeAwards({
+      aggregateStats,
+      allHaveDemo,
+      mapDistribution,
+      playerId,
+      date,
+    });
+
+    // 8. Compute totals
+    const winCount = partyMatches.filter((m) => m.result).length;
+    const lossCount = partyMatches.length - winCount;
+    const totalSeconds = partyMatches.reduce((sum, m) => {
+      if (m.startedAt && m.finishedAt) {
+        return sum + (m.finishedAt - m.startedAt);
+      }
+      return sum;
+    }, 0);
+    const totalHoursPlayed = Math.round((totalSeconds / 3600) * 10) / 10;
+
+    return {
+      date,
+      matches: partyMatches.sort((a, b) => a.startedAt - b.startedAt),
+      matchStats: allMatchStats,
+      demoMatches,
+      allHaveDemo,
+      partyMembers,
+      aggregateStats,
+      awards,
+      mapDistribution,
+      totalHoursPlayed,
+      winCount,
+      lossCount,
+    };
+  });
