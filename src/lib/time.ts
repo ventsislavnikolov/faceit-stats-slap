@@ -92,3 +92,53 @@ export function getPreviousCalendarDayRange(
     endUnix: Math.floor(todayStart.getTime() / 1000),
   };
 }
+
+export function getYesterdayDateString(
+  now: Date = new Date(),
+  timeZone = APP_TIME_ZONE
+): string {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(now);
+  const year = parts.find((p) => p.type === "year")!.value;
+  const month = parts.find((p) => p.type === "month")!.value;
+  const day = parts.find((p) => p.type === "day")!.value;
+  const todayMs = Date.UTC(Number(year), Number(month) - 1, Number(day), 12);
+  const yesterday = new Date(todayMs - 24 * 60 * 60 * 1000);
+  return yesterday.toISOString().slice(0, 10);
+}
+
+export function getCalendarDayRange(
+  dateString: string,
+  timeZone = APP_TIME_ZONE
+): {
+  start: Date;
+  end: Date;
+  startIso: string;
+  endIso: string;
+  startUnix: number;
+  endUnix: number;
+} {
+  const [yearStr, monthStr, dayStr] = dateString.split("-");
+  const year = Number(yearStr);
+  const month = Number(monthStr);
+  const day = Number(dayStr);
+
+  const dayStart = zonedMidnightToUtc({ year, month, day, timeZone });
+
+  const nextDayProbe = new Date(dayStart.getTime() + 36 * 60 * 60 * 1000);
+  const nextDayParts = getDatePartsInTimeZone(nextDayProbe, timeZone);
+  const dayEnd = zonedMidnightToUtc({ ...nextDayParts, timeZone });
+
+  return {
+    start: dayStart,
+    end: dayEnd,
+    startIso: dayStart.toISOString(),
+    endIso: dayEnd.toISOString(),
+    startUnix: Math.floor(dayStart.getTime() / 1000),
+    endUnix: Math.floor(dayEnd.getTime() / 1000),
+  };
+}
