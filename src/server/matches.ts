@@ -1309,10 +1309,13 @@ export const getPartySessionStats = createServerFn({ method: "GET" })
     const { computeAggregateStats, computeAwards, computeMapDistribution } =
       await import("~/lib/last-party");
 
-    // 1. Resolve friend list
-    const targetFriendIds = await fetchPlayer(playerId)
-      .then((player) => player.friendsIds)
-      .catch(() => null);
+    // 1. Resolve friend list and elo
+    const targetPlayer = await fetchPlayer(playerId).catch(() => null);
+    const targetFriendIds = targetPlayer?.friendsIds ?? null;
+    const eloMap: Record<string, number> = {};
+    if (targetPlayer) {
+      eloMap[playerId] = targetPlayer.elo;
+    }
 
     // 2. Fetch all matches for the date
     const { startUnix, endUnix } = getCalendarDayRange(date);
@@ -1398,6 +1401,23 @@ export const getPartySessionStats = createServerFn({ method: "GET" })
     }
     const partyMemberIds = [...partyMemberIdSet];
 
+    // 4b. Fetch elo for party members we don't have yet
+    const missingEloIds = partyMemberIds.filter((id) => !(id in eloMap));
+    for (let i = 0; i < missingEloIds.length; i += 5) {
+      if (i > 0) {
+        await sleep(BATCH_DELAY_MS);
+      }
+      const batch = missingEloIds.slice(i, i + 5);
+      const results = await Promise.allSettled(
+        batch.map((id) => fetchPlayer(id))
+      );
+      for (const r of results) {
+        if (r.status === "fulfilled") {
+          eloMap[r.value.faceitId] = r.value.elo;
+        }
+      }
+    }
+
     // 5. Fetch demo analytics for each match
     const supabase = createServerSupabase();
     const demoMatches: Record<string, DemoMatchAnalytics> = {};
@@ -1433,6 +1453,7 @@ export const getPartySessionStats = createServerFn({ method: "GET" })
       partyMemberIds,
       demoMatches,
       allHaveDemo,
+      eloMap,
     });
     const mapDistribution = computeMapDistribution(partyMatches);
     const awards = computeAwards({

@@ -163,7 +163,7 @@ function getEntryRate(row: SharedStatsLeaderboardRow): number {
   return clamp(entryWins / entryCount, 0, 1);
 }
 
-function computeImpactScore(row: SharedStatsLeaderboardRow): number {
+export function computeImpactScore(row: SharedStatsLeaderboardRow): number {
   const baseline = getImpactBaseline(Number(row.elo) || 0);
   const cappedKd = Math.min(Math.max(Number(row.kdRatio) || 0, 0), 2.5);
   const cappedAdr = Math.min(Math.max(Number(row.adr) || 0, 0), 140);

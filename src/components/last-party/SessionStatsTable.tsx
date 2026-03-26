@@ -20,11 +20,13 @@ export function SessionStatsTable({
   stats,
   allHaveDemo,
 }: SessionStatsTableProps) {
-  const entries = Object.values(stats).sort((a, b) => {
-    const aMetric = allHaveDemo ? (a.avgRating ?? 0) : a.avgKd;
-    const bMetric = allHaveDemo ? (b.avgRating ?? 0) : b.avgKd;
-    return bMetric - aMetric;
-  });
+  const entries = Object.values(stats).sort(
+    (a, b) =>
+      b.avgImpact - a.avgImpact ||
+      (allHaveDemo
+        ? (b.avgRating ?? 0) - (a.avgRating ?? 0)
+        : b.avgKd - a.avgKd)
+  );
 
   if (entries.length === 0) {
     return null;
@@ -40,6 +42,7 @@ export function SessionStatsTable({
           <thead>
             <tr className="text-[9px] text-text-dim">
               <th className="py-1 text-left font-normal">Player</th>
+              <th className="px-2 py-1 text-center font-normal">Impact</th>
               {allHaveDemo && (
                 <>
                   <th className="px-2 py-1 text-center font-normal">RTG</th>
@@ -69,6 +72,9 @@ export function SessionStatsTable({
             {entries.map((e) => (
               <tr className="border-border border-t" key={e.faceitId}>
                 <td className="py-1.5 font-semibold text-text">{e.nickname}</td>
+                <td className="px-2 text-center font-bold text-accent">
+                  {e.avgImpact.toFixed(1)}
+                </td>
                 {allHaveDemo && (
                   <>
                     <td

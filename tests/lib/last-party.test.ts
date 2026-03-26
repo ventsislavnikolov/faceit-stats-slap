@@ -73,6 +73,7 @@ describe("computeAggregateStats", () => {
     expect(result.p1.avgKd).toBeCloseTo(1.0);
     expect(result.p1.avgAdr).toBeCloseTo(80);
     expect(result.p1.gamesPlayed).toBe(2);
+    expect(result.p1.avgImpact).toBeGreaterThan(0);
   });
 });
 

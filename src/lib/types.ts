@@ -385,6 +385,7 @@ export interface AggregatePlayerStats {
   avgEnemiesFlashed?: number;
   avgEntryRate?: number;
   avgHsPercent: number;
+  avgImpact: number;
   avgKast?: number;
   avgKd: number;
   avgKrRatio: number;

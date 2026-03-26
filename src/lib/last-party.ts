@@ -1,4 +1,8 @@
 import { getSessionBanterLine } from "~/lib/banter";
+import {
+  computeImpactScore,
+  type SharedStatsLeaderboardRow,
+} from "~/lib/stats-leaderboard";
 import type {
   AggregatePlayerStats,
   DemoMatchAnalytics,
@@ -29,9 +33,16 @@ export function computeAggregateStats(params: {
   partyMemberIds: string[];
   demoMatches: Record<string, DemoMatchAnalytics>;
   allHaveDemo: boolean;
+  eloMap?: Record<string, number>;
 }): Record<string, AggregatePlayerStats> {
-  const { matchIds, matchStats, partyMemberIds, demoMatches, allHaveDemo } =
-    params;
+  const {
+    matchIds,
+    matchStats,
+    partyMemberIds,
+    demoMatches,
+    allHaveDemo,
+    eloMap = {},
+  } = params;
   const result: Record<string, AggregatePlayerStats> = {};
 
   for (const pid of partyMemberIds) {
@@ -63,11 +74,40 @@ export function computeAggregateStats(params: {
     const n = playerMatches.length;
     const nickname = playerMatches[0].nickname;
 
+    const elo = eloMap[pid] ?? 1225;
+    const impactScores = playerMatches.map((m) => {
+      const row: SharedStatsLeaderboardRow = {
+        matchId: "",
+        playedAt: null,
+        faceitId: pid,
+        nickname: m.nickname,
+        elo,
+        kills: m.kills,
+        kdRatio: m.kdRatio,
+        adr: m.adr,
+        hsPercent: m.hsPercent,
+        krRatio: m.krRatio,
+        win: m.result,
+        firstKills: m.firstKills,
+        clutchKills: m.clutchKills,
+        utilityDamage: m.utilityDamage,
+        enemiesFlashed: m.enemiesFlashed,
+        entryCount: m.entryCount,
+        entryWins: m.entryWins,
+        sniperKills: m.sniperKills,
+      };
+      return computeImpactScore(row);
+    });
+
     const base: AggregatePlayerStats = {
       faceitId: pid,
       nickname,
       gamesPlayed: n,
       wins: playerMatches.filter((m) => m.result).length,
+      avgImpact:
+        Math.round(
+          (impactScores.reduce((s, v) => s + v, 0) / impactScores.length) * 10
+        ) / 10,
       avgKd: playerMatches.reduce((s, m) => s + m.kdRatio, 0) / n,
       avgAdr: playerMatches.reduce((s, m) => s + m.adr, 0) / n,
       avgHsPercent: playerMatches.reduce((s, m) => s + m.hsPercent, 0) / n,
