@@ -7,17 +7,19 @@ A new route `/last-party` that shows a comprehensive, entertainment-focused reca
 ## Input
 
 - **Player search**: Nickname, UUID, or profile link (reuses `PlayerSearchHeader`)
-- **Date picker**: Calendar single-day selector, defaults to yesterday
+- **Date picker**: Calendar single-day selector, defaults to yesterday. Uses `react-day-picker` for accessible keyboard navigation and ARIA support. The selected date is a `YYYY-MM-DD` string interpreted in `APP_TIME_ZONE` (Europe/Sofia), consistent with `getPreviousCalendarDayRange`.
 - No queue filter — this page is exclusively for party matches
 
 ## Data Flow
 
 1. Resolve player via existing `resolvePlayer` / `fetchPlayerByNickname`
-2. Fetch all matches for that player on the selected date (using `fetchPlayerHistoryRange` with start/end unix timestamps for the chosen day)
-3. Filter to party matches only (`queueBucket === "party"`, i.e. 3+ known friends)
-4. For each match, fetch full stats + check Supabase for demo analytics
-5. Resolve friend list to identify party members
-6. **Demo prioritization**: If ALL matches have parsed demo data, use demo stats as the primary data source for aggregates, awards, and per-match display. Fall back to FACEIT stats only when some matches lack demos.
+2. Resolve friend list via `searchAndLoadFriends` to get the player's FACEIT friends
+3. Fetch all matches for that player on the selected date (using `fetchPlayerHistoryRange` internally within `src/server/matches.ts`, with start/end unix timestamps computed from the selected date in `APP_TIME_ZONE`)
+4. Classify each match using `classifyKnownFriendQueue` with the resolved friend list — filter to party matches only (`queueBucket === "party"`, i.e. player + 2+ known friends on the same team, per `PARTY_FRIEND_THRESHOLD`)
+5. For each party match, fetch per-match stats for all players via `fetchMatchStats` (batched, lazy-loaded on accordion expand for performance) + check Supabase for demo analytics via `fetchDemoAnalyticsForMatch`
+6. **Demo prioritization**: If ALL party matches have parsed demo data (`ingestionStatus === "parsed"`), use demo stats as the primary data source for aggregates, awards, and per-match display. Fall back to FACEIT stats only when some matches lack demos.
+
+**Note**: `fetchPlayerHistoryRange` and `fetchDemoAnalyticsForMatch` are private helpers in `src/server/matches.ts`. The new `getPartySessionStats` server function should be co-located in the same file to access them directly.
 
 ## Page Layout
 
@@ -27,7 +29,7 @@ A new route `/last-party` that shows a comprehensive, entertainment-focused reca
 - Total party matches played
 - Win/Loss record (e.g. "5W - 2L")
 - Total hours played
-- Win/loss streak indicator (if applicable)
+- Longest win/loss streak within the session
 
 ### 2. Awards Section
 
@@ -40,7 +42,7 @@ The showpiece of the page. Fun superlatives awarded across all matches in the se
 | Party MVP | Highest avg K/D (or Rating if demo) | Session carry banter |
 | Party Anchor | Lowest avg K/D (or Rating if demo) | Session roast banter |
 | Headshot Machine | Highest HS% | — |
-| The Wall | Highest ADR | — |
+| Damage Dealer | Highest ADR | — |
 | Map Specialist | Best win rate on a specific map (only if 2+ maps played) | — |
 
 **Demo-only awards (shown when ALL matches have demo data):**
@@ -53,6 +55,8 @@ The showpiece of the page. Fun superlatives awarded across all matches in the se
 | Clutch God | Most clutch wins |
 | Flash Demon | Most enemies flashed |
 | Economy King | Best damage per $1000 spent |
+
+**Tiebreaker**: Ties broken by alphabetical nickname order (ascending) for deterministic results.
 
 Awards use session-level banter lines for MVP and Anchor. Per-match banters are shown in the accordion section below.
 
@@ -82,7 +86,7 @@ All party members' averaged stats across the session.
 Each match as a collapsible row:
 
 **Collapsed**: Map badge, score, W/L indicator, match duration
-**Expanded**:
+**Expanded** (stats fetched lazily on expand for performance):
 - Full stats table for all party members in that match
 - If demo exists for that match: show advanced columns inline (Rating, RWS, KAST, TK, UD)
 - Carry banter (top fragger) + Roast banter (bottom fragger) using existing deterministic banter system
@@ -90,21 +94,28 @@ Each match as a collapsible row:
 
 ### 6. Session Analyst (only when ALL matches have demo data)
 
-- Combined radar chart comparing all party members across the session (axes: Kills, ADR, KAST, HS%, Entry kills, Trade kills)
+- Combined radar chart comparing all party members across the session (axes: Kills, ADR, KAST, HS%, Entry kills, Trade kills). Uses Recharts (already available via `AnalystDashboard`).
 - Team-compare style aggregates: total trade kills, total utility damage, avg KAST%, avg rating
 - Economy overview: avg spend efficiency across the session
+
+## States
+
+- **Loading**: Skeleton placeholders for header + awards + table while fetching session data
+- **Error**: "Player not found" or "Failed to load session data" with retry button (same pattern as history page)
+- **Empty**: "No party matches found on this date" message with suggestion to try another date
+- **Partial loading**: Session header and aggregate stats load first; per-match accordion details load lazily on expand
 
 ## Components
 
 ### New Components
 
-- `LastPartyHeader` — Session summary (date, W/L, hours)
+- `LastPartyHeader` — Session summary (date, W/L, hours, streak)
 - `PartyAwards` — Awards section with superlatives
 - `SessionStatsTable` — Aggregate stats table (handles demo/no-demo columns)
 - `MapDistribution` — Map breakdown visual
-- `MatchAccordion` — Per-match expandable rows with stats + banter
-- `SessionAnalyst` — Radar charts and team aggregates (demo-only)
-- `DatePicker` — Calendar single-day selector
+- `MatchAccordion` — Per-match expandable rows with stats + banter (lazy-loads per-match details)
+- `SessionAnalyst` — Radar charts and team aggregates (demo-only, uses Recharts)
+- `DatePicker` — Calendar single-day selector using `react-day-picker` library for accessibility (keyboard navigation, ARIA labels, screen reader support)
 
 ### Reused Components
 
@@ -115,20 +126,24 @@ Each match as a collapsible row:
 
 ### New Banter Lines
 
-Session-level banter lines for Party MVP and Party Anchor (separate from per-match banters). These are triggered by session aggregate performance, not individual match performance.
+Session-level banter lines for Party MVP and Party Anchor (separate from per-match banters). These are triggered by session aggregate performance, not individual match performance. Hash seed for deterministic selection: `playerId + date` (e.g. `"abc123-2026-03-25" + "carry"`), ensuring the same session always produces the same banter.
 
 ## Server Functions
 
 ### New
 
-- `getPartySessionStats(playerId, dateStart, dateEnd)` — Fetches all matches in date range, filters to party only, aggregates stats, fetches demo data where available
-- Returns: `{ matches: PlayerHistoryMatch[], demoMatches: Map<matchId, DemoMatchAnalytics>, allHaveDemo: boolean, partyMembers: string[], aggregateStats: AggregateStats }`
+- `getPartySessionStats(playerId, date)` — Defined in `src/server/matches.ts` alongside existing private helpers. Fetches all matches in date range, resolves friend list, classifies queue buckets, filters to party only, aggregates stats, fetches demo data where available.
+- Returns: `{ matches: PlayerHistoryMatch[], demoMatches: Record<string, DemoMatchAnalytics>, allHaveDemo: boolean, partyMembers: Pick<FaceitPlayer, "faceitId" | "nickname">[], aggregateStats: Record<string, AggregatePlayerStats>, awards: SessionAward[], mapDistribution: MapStats[], totalHoursPlayed: number, winCount: number, lossCount: number }`
 
-### Reused
+### Internal helpers used (private, co-located in matches.ts)
 
-- `resolvePlayer` — Player resolution
 - `fetchPlayerHistoryRange` — Fetch matches in date range
 - `fetchDemoAnalyticsForMatch` — Demo data per match
+- `classifyKnownFriendQueue` — Party classification
+
+### Reused (exported)
+
+- `resolvePlayer` — Player resolution
 - `searchAndLoadFriends` — Friend list resolution
 
 ## Types
@@ -137,20 +152,15 @@ Session-level banter lines for Party MVP and Party Anchor (separate from per-mat
 interface PartySessionData {
   date: string
   matches: PlayerHistoryMatch[]
-  demoMatches: Map<string, DemoMatchAnalytics>
+  demoMatches: Record<string, DemoMatchAnalytics>
   allHaveDemo: boolean
-  partyMembers: PartyMember[]
-  aggregateStats: Map<string, AggregatePlayerStats>
+  partyMembers: Pick<FaceitPlayer, "faceitId" | "nickname">[]
+  aggregateStats: Record<string, AggregatePlayerStats>
   awards: SessionAward[]
   mapDistribution: MapStats[]
   totalHoursPlayed: number
   winCount: number
   lossCount: number
-}
-
-interface PartyMember {
-  faceitId: string
-  nickname: string
 }
 
 interface AggregatePlayerStats {
@@ -200,21 +210,32 @@ interface MapStats {
 ```typescript
 // src/routes/_authed/last-party.tsx
 export const Route = createFileRoute("/_authed/last-party")({
-  validateSearch: (search) => ({
-    player: search.player as string | undefined,
-    date: search.date as string | undefined,  // YYYY-MM-DD format
+  validateSearch: (search: Record<string, unknown>) => ({
+    player:
+      typeof search.player === "string" && search.player.length > 0
+        ? search.player
+        : undefined,
+    date:
+      typeof search.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(search.date)
+        ? search.date
+        : undefined,
   }),
 })
 ```
 
 ## Navigation
 
-Add "Last Party" link to the navigation bar in `_authed.tsx`, alongside Friends, Leaderboard, History.
+Add "Last Party" link to the navigation bar in `_authed.tsx`, following the same pattern as `historyHref` and `leaderboardHref`:
+
+- Construct `lastPartyHref` using `getCurrentNickname` to pre-fill `?player=` when a player is in context
+- Update `getCurrentNickname` to recognize the `/last-party` path
+- Active-state styling follows the existing `isActive` pattern for nav links
 
 ## Edge Cases
 
 - **No party matches on selected date**: Show empty state message "No party matches found on this date"
-- **Only 1 match**: Awards still shown but some (Map Specialist) hidden
+- **Only 1 match**: Awards still shown but Map Specialist hidden
 - **Player not found**: Same error handling as history page
 - **Demo data partially available**: Use FACEIT stats for aggregates, show demo indicator per match in accordion, hide Session Analyst and demo-only awards
 - **All friends left mid-session**: Party members list is union of all friends across all matches (not intersection)
+- **URL sharing**: `/last-party?player=foo&date=2026-03-25` works for any user, but party classification depends on the searched player's friend list (not the viewer's). This is expected behavior — you're viewing that player's party session.
