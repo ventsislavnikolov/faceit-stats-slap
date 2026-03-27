@@ -59,9 +59,9 @@ export function getPlayerViewTabs({
 }): PlayerViewTab[] {
   const views: Array<{ view: PlayerView; label: string }> = [
     { view: "friends", label: "Friends" },
+    { view: "last-party", label: "Last Party" },
     { view: "history", label: "History" },
     { view: "leaderboard", label: "Leaderboard" },
-    { view: "last-party", label: "Last Party" },
   ];
 
   return views.map(({ view, label }) => ({

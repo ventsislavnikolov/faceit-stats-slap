@@ -43,9 +43,9 @@ describe("player view shell", () => {
       }))
     ).toEqual([
       { label: "Friends", isActive: false, isDisabled: true },
+      { label: "Last Party", isActive: false, isDisabled: true },
       { label: "History", isActive: true, isDisabled: true },
       { label: "Leaderboard", isActive: false, isDisabled: true },
-      { label: "Last Party", isActive: false, isDisabled: true },
     ]);
   });
 
@@ -57,9 +57,9 @@ describe("player view shell", () => {
       }).map((tab) => tab.view)
     ).toEqual([
       "friends",
+      "last-party",
       "history",
       "leaderboard",
-      "last-party",
     ] satisfies PlayerView[]);
   });
 });
