@@ -25,7 +25,7 @@ export function BettingPanel({
 }: BettingPanelProps) {
   const queryClient = useQueryClient();
   const [selectedSide, setSelectedSide] = useState<BetSide | null>(null);
-  const [amount, setAmount] = useState(50);
+  const amount = 10;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState("");
@@ -185,26 +185,12 @@ export function BettingPanel({
         })}
       </div>
 
-      {/* Amount input */}
+      {/* Bet info */}
       {isOpen && (
         <div className="flex items-center gap-2">
-          <input
-            className="w-20 rounded border border-border bg-bg-elevated px-2 py-1 text-text text-xs outline-none focus:border-accent"
-            max={Math.min(500, userCoins)}
-            min={10}
-            onChange={(e) =>
-              setAmount(
-                Math.max(
-                  10,
-                  Math.min(500, Number.parseInt(e.target.value) || 10)
-                )
-              )
-            }
-            type="number"
-            value={amount}
-          />
           <span className="text-[10px] text-text-dim">
-            Balance: <span className="text-text">{userCoins}</span>
+            Bet: <span className="text-text">{amount} coins</span> · Balance:{" "}
+            <span className="text-text">{userCoins}</span>
           </span>
           {selectedSide && potentialPayout > 0 && (
             <span className="ml-auto text-[10px] text-text-dim">
