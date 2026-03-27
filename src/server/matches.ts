@@ -429,12 +429,19 @@ export const getLiveMatches = createServerFn({ method: "GET" })
       const matchAgeSeconds =
         Math.floor(Date.now() / 1000) - liveMatch.startedAt;
       if (matchAgeSeconds <= 5 * 60) {
-        await supabase
-          .from("betting_pools")
-          .insert({
+        const f1Friends = liveMatch.teams.faction1.roster
+          .filter((p) => liveMatch.friendIds.includes(p.playerId))
+          .map((p) => p.nickname);
+        const f2Friends = liveMatch.teams.faction2.roster
+          .filter((p) => liveMatch.friendIds.includes(p.playerId))
+          .map((p) => p.nickname);
+        const team1Label = f1Friends[0] || "Opponents";
+        const team2Label = f2Friends[0] || "Opponents";
+        await supabase.from("betting_pools").upsert(
+          {
             faceit_match_id: liveMatch.matchId,
-            team1_name: liveMatch.teams.faction1.name,
-            team2_name: liveMatch.teams.faction2.name,
+            team1_name: team1Label,
+            team2_name: team2Label,
             opens_at: new Date(liveMatch.startedAt * 1000).toISOString(),
             closes_at: new Date(
               liveMatch.startedAt * 1000 + 5 * 60 * 1000
@@ -442,9 +449,9 @@ export const getLiveMatches = createServerFn({ method: "GET" })
             match_started_at: new Date(
               liveMatch.startedAt * 1000
             ).toISOString(),
-          })
-          .onConflict("faceit_match_id")
-          .ignore();
+          },
+          { onConflict: "faceit_match_id" }
+        );
       }
     }
 
