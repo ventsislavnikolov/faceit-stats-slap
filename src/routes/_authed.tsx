@@ -190,6 +190,16 @@ export function AppLayout() {
                 >
                   Leaderboard
                 </Link>
+                <Link
+                  activeProps={{ className: mobileNavLinkActive }}
+                  inactiveProps={{ className: mobileNavLinkInactive }}
+                  onClick={() => setMenuOpen(false)}
+                  params={historyHref.params as never}
+                  search={historyHref.search as never}
+                  to={historyHref.to as never}
+                >
+                  History
+                </Link>
                 {isSignedIn && (
                   <Link
                     activeProps={{ className: mobileNavLinkActive }}
@@ -201,16 +211,6 @@ export function AppLayout() {
                     Bets
                   </Link>
                 )}
-                <Link
-                  activeProps={{ className: mobileNavLinkActive }}
-                  inactiveProps={{ className: mobileNavLinkInactive }}
-                  onClick={() => setMenuOpen(false)}
-                  params={historyHref.params as never}
-                  search={historyHref.search as never}
-                  to={historyHref.to as never}
-                >
-                  History
-                </Link>
 
                 <div className="my-1 border-border border-t" />
 
@@ -282,6 +282,15 @@ export function AppLayout() {
             >
               Leaderboard
             </Link>
+            <Link
+              activeProps={{ className: desktopNavLinkActive }}
+              inactiveProps={{ className: desktopNavLinkInactive }}
+              params={historyHref.params as never}
+              search={historyHref.search as never}
+              to={historyHref.to as never}
+            >
+              History
+            </Link>
             {isSignedIn && (
               <Link
                 activeProps={{ className: desktopNavLinkActive }}
@@ -292,15 +301,6 @@ export function AppLayout() {
                 Bets
               </Link>
             )}
-            <Link
-              activeProps={{ className: desktopNavLinkActive }}
-              inactiveProps={{ className: desktopNavLinkInactive }}
-              params={historyHref.params as never}
-              search={historyHref.search as never}
-              to={historyHref.to as never}
-            >
-              History
-            </Link>
           </div>
         </div>
 
