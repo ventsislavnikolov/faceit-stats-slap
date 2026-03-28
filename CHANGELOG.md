@@ -1,3 +1,10 @@
+## [1.6.1](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.6.0...v1.6.1) (2026-03-28)
+
+
+### Bug Fixes
+
+* **ui:** make datetime-local calendar icon white ([e14c59b](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/e14c59ba4d9d325a64cbf84cb211e98e1cb4823d))
+
 # [1.6.0](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.5.0...v1.6.0) (2026-03-28)
 
 
