@@ -1,3 +1,10 @@
+# [1.6.0](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.5.0...v1.6.0) (2026-03-28)
+
+
+### Features
+
+* **betting:** structured prize with skin image auto-fetch ([bd62f24](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/bd62f24d617b482fa5f2f4233b6e30b50fb34282))
+
 # [1.5.0](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.4.0...v1.5.0) (2026-03-28)
 
 
