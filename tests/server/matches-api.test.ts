@@ -7,7 +7,7 @@ import {
   getPlayerStats,
   syncAllPlayerHistory,
 } from "~/server/matches";
-import { runWithStartContext } from "../../node_modules/.pnpm/@tanstack+start-storage-context@1.166.15/node_modules/@tanstack/start-storage-context/dist/esm/index.js";
+import { runWithStartContext } from "../../node_modules/.pnpm/@tanstack+start-storage-context@1.166.20/node_modules/@tanstack/start-storage-context/dist/esm/index.js";
 
 const faceitMocks = vi.hoisted(() => ({
   fetchPlayer: vi.fn(),
@@ -36,6 +36,7 @@ const supabaseState = vi.hoisted(() => {
       ignore: bettingPoolIgnore,
     })),
   }));
+  const bettingPoolUpsert = vi.fn(async () => ({ data: null, error: null }));
   const rpc = vi.fn(async () => ({ data: null, error: null }));
 
   let stalePools: Array<{ faceit_match_id: string }> = [];
@@ -85,6 +86,7 @@ const supabaseState = vi.hoisted(() => {
     if (table === "betting_pools") {
       return {
         insert: bettingPoolInsert,
+        upsert: bettingPoolUpsert,
         select: bettingPoolsSelect,
       };
     }
@@ -126,6 +128,7 @@ const supabaseState = vi.hoisted(() => {
     matchPlayerStatsUpsert,
     matchPlayerStatsSelectIn,
     bettingPoolInsert,
+    bettingPoolUpsert,
     bettingPoolIgnore,
     bettingPoolsSelectIn,
     rpc,
@@ -147,6 +150,7 @@ const supabaseState = vi.hoisted(() => {
       matchPlayerStatsSelect.mockClear();
       matchPlayerStatsSelectIn.mockClear();
       bettingPoolInsert.mockClear();
+      bettingPoolUpsert.mockClear();
       bettingPoolIgnore.mockClear();
       bettingPoolsSelectIn.mockClear();
       rpc.mockClear();
@@ -1226,7 +1230,7 @@ describe("getLiveMatches", () => {
       "p2-match",
       "p1-match",
     ]);
-    expect(supabaseState.bettingPoolInsert).toHaveBeenCalledTimes(1);
+    expect(supabaseState.bettingPoolUpsert).toHaveBeenCalledTimes(1);
   });
 
   it("falls back to webhook friend ids when the fetched roster does not contain them", async () => {
@@ -1412,7 +1416,7 @@ describe("getLiveMatches", () => {
       friendIds: ["p2"],
     });
     expect(supabaseState.matchesUpsert).toHaveBeenCalledTimes(2);
-    expect(supabaseState.bettingPoolInsert).toHaveBeenCalledTimes(1);
+    expect(supabaseState.bettingPoolUpsert).toHaveBeenCalledTimes(1);
     expect(supabaseState.rpc).toHaveBeenCalledWith("resolve_pool", {
       p_faceit_match_id: "stale-finished",
       p_winning_team: "team1",

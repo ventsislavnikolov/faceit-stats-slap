@@ -77,7 +77,7 @@ export function BetsLeaderboardTab({ userId }: BetsLeaderboardTabProps) {
             <span
               className={`truncate font-bold ${isCurrentUser ? "text-accent" : "text-text"}`}
             >
-              {isCurrentUser ? "You" : entry.nickname}
+              {entry.nickname}
             </span>
             <span
               className={`text-right font-semibold text-xs ${

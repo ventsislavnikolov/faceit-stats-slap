@@ -1046,13 +1046,14 @@ export const getStatsLeaderboard = createServerFn({ method: "GET" })
     }): Promise<StatsLeaderboardResult> => {
       const supabase = createServerSupabase();
 
+      const allIds = [...new Set([targetPlayerId, ...playerIds])];
       const { data: friendRows } =
-        playerIds.length === 0
+        allIds.length === 0
           ? { data: [] }
           : await supabase
               .from("tracked_friends")
               .select("faceit_id, nickname, elo")
-              .in("faceit_id", playerIds);
+              .in("faceit_id", allIds);
 
       const friendMap = new Map(
         (friendRows || []).map((f: any) => [

@@ -60,7 +60,7 @@ describe("BetsLeaderboardTab", () => {
 
     expect(html).toContain("border-accent");
     expect(html).toContain("border-l-2");
-    expect(html).toContain(">You<");
+    expect(html).toContain(">alpha<");
   });
 
   it("shows clear loading, error, and empty states", () => {

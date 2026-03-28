@@ -5,7 +5,6 @@ import { PageSectionTabs } from "~/components/PageSectionTabs";
 import { PlayerSearchHeader } from "~/components/PlayerSearchHeader";
 import { useStatsLeaderboard } from "~/hooks/useStatsLeaderboard";
 import { useSyncPlayerHistory } from "~/hooks/useSyncPlayerHistory";
-import { MY_FACEIT_ID } from "~/lib/constants";
 import { resolveFaceitSearchTarget } from "~/lib/faceit-search";
 import {
   getHistoryMatchCountOptions,
@@ -378,7 +377,7 @@ function StatsTab({
         style={{ minWidth: leaderboardMinWidth }}
       >
         {entries.map((entry, i) => {
-          const isMe = entry.faceitId === MY_FACEIT_ID;
+          const isMe = entry.faceitId === targetPlayerId;
           return (
             <div
               className={`grid items-center gap-2 rounded px-3 py-2 text-sm ${isMe ? "border-accent border-l-2 bg-accent/10" : "bg-bg-elevated"}`}
@@ -392,7 +391,7 @@ function StatsTab({
                 <span
                   className={`truncate font-bold ${isMe ? "text-accent" : "text-text"}`}
                 >
-                  {isMe ? "You" : entry.nickname}
+                  {entry.nickname}
                 </span>
                 {entry.elo > 0 && (
                   <span className="shrink-0 text-[10px] text-text-dim">
