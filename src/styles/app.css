@@ -6,8 +6,9 @@
     scrollbar-width: thin;
   }
 
-  input[type="date"]::-webkit-calendar-picker-indicator {
-    filter: invert(0.7);
+  input[type="date"]::-webkit-calendar-picker-indicator,
+  input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
   }
 }
 
