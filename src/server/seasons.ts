@@ -64,6 +64,7 @@ export const getActiveSeason = createServerFn({ method: "GET" }).handler(
           return rowToSeason(activated);
         }
       }
+      return rowToSeason(upcoming);
     }
 
     return null;
