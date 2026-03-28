@@ -342,7 +342,14 @@ export interface Season {
   endsAt: string;
   id: string;
   name: string;
-  prizes: { place: number; description: string }[];
+  prizes: {
+    description: string;
+    float?: string;
+    imageUrl?: string;
+    place: number;
+    skinName?: string;
+    wear?: string;
+  }[];
   startsAt: string;
   status: SeasonStatus;
 }

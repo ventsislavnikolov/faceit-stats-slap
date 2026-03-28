@@ -89,19 +89,44 @@ export function SeasonLeaderboardTab({
       </div>
 
       {season.prizes.length > 0 && (
-        <div className="flex flex-col gap-2">
-          <div className="text-[10px] text-text-dim uppercase tracking-wider">
-            Prizes
-          </div>
+        <div className="flex flex-col gap-3">
           {season.prizes.map((prize) => (
             <div
-              className="flex items-center gap-3 rounded bg-bg-elevated px-3 py-2 text-sm"
+              className="relative overflow-hidden rounded-lg border border-accent/30 bg-gradient-to-r from-accent/10 via-bg-elevated to-accent/5 p-4"
               key={prize.place}
             >
-              <span className="font-bold text-accent text-xs">
-                #{prize.place}
-              </span>
-              <span className="text-text">{prize.description}</span>
+              <div className="flex items-center gap-4">
+                {prize.imageUrl && (
+                  <div className="shrink-0">
+                    <img
+                      alt={prize.skinName ?? prize.description}
+                      className="h-24 w-auto object-contain drop-shadow-[0_0_8px_rgba(80,250,123,0.3)]"
+                      src={prize.imageUrl}
+                    />
+                  </div>
+                )}
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">🏆</span>
+                    <span className="font-bold text-[10px] text-accent uppercase tracking-wider">
+                      1st Place Prize
+                    </span>
+                  </div>
+                  <div className="font-bold text-lg text-text">
+                    {prize.skinName ?? prize.description}
+                  </div>
+                  {(prize.wear || prize.float) && (
+                    <div className="flex items-center gap-2 text-text-muted text-xs">
+                      {prize.wear && (
+                        <span className="rounded bg-accent/15 px-1.5 py-0.5 font-bold text-accent">
+                          {prize.wear}
+                        </span>
+                      )}
+                      {prize.float && <span>Float: {prize.float}</span>}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           ))}
         </div>
