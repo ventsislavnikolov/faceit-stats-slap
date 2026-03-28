@@ -1,12 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { createIsomorphicFn } from "@tanstack/react-start";
 import { useEffect, useRef, useState } from "react";
-import { BetsLeaderboardTab } from "~/components/BetsLeaderboardTab";
-import {
-  PageSectionTabs,
-  shouldRenderPageSectionTabs,
-} from "~/components/PageSectionTabs";
+import { PageSectionTabs } from "~/components/PageSectionTabs";
 import { PlayerSearchHeader } from "~/components/PlayerSearchHeader";
 import { useStatsLeaderboard } from "~/hooks/useStatsLeaderboard";
 import { useSyncPlayerHistory } from "~/hooks/useSyncPlayerHistory";
@@ -17,11 +12,6 @@ import {
   getHistoryQueueOptions,
   type HistoryMatchCount,
 } from "~/lib/history-page";
-import {
-  getLeaderboardTabs,
-  type LeaderboardTab,
-  normalizeLeaderboardTab,
-} from "~/lib/leaderboard-page";
 import {
   getStatsLeaderboardEmptyStateCopy,
   getStatsLeaderboardSummaryCopy,
@@ -34,33 +24,12 @@ import {
 import type { StatsLeaderboardEntry } from "~/lib/types";
 import { searchAndLoadFriends } from "~/server/friends";
 
-const getClientSession = createIsomorphicFn()
-  .server(() => null)
-  .client(async () => {
-    const { getSupabaseClient } = await import("~/lib/supabase.client");
-    const {
-      data: { session },
-    } = await getSupabaseClient().auth.getSession();
-    return session;
-  });
-
 export const Route = createFileRoute("/_authed/leaderboard")({
   validateSearch: (search: Record<string, unknown>) => ({
     player: (search.player as string) || undefined,
-    tab: search.tab === "bets" ? "bets" : "stats",
   }),
   component: LeaderboardPage,
 });
-
-export function shouldRenderLeaderboardBetsTab(params: {
-  authResolved: boolean;
-  isSignedIn: boolean;
-  selectedTab: LeaderboardTab;
-}): boolean {
-  return (
-    params.authResolved && params.isSignedIn && params.selectedTab === "bets"
-  );
-}
 
 type SortKey =
   | "avgImpact"
@@ -211,7 +180,7 @@ function StatsTab({
   hasSearchTarget: boolean;
   isResolvingTarget: boolean;
 }) {
-  const [n, setN] = useState<HistoryMatchCount>("yesterday");
+  const [n, setN] = useState<HistoryMatchCount>(20);
   const [days, setDays] = useState<30 | 90 | 180 | 365 | 730>(30);
   const [queue, setQueue] = useState<"all" | "solo" | "party">("party");
   const [sortKey, setSortKey] = useState<SortKey>("avgImpact");
@@ -304,21 +273,18 @@ function StatsTab({
           ? "text-amber-600"
           : "text-text-dim";
 
-  return (
-    <div className="flex flex-col gap-6">
+  const settingsBar = (
+    <>
       <div className="flex flex-wrap items-center gap-6 text-xs">
         <div className="flex items-center gap-2">
           <span className="text-text-dim">Last</span>
           <div className="flex gap-1">
             {getHistoryMatchCountOptions().map((option) => (
               <button
-                className={`rounded px-3 py-1.5 transition-colors ${
-                  n === option.value
-                    ? "bg-accent font-bold text-bg"
-                    : "bg-bg-elevated text-text-muted hover:text-text"
-                }`}
+                className={`rounded px-3 py-1.5 transition-colors ${n === option.value ? "bg-accent font-bold text-bg" : "bg-bg-elevated text-text-muted hover:text-text"}`}
                 key={option.value}
                 onClick={() => setN(option.value)}
+                type="button"
               >
                 {option.label}
               </button>
@@ -331,13 +297,10 @@ function StatsTab({
           <div className="flex gap-1">
             {getHistoryQueueOptions().map((option) => (
               <button
-                className={`rounded px-3 py-1.5 transition-colors ${
-                  queue === option.value
-                    ? "bg-accent font-bold text-bg"
-                    : "bg-bg-elevated text-text-muted hover:text-text"
-                }`}
+                className={`rounded px-3 py-1.5 transition-colors ${queue === option.value ? "bg-accent font-bold text-bg" : "bg-bg-elevated text-text-muted hover:text-text"}`}
                 key={option.value}
                 onClick={() => setQueue(option.value)}
+                type="button"
               >
                 {option.label}
               </button>
@@ -349,13 +312,10 @@ function StatsTab({
           <div className="flex gap-1">
             {([30, 90, 180, 365, 730] as const).map((v) => (
               <button
-                className={`rounded px-3 py-1.5 transition-colors ${
-                  days === v
-                    ? "bg-accent font-bold text-bg"
-                    : "bg-bg-elevated text-text-muted hover:text-text"
-                }`}
+                className={`rounded px-3 py-1.5 transition-colors ${days === v ? "bg-accent font-bold text-bg" : "bg-bg-elevated text-text-muted hover:text-text"}`}
                 key={v}
                 onClick={() => setDays(v)}
+                type="button"
               >
                 {v}
               </button>
@@ -367,26 +327,108 @@ function StatsTab({
           className="rounded bg-bg-elevated px-3 py-1.5 text-text-muted text-xs transition-colors hover:text-text disabled:opacity-50"
           disabled={manualSync.isPending || !targetPlayerId}
           onClick={() => manualSync.mutate({ n, days })}
+          type="button"
         >
           {manualSync.isPending ? "Syncing..." : "↻ Refresh"}
         </button>
       </div>
-
       <div className="text-[10px] text-text-dim">
         Party means the player plus at least 2 known FACEIT friends in the same
         match.
       </div>
+    </>
+  );
 
+  const leaderboardTable = (
+    <div className="w-full overflow-x-auto">
+      <div
+        className="grid gap-2 px-3 pb-1 text-[10px] text-text-dim uppercase tracking-wider"
+        style={{
+          gridTemplateColumns: leaderboardGridTemplate,
+          minWidth: leaderboardMinWidth,
+        }}
+      >
+        <span>#</span>
+        <span>Player</span>
+        <span className="group/hdr relative cursor-help text-right">
+          GP
+          <span className="pointer-events-none absolute top-full left-1/2 z-50 mt-1 hidden -translate-x-1/2 whitespace-nowrap rounded border border-border bg-bg-card px-2 py-1 font-normal text-[9px] text-text normal-case tracking-normal shadow-lg group-hover/hdr:block">
+            Games played
+          </span>
+        </span>
+        {activeCols.map((col) => (
+          <button
+            className={`group/col relative text-right transition-colors hover:text-text ${sortKey === col.key ? "text-accent" : ""}`}
+            key={col.key}
+            onClick={() => handleSort(col.key)}
+            type="button"
+          >
+            {col.label}
+            {sortKey === col.key ? (sortDir === "desc" ? " ↓" : " ↑") : ""}
+            {col.tooltip && (
+              <span className="pointer-events-none absolute top-full left-1/2 z-50 mt-1 hidden -translate-x-1/2 whitespace-nowrap rounded border border-border bg-bg-card px-2 py-1 font-normal text-[9px] text-text normal-case tracking-normal shadow-lg group-hover/col:block">
+                {col.tooltip}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+      <div
+        className="flex flex-col gap-1"
+        style={{ minWidth: leaderboardMinWidth }}
+      >
+        {entries.map((entry, i) => {
+          const isMe = entry.faceitId === MY_FACEIT_ID;
+          return (
+            <div
+              className={`grid items-center gap-2 rounded px-3 py-2 text-sm ${isMe ? "border-accent border-l-2 bg-accent/10" : "bg-bg-elevated"}`}
+              key={entry.faceitId}
+              style={{ gridTemplateColumns: leaderboardGridTemplate }}
+            >
+              <span className={`font-bold text-xs ${rankColor(i)}`}>
+                {i + 1}
+              </span>
+              <div className="flex min-w-0 items-baseline gap-1.5">
+                <span
+                  className={`truncate font-bold ${isMe ? "text-accent" : "text-text"}`}
+                >
+                  {isMe ? "You" : entry.nickname}
+                </span>
+                {entry.elo > 0 && (
+                  <span className="shrink-0 text-[10px] text-text-dim">
+                    {entry.elo}
+                  </span>
+                )}
+              </div>
+              <span className="text-right text-text-muted text-xs">
+                {entry.gamesPlayed || "—"}
+              </span>
+              {activeCols.map((col) => (
+                <span
+                  className={`text-right text-xs ${sortKey === col.key ? "font-semibold text-accent" : "text-text-muted"}`}
+                  key={col.key}
+                >
+                  {fmt(entry[col.key], col.decimals, col.suffix)}
+                </span>
+              ))}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="flex flex-col gap-6">
+      {settingsBar}
       {summaryCopy && (
         <div className="text-[10px] text-text-dim">{summaryCopy}</div>
       )}
-
       {autoSync.isPending && !manualSync.isPending && (
         <div className="text-[10px] text-text-dim">
           Syncing older history in the background...
         </div>
       )}
-
       <PageSectionTabs
         activeKey={statGroup}
         onChange={(key) => {
@@ -400,7 +442,6 @@ function StatsTab({
           label: group.label,
         }))}
       />
-
       {isResolvingTarget ? (
         <div className="animate-pulse py-8 text-center text-accent">
           Loading...
@@ -417,99 +458,7 @@ function StatsTab({
                 {emptyStateCopy}
               </div>
             )}
-
-            {!emptyStateCopy && (
-              <div className="w-full overflow-x-auto">
-                <div
-                  className="grid gap-2 px-3 pb-1 text-[10px] text-text-dim uppercase tracking-wider"
-                  style={{
-                    gridTemplateColumns: leaderboardGridTemplate,
-                    minWidth: leaderboardMinWidth,
-                  }}
-                >
-                  <span>#</span>
-                  <span>Player</span>
-                  <span className="group/hdr relative cursor-help text-right">
-                    GP
-                    <span className="pointer-events-none absolute top-full left-1/2 z-50 mt-1 hidden -translate-x-1/2 whitespace-nowrap rounded border border-border bg-bg-card px-2 py-1 font-normal text-[9px] text-text normal-case tracking-normal shadow-lg group-hover/hdr:block">
-                      Games played
-                    </span>
-                  </span>
-                  {activeCols.map((col) => (
-                    <button
-                      className={`group/col relative text-right transition-colors hover:text-text ${
-                        sortKey === col.key ? "text-accent" : ""
-                      }`}
-                      key={col.key}
-                      onClick={() => handleSort(col.key)}
-                    >
-                      {col.label}
-                      {sortKey === col.key
-                        ? sortDir === "desc"
-                          ? " ↓"
-                          : " ↑"
-                        : ""}
-                      {col.tooltip && (
-                        <span className="pointer-events-none absolute top-full left-1/2 z-50 mt-1 hidden -translate-x-1/2 whitespace-nowrap rounded border border-border bg-bg-card px-2 py-1 font-normal text-[9px] text-text normal-case tracking-normal shadow-lg group-hover/col:block">
-                          {col.tooltip}
-                        </span>
-                      )}
-                    </button>
-                  ))}
-                </div>
-
-                <div
-                  className="flex flex-col gap-1"
-                  style={{ minWidth: leaderboardMinWidth }}
-                >
-                  {entries.map((entry, i) => {
-                    const isMe = entry.faceitId === MY_FACEIT_ID;
-                    return (
-                      <div
-                        className={`grid items-center gap-2 rounded px-3 py-2 text-sm ${
-                          isMe
-                            ? "border-accent border-l-2 bg-accent/10"
-                            : "bg-bg-elevated"
-                        }`}
-                        key={entry.faceitId}
-                        style={{ gridTemplateColumns: leaderboardGridTemplate }}
-                      >
-                        <span className={`font-bold text-xs ${rankColor(i)}`}>
-                          {i + 1}
-                        </span>
-                        <div className="flex min-w-0 items-baseline gap-1.5">
-                          <span
-                            className={`truncate font-bold ${isMe ? "text-accent" : "text-text"}`}
-                          >
-                            {isMe ? "You" : entry.nickname}
-                          </span>
-                          {entry.elo > 0 && (
-                            <span className="shrink-0 text-[10px] text-text-dim">
-                              {entry.elo}
-                            </span>
-                          )}
-                        </div>
-                        <span className="text-right text-text-muted text-xs">
-                          {entry.gamesPlayed || "—"}
-                        </span>
-                        {activeCols.map((col) => (
-                          <span
-                            className={`text-right text-xs ${
-                              sortKey === col.key
-                                ? "font-semibold text-accent"
-                                : "text-text-muted"
-                            }`}
-                            key={col.key}
-                          >
-                            {fmt(entry[col.key], col.decimals, col.suffix)}
-                          </span>
-                        ))}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+            {!emptyStateCopy && leaderboardTable}
           </div>
         )
       ) : (
@@ -524,23 +473,17 @@ function StatsTab({
 
 function LeaderboardPage() {
   const navigate = useNavigate();
-  const { player: urlPlayer, tab: selectedTab } = Route.useSearch();
+  const { player: urlPlayer } = Route.useSearch();
   const [input, setInput] = useState(urlPlayer ?? "");
-  const [authResolved, setAuthResolved] = useState(false);
-  const [isSignedIn, setIsSignedIn] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
-  const normalizedSelectedTab = authResolved
-    ? normalizeLeaderboardTab(selectedTab, isSignedIn)
-    : selectedTab;
 
   const {
     data: searchResult,
     isLoading: searchLoading,
     isError: searchError,
   } = useQuery({
-    queryKey: ["friends-search", urlPlayer?.toLowerCase(), selectedTab],
+    queryKey: ["friends-search", urlPlayer?.toLowerCase()],
     queryFn: () => searchAndLoadFriends({ data: urlPlayer! }),
-    enabled: !!urlPlayer && normalizedSelectedTab === "stats",
+    enabled: !!urlPlayer,
     staleTime: 5 * 60 * 1000,
     retry: false,
   });
@@ -549,53 +492,12 @@ function LeaderboardPage() {
     setInput(urlPlayer ?? "");
   }, [urlPlayer]);
 
-  useEffect(() => {
-    getClientSession().then((session) => {
-      const signedIn = !!session;
-      setUserId(session?.user.id ?? null);
-      setIsSignedIn(signedIn);
-      setAuthResolved(true);
-    });
-  }, []);
-
-  useEffect(() => {
-    if (authResolved && !isSignedIn && selectedTab === "bets") {
-      navigate({
-        to: "/leaderboard",
-        search: {
-          player: urlPlayer,
-          tab: "stats",
-        },
-        replace: true,
-      });
-    }
-  }, [authResolved, isSignedIn, navigate, selectedTab, urlPlayer]);
-
   const friendIds = searchResult?.friends.map((f) => f.faceitId) ?? [];
   const targetPlayerId = searchResult?.player.faceitId ?? "";
   const targetNickname = searchResult?.player.nickname ?? "";
   const hasSearchTarget = Boolean(urlPlayer);
   const isResolvingTarget =
-    normalizedSelectedTab === "stats" &&
-    hasSearchTarget &&
-    searchLoading &&
-    !searchError &&
-    !targetPlayerId;
-  const showBetsTab = normalizedSelectedTab === "bets";
-  const tabs = authResolved
-    ? getLeaderboardTabs(isSignedIn)
-    : showBetsTab
-      ? ["bets"]
-      : ["stats"];
-  const sectionTabs = tabs.map((tab) => ({
-    key: tab,
-    label: tab === "stats" ? "Stats" : "Bets",
-  }));
-  const shouldRenderBetsTab = shouldRenderLeaderboardBetsTab({
-    authResolved,
-    isSignedIn,
-    selectedTab: normalizedSelectedTab,
-  });
+    hasSearchTarget && searchLoading && !searchError && !targetPlayerId;
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -613,7 +515,6 @@ function LeaderboardPage() {
       to: "/leaderboard",
       search: {
         player: target.value,
-        tab: normalizedSelectedTab,
       },
     });
   };
@@ -634,41 +535,13 @@ function LeaderboardPage() {
         style={{ scrollbarGutter: "stable" }}
       >
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6">
-          {shouldRenderPageSectionTabs(sectionTabs) ? (
-            <PageSectionTabs
-              activeKey={normalizedSelectedTab}
-              onChange={(tab) => {
-                const nextTab = tab as LeaderboardTab;
-                navigate({
-                  to: "/leaderboard",
-                  search: {
-                    player: urlPlayer,
-                    tab: normalizeLeaderboardTab(nextTab, isSignedIn),
-                  },
-                  replace: true,
-                });
-              }}
-              tabs={sectionTabs}
-            />
-          ) : null}
-
-          {showBetsTab ? (
-            shouldRenderBetsTab ? (
-              <BetsLeaderboardTab userId={userId} />
-            ) : (
-              <div className="animate-pulse py-12 text-center text-accent">
-                Loading...
-              </div>
-            )
-          ) : (
-            <StatsTab
-              hasSearchTarget={hasSearchTarget}
-              isResolvingTarget={isResolvingTarget}
-              playerIds={friendIds}
-              targetNickname={targetNickname}
-              targetPlayerId={targetPlayerId}
-            />
-          )}
+          <StatsTab
+            hasSearchTarget={hasSearchTarget}
+            isResolvingTarget={isResolvingTarget}
+            playerIds={friendIds}
+            targetNickname={targetNickname}
+            targetPlayerId={targetPlayerId}
+          />
         </div>
       </div>
     </div>
