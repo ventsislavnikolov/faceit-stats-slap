@@ -1241,7 +1241,7 @@ export const getPlayerStats = createServerFn({ method: "GET" })
             })
         );
 
-        if (historyForYesterday || history.length < pageSize) {
+        if (history.length < pageSize) {
           break;
         }
       }
