@@ -115,14 +115,11 @@ export function SeasonLeaderboardTab({
                   <div className="font-bold text-lg text-text">
                     {prize.skinName ?? prize.description}
                   </div>
-                  {(prize.wear || prize.float) && (
+                  {prize.wear && (
                     <div className="flex items-center gap-2 text-text-muted text-xs">
-                      {prize.wear && (
-                        <span className="rounded bg-accent/15 px-1.5 py-0.5 font-bold text-accent">
-                          {prize.wear}
-                        </span>
-                      )}
-                      {prize.float && <span>Float: {prize.float}</span>}
+                      <span className="rounded bg-accent/15 px-1.5 py-0.5 font-bold text-accent">
+                        {prize.wear}
+                      </span>
                     </div>
                   )}
                 </div>

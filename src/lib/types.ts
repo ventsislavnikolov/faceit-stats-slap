@@ -344,7 +344,6 @@ export interface Season {
   name: string;
   prizes: {
     description: string;
-    float?: string;
     imageUrl?: string;
     place: number;
     skinName?: string;

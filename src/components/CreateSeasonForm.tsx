@@ -25,7 +25,6 @@ export function CreateSeasonForm({ userId }: CreateSeasonFormProps) {
 
   const [skinName, setSkinName] = useState("");
   const [skinWear, setSkinWear] = useState("MW");
-  const [skinFloat, setSkinFloat] = useState("");
   const [skinImageUrl, setSkinImageUrl] = useState("");
   const [imageLoading, setImageLoading] = useState(false);
   const [manualImageUrl, setManualImageUrl] = useState("");
@@ -105,7 +104,6 @@ export function CreateSeasonForm({ userId }: CreateSeasonFormProps) {
             description: `${skinName.trim()} (${skinWear})`,
             skinName: skinName.trim(),
             wear: skinWear,
-            float: skinFloat.trim() || undefined,
             imageUrl: displayImageUrl || undefined,
           },
         ]
@@ -133,7 +131,6 @@ export function CreateSeasonForm({ userId }: CreateSeasonFormProps) {
     setStartsAt("");
     setEndsAt("");
     setSkinName("");
-    setSkinFloat("");
     setSkinImageUrl("");
     setManualImageUrl("");
     queryClient.invalidateQueries({ queryKey: ["active-season"] });
@@ -219,43 +216,25 @@ export function CreateSeasonForm({ userId }: CreateSeasonFormProps) {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex flex-col gap-1">
-              <label
-                className="text-[10px] text-text-dim uppercase tracking-wider"
-                htmlFor="skin-wear"
-              >
-                Wear
-              </label>
-              <select
-                className="rounded border border-border bg-bg px-3 py-1.5 text-sm text-text"
-                id="skin-wear"
-                onChange={(e) => setSkinWear(e.target.value)}
-                value={skinWear}
-              >
-                {WEAR_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="flex flex-col gap-1">
-              <label
-                className="text-[10px] text-text-dim uppercase tracking-wider"
-                htmlFor="skin-float"
-              >
-                Float (optional)
-              </label>
-              <input
-                className="rounded border border-border bg-bg px-3 py-1.5 text-sm text-text"
-                id="skin-float"
-                onChange={(e) => setSkinFloat(e.target.value)}
-                placeholder="0.07"
-                type="text"
-                value={skinFloat}
-              />
-            </div>
+          <div className="flex flex-col gap-1">
+            <label
+              className="text-[10px] text-text-dim uppercase tracking-wider"
+              htmlFor="skin-wear"
+            >
+              Wear
+            </label>
+            <select
+              className="rounded border border-border bg-bg px-3 py-1.5 text-sm text-text"
+              id="skin-wear"
+              onChange={(e) => setSkinWear(e.target.value)}
+              value={skinWear}
+            >
+              {WEAR_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
           </div>
 
           {displayImageUrl && (
@@ -267,11 +246,6 @@ export function CreateSeasonForm({ userId }: CreateSeasonFormProps) {
               />
               <span className="font-bold text-accent text-xs">
                 {skinName} ({skinWear})
-                {skinFloat && (
-                  <span className="ml-1 font-normal text-text-muted">
-                    Float: {skinFloat}
-                  </span>
-                )}
               </span>
             </div>
           )}
