@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -262,6 +262,14 @@ function OverviewTab({
   selectedDemo: DemoPlayerAnalytics | null;
   selectedFaceit: MatchPlayerStats | null;
 }) {
+  const detailRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (selectedPlayer && detailRef.current) {
+      detailRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [selectedPlayer]);
+
   return (
     <div className="space-y-4">
       {/* Score evolution */}
@@ -354,6 +362,7 @@ function OverviewTab({
       </Card>
 
       {/* Player detail */}
+      <div ref={detailRef} />
       {selectedDemo && selectedFaceit && (
         <PlayerDetailCard
           demo={selectedDemo}
