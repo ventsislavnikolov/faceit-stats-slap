@@ -1,3 +1,10 @@
+## [1.7.1](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.7.0...v1.7.1) (2026-03-28)
+
+
+### Bug Fixes
+
+* **nav:** exclude /bets from Friends active state ([f8cdbab](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/f8cdbaba38749ce3ec244f3bdf9e937584d56a54))
+
 # [1.7.0](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.6.1...v1.7.0) (2026-03-28)
 
 
