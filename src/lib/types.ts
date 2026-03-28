@@ -274,6 +274,9 @@ export interface TwitchStream {
 
 export type BetSide = "team1" | "team2";
 export type BettingPoolStatus = "OPEN" | "CLOSED" | "RESOLVED" | "REFUNDED";
+export type PropBetSide = "yes" | "no";
+export type PropPoolStatus = "open" | "closed" | "resolved" | "refunded";
+export type SeasonStatus = "upcoming" | "active" | "completed";
 
 export interface BettingPool {
   closesAt: string;
@@ -309,8 +312,9 @@ export interface Bet {
   createdAt: string;
   id: string;
   payout: number | null;
-  poolId: string;
-  side: BetSide;
+  poolId: string | null;
+  propPoolId: string | null;
+  side: BetSide | PropBetSide;
   userId: string;
 }
 
@@ -328,6 +332,54 @@ export interface BettingLeaderboardEntry {
   resolvedBets: number;
   totalReturned: number;
   totalWagered: number;
+  userId: string;
+  winRate: number;
+}
+
+export interface Season {
+  createdAt: string;
+  createdBy: string;
+  endsAt: string;
+  id: string;
+  name: string;
+  prizes: { place: number; description: string }[];
+  startsAt: string;
+  status: SeasonStatus;
+}
+
+export interface SeasonParticipant {
+  coins: number;
+  id: string;
+  joinedAt: string;
+  seasonId: string;
+  startingCoins: number;
+  userId: string;
+}
+
+export interface PropPool {
+  closesAt: string;
+  createdAt: string;
+  description: string;
+  faceitMatchId: string;
+  id: string;
+  noPool: number;
+  opensAt: string;
+  outcome: boolean | null;
+  playerId: string;
+  playerNickname: string;
+  resolvedAt: string | null;
+  seasonId: string;
+  statKey: "kills" | "kd" | "adr";
+  status: PropPoolStatus;
+  threshold: number;
+  yesPool: number;
+}
+
+export interface SeasonLeaderboardEntry {
+  betsPlaced: number;
+  betsWon: number;
+  coins: number;
+  nickname: string;
   userId: string;
   winRate: number;
 }
