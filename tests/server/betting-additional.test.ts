@@ -62,7 +62,6 @@ vi.mock("~/lib/supabase.server", () => ({
 
 import {
   cancelPool,
-  claimDailyAllowance,
   createBettingPool,
   getBetAuditLog,
   getBettingPool,
@@ -175,6 +174,7 @@ describe("getBettingPool", () => {
 
 describe("placeBet", () => {
   const input = {
+    seasonId: "season-1",
     poolId: "pool-1",
     side: "team1" as const,
     amount: 50,
@@ -187,7 +187,9 @@ describe("placeBet", () => {
     expect(result).toEqual({ success: true });
     expect(mocks.supabase.rpc).toHaveBeenCalledWith("place_bet", {
       p_user_id: "user-1",
+      p_season_id: "season-1",
       p_pool_id: "pool-1",
+      p_prop_pool_id: null,
       p_side: "team1",
       p_amount: 50,
     });
@@ -249,29 +251,6 @@ describe("getCoinBalance", () => {
   it("returns 0 when no profile", async () => {
     mocks.pushResponse(null);
     const result = await run(() => getCoinBalance({ data: "ghost" } as any));
-    expect(result).toBe(0);
-  });
-});
-
-// ── claimDailyAllowance ──────────────────────────────────────
-
-describe("claimDailyAllowance", () => {
-  it("returns coins from rpc response", async () => {
-    mocks.setRpcResponse({ coins: 500 });
-    const result = await run(() =>
-      claimDailyAllowance({ data: "user-1" } as any)
-    );
-    expect(result).toBe(500);
-    expect(mocks.supabase.rpc).toHaveBeenCalledWith("claim_daily_allowance", {
-      p_user_id: "user-1",
-    });
-  });
-
-  it("returns 0 when rpc returns null", async () => {
-    mocks.setRpcResponse(null);
-    const result = await run(() =>
-      claimDailyAllowance({ data: "user-1" } as any)
-    );
     expect(result).toBe(0);
   });
 });

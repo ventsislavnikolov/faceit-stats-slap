@@ -91,6 +91,27 @@ const supabaseState = vi.hoisted(() => {
       };
     }
 
+    if (table === "seasons") {
+      return {
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            single: vi.fn(async () => ({ data: null, error: null })),
+          })),
+        })),
+      };
+    }
+
+    if (table === "prop_pools") {
+      return {
+        upsert: vi.fn(async () => ({ data: null, error: null })),
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            in: vi.fn(async () => ({ data: [] })),
+          })),
+        })),
+      };
+    }
+
     // Demo analytics tables — return empty results by default
     if (table === "demo_match_analytics" || table === "demo_ingestions") {
       return {

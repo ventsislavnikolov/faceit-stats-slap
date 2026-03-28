@@ -21,6 +21,10 @@ import {
 import { filterUnsyncedHistoryItems } from "~/lib/history-sync";
 import { classifyKnownFriendQueue } from "~/lib/match-queue";
 import {
+  buildPropDescription,
+  generatePropThresholds,
+} from "~/lib/prop-generation";
+import {
   buildPersonalFormLeaderboard,
   type SharedStatsLeaderboardRow,
 } from "~/lib/stats-leaderboard";
@@ -421,6 +425,12 @@ export const getLiveMatches = createServerFn({ method: "GET" })
     // ── Betting pool lifecycle ─────────────────────────────────
 
     // 1. Create betting pools for new ONGOING matches within the 5-min window
+    const { data: activeSeason } = await supabase
+      .from("seasons")
+      .select("id")
+      .eq("status", "active")
+      .single();
+
     for (const liveMatch of liveMatches) {
       if (liveMatch.startedAt === 0) {
         continue;
@@ -439,6 +449,7 @@ export const getLiveMatches = createServerFn({ method: "GET" })
         await supabase.from("betting_pools").upsert(
           {
             faceit_match_id: liveMatch.matchId,
+            season_id: activeSeason?.id ?? null,
             team1_name: team1Label,
             team2_name: team2Label,
             opens_at: new Date(liveMatch.startedAt * 1000).toISOString(),
@@ -451,6 +462,77 @@ export const getLiveMatches = createServerFn({ method: "GET" })
           },
           { onConflict: "faceit_match_id" }
         );
+
+        // Generate prop pools for tracked players in this match
+        if (activeSeason) {
+          const rosterPlayerIds = [
+            ...liveMatch.teams.faction1.roster.map((p) => p.playerId),
+            ...liveMatch.teams.faction2.roster.map((p) => p.playerId),
+          ].filter((pid) => liveMatch.friendIds.includes(pid));
+
+          for (const playerId of rosterPlayerIds) {
+            const { data: recentStats } = await supabase
+              .from("match_player_stats")
+              .select("kills, kd_ratio, adr, nickname")
+              .eq("faceit_player_id", playerId)
+              .order("played_at", { ascending: false })
+              .limit(20);
+
+            if (!recentStats || recentStats.length < 3) {
+              continue;
+            }
+
+            const avgKills =
+              recentStats.reduce((s, r) => s + r.kills, 0) / recentStats.length;
+            const avgKd =
+              recentStats.reduce((s, r) => s + r.kd_ratio, 0) /
+              recentStats.length;
+            const avgAdr =
+              recentStats.reduce((s, r) => s + r.adr, 0) / recentStats.length;
+            const nickname = recentStats[0].nickname;
+
+            const thresholds = generatePropThresholds({
+              avgKills,
+              avgKd,
+              avgAdr,
+            });
+            const statKeys = ["kills", "kd", "adr"] as const;
+            const thresholdValues = {
+              kills: thresholds.kills,
+              kd: thresholds.kd,
+              adr: thresholds.adr,
+            };
+
+            for (const statKey of statKeys) {
+              const threshold = thresholdValues[statKey];
+              const description = buildPropDescription(
+                nickname,
+                statKey,
+                threshold
+              );
+
+              await supabase.from("prop_pools").upsert(
+                {
+                  season_id: activeSeason.id,
+                  faceit_match_id: liveMatch.matchId,
+                  player_id: playerId,
+                  player_nickname: nickname,
+                  stat_key: statKey,
+                  threshold,
+                  description,
+                  opens_at: new Date(liveMatch.startedAt * 1000).toISOString(),
+                  closes_at: new Date(
+                    liveMatch.startedAt * 1000 + 5 * 60 * 1000
+                  ).toISOString(),
+                },
+                {
+                  onConflict: "faceit_match_id,player_id,stat_key",
+                  ignoreDuplicates: true,
+                }
+              );
+            }
+          }
+        }
       }
     }
 
@@ -478,10 +560,64 @@ export const getLiveMatches = createServerFn({ method: "GET" })
               p_winning_team: winner,
             });
           }
+
+          // Resolve props for this match
+          const { data: matchProps } = await supabase
+            .from("prop_pools")
+            .select("id, stat_key, threshold, player_id")
+            .eq("faceit_match_id", pool.faceit_match_id)
+            .in("status", ["open", "closed"]);
+
+          if (matchProps && matchProps.length > 0) {
+            const { data: matchStats } = await supabase
+              .from("match_player_stats")
+              .select("faceit_player_id, kills, kd_ratio, adr")
+              .eq("match_id", pool.faceit_match_id);
+
+            const statsMap = new Map(
+              (matchStats ?? []).map((s: any) => [s.faceit_player_id, s])
+            );
+
+            for (const prop of matchProps) {
+              const playerStats = statsMap.get(prop.player_id);
+              if (!playerStats) {
+                await supabase.rpc("cancel_prop", {
+                  p_prop_pool_id: prop.id,
+                });
+                continue;
+              }
+
+              const actualValue =
+                prop.stat_key === "kills"
+                  ? playerStats.kills
+                  : prop.stat_key === "kd"
+                    ? playerStats.kd_ratio
+                    : playerStats.adr;
+
+              const outcome = actualValue >= prop.threshold;
+              await supabase.rpc("resolve_prop", {
+                p_prop_pool_id: prop.id,
+                p_outcome: outcome,
+              });
+            }
+          }
         } else if (match.status === "CANCELLED") {
           await supabase.rpc("cancel_pool", {
             p_faceit_match_id: pool.faceit_match_id,
           });
+
+          // Cancel props for this match
+          const { data: cancelProps } = await supabase
+            .from("prop_pools")
+            .select("id")
+            .eq("faceit_match_id", pool.faceit_match_id)
+            .in("status", ["open", "closed"]);
+
+          for (const prop of cancelProps ?? []) {
+            await supabase.rpc("cancel_prop", {
+              p_prop_pool_id: prop.id,
+            });
+          }
         }
       } catch {
         // Ignore per-match errors, continue sweep
