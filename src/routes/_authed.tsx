@@ -96,6 +96,7 @@ export function AppLayout() {
     pathname !== "/history" &&
     pathname !== "/leaderboard" &&
     pathname !== "/last-party" &&
+    pathname !== "/bets" &&
     pathname !== "/sign-in";
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
