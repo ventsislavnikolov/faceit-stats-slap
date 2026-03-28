@@ -6,6 +6,10 @@ vi.mock("~/components/CoinBalance", () => ({
   CoinBalance: () => <div>Coins</div>,
 }));
 
+vi.mock("~/hooks/useActiveSeason", () => ({
+  useActiveSeason: () => ({ data: null, isLoading: false }),
+}));
+
 vi.mock("@tanstack/react-router", async (importOriginal) => {
   const actual =
     await importOriginal<typeof import("@tanstack/react-router")>();

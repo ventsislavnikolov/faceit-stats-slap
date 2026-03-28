@@ -8,6 +8,7 @@ import {
 import { createIsomorphicFn } from "@tanstack/react-start";
 import { useEffect, useRef, useState } from "react";
 import { CoinBalance } from "~/components/CoinBalance";
+import { useActiveSeason } from "~/hooks/useActiveSeason";
 import { initializeAuthSession } from "~/lib/auth";
 import { getPlayerViewHref } from "~/lib/player-view-shell";
 
@@ -68,6 +69,8 @@ export function AppLayout() {
   });
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const { data: activeSeason } = useActiveSeason();
+  const seasonId = activeSeason?.id ?? null;
   const pathname = location.pathname;
   const currentSearch = location.search as Record<string, unknown>;
   const currentNickname = getCurrentNickname(pathname, currentSearch);
@@ -86,7 +89,7 @@ export function AppLayout() {
   const lastPartyHref = currentNickname
     ? getPlayerViewHref("last-party", currentNickname)
     : { to: "/last-party", search: { player: undefined } };
-  const betsHref = { to: "/bets", search: { tab: "my-bets" } };
+  const betsHref = { to: "/bets", search: { tab: "leaderboard" } };
   const pathSegments = pathname.split("/").filter(Boolean);
   const isFriendsActive =
     pathSegments.length === 1 &&
@@ -218,7 +221,7 @@ export function AppLayout() {
                   <>
                     {userId && (
                       <div className="px-3 py-2">
-                        <CoinBalance userId={userId} />
+                        <CoinBalance seasonId={seasonId} userId={userId} />
                       </div>
                     )}
                     <button
@@ -307,7 +310,7 @@ export function AppLayout() {
         <div className="hidden items-center gap-3 lg:flex">
           {isSignedIn ? (
             <>
-              {userId && <CoinBalance userId={userId} />}
+              {userId && <CoinBalance seasonId={seasonId} userId={userId} />}
               <button
                 className="text-text-muted text-xs hover:text-error"
                 onClick={handleSignOut}
