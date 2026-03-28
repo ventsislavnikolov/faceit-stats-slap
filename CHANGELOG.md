@@ -1,3 +1,10 @@
+## [1.7.2](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.7.1...v1.7.2) (2026-03-28)
+
+
+### Bug Fixes
+
+* **betting:** return upcoming season from getActiveSeason ([08d0308](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/08d0308d419b481b552d94c68e363781a222b4ac))
+
 ## [1.7.1](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.7.0...v1.7.1) (2026-03-28)
 
 
