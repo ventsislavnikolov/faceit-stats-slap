@@ -1,15 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
-import {
-  buildBetHistorySummary,
-  sortBettingLeaderboardEntries,
-} from "~/lib/betting-stats";
 import { createServerSupabase } from "~/lib/supabase.server";
 import type {
   Bet,
   BetAuditEvent,
-  BettingLeaderboardEntry,
   BettingPool,
   BetWithPool,
+  PropPool,
 } from "~/lib/types";
 
 // ── Helpers ──────────────────────────────────────────────────
@@ -120,8 +116,10 @@ export const getBettingPool = createServerFn({ method: "GET" })
 export const placeBet = createServerFn({ method: "POST" })
   .inputValidator(
     (input: {
-      poolId: string;
-      side: "team1" | "team2";
+      seasonId: string;
+      poolId?: string;
+      propPoolId?: string;
+      side: string;
       amount: number;
       userId: string;
     }) => input
@@ -130,7 +128,9 @@ export const placeBet = createServerFn({ method: "POST" })
     const supabase = createServerSupabase();
     const { data: result, error } = await supabase.rpc("place_bet", {
       p_user_id: data.userId,
-      p_pool_id: data.poolId,
+      p_season_id: data.seasonId,
+      p_pool_id: data.poolId ?? null,
+      p_prop_pool_id: data.propPoolId ?? null,
       p_side: data.side,
       p_amount: data.amount,
     });
@@ -183,91 +183,37 @@ export const getCoinBalance = createServerFn({ method: "GET" })
     return (data as any)?.coins ?? 0;
   });
 
-// ── claimDailyAllowance ───────────────────────────────────────
-// Note: resolveStalePools logic lives inline in getLiveMatches (src/server/matches.ts)
-// to avoid an extra server function call on each poll. No standalone export needed.
+// ── getPropPoolsForMatch ─────────────────────────────────────
 
-export const claimDailyAllowance = createServerFn({ method: "POST" })
-  .inputValidator((userId: string) => userId)
-  .handler(async ({ data: userId }): Promise<number> => {
+export const getPropPoolsForMatch = createServerFn({ method: "GET" })
+  .inputValidator((faceitMatchId: string) => faceitMatchId)
+  .handler(async ({ data: faceitMatchId }): Promise<PropPool[]> => {
     const supabase = createServerSupabase();
-    const { data } = await supabase.rpc("claim_daily_allowance", {
-      p_user_id: userId,
-    });
-    return (data as any)?.coins ?? 0;
+    const { data: rows } = await supabase
+      .from("prop_pools")
+      .select("*")
+      .eq("faceit_match_id", faceitMatchId)
+      .order("player_nickname", { ascending: true });
+
+    return (rows ?? []).map((row: any) => ({
+      id: row.id,
+      seasonId: row.season_id,
+      faceitMatchId: row.faceit_match_id,
+      playerId: row.player_id,
+      playerNickname: row.player_nickname,
+      statKey: row.stat_key,
+      threshold: Number(row.threshold),
+      description: row.description,
+      yesPool: row.yes_pool,
+      noPool: row.no_pool,
+      outcome: row.outcome,
+      status: row.status,
+      opensAt: row.opens_at,
+      closesAt: row.closes_at,
+      resolvedAt: row.resolved_at,
+      createdAt: row.created_at,
+    }));
   });
-
-// ── getLeaderboard ────────────────────────────────────────────
-
-export const getLeaderboard = createServerFn({ method: "GET" }).handler(
-  async (): Promise<BettingLeaderboardEntry[]> => {
-    const supabase = createServerSupabase();
-    const { data: profiles } = await supabase
-      .from("profiles")
-      .select("id, nickname, coins")
-      .order("coins", { ascending: false });
-
-    if (!profiles) {
-      return [];
-    }
-
-    const { data: betRows } = await supabase
-      .from("bets")
-      .select(
-        "id, pool_id, user_id, side, amount, payout, created_at, betting_pools(*)"
-      );
-
-    const betsByUser = new Map<string, BetWithPool[]>();
-    for (const [index, row] of (betRows ?? []).entries()) {
-      const userBets = betsByUser.get(row.user_id) ?? [];
-      userBets.push({
-        id: row.id ?? `bet-${index}`,
-        poolId: row.pool_id ?? `pool-${index}`,
-        userId: row.user_id,
-        side: row.side ?? "team1",
-        amount: row.amount,
-        payout: row.payout,
-        createdAt: row.created_at ?? "",
-        pool: rowToPool({
-          id: row.betting_pools?.id ?? `pool-${index}`,
-          faceit_match_id:
-            row.betting_pools?.faceit_match_id ?? `match-${index}`,
-          status: row.betting_pools?.status ?? "OPEN",
-          team1_name: row.betting_pools?.team1_name ?? "Team 1",
-          team2_name: row.betting_pools?.team2_name ?? "Team 2",
-          team1_pool: row.betting_pools?.team1_pool ?? 0,
-          team2_pool: row.betting_pools?.team2_pool ?? 0,
-          winning_team: row.betting_pools?.winning_team ?? null,
-          opens_at: row.betting_pools?.opens_at ?? "",
-          closes_at: row.betting_pools?.closes_at ?? "",
-          resolved_at: row.betting_pools?.resolved_at ?? null,
-        }),
-      });
-      betsByUser.set(row.user_id, userBets);
-    }
-
-    const entries = profiles.map((p) => {
-      const summary = buildBetHistorySummary(
-        betsByUser.get(p.id) ?? [],
-        p.coins
-      );
-      return {
-        userId: p.id,
-        nickname: p.nickname,
-        coins: p.coins,
-        betsPlaced: summary.betsPlaced,
-        betsWon: summary.betsWon,
-        resolvedBets: summary.resolvedBets,
-        totalWagered: summary.totalWagered,
-        totalReturned: summary.totalReturned,
-        netProfit: summary.netProfit,
-        winRate: summary.winRate,
-      };
-    });
-
-    return sortBettingLeaderboardEntries(entries);
-  }
-);
 
 // ── getUserBetForMatch ────────────────────────────────────────
 
