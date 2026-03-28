@@ -1,3 +1,11 @@
+# [1.3.0](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.2.0...v1.3.0) (2026-03-28)
+
+
+### Features
+
+* **bets:** add auth-gated Bets link to nav ([1147353](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/11473532063606ed51a176578bff56adc1992fe1))
+* **bets:** add dedicated /bets route with sub-tabs ([84d10a2](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/84d10a289c9fc155462a2c3a54b8752a33f619a8))
+
 # [1.2.0](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.1.1...v1.2.0) (2026-03-27)
 
 ## [1.1.1](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.1.0...v1.1.1) (2026-03-27)
