@@ -485,7 +485,7 @@ export interface PartySessionData {
   mapDistribution: MapStats[];
   matches: PlayerHistoryMatch[];
   matchStats: Record<string, MatchPlayerStats[]>;
-  partyMembers: Array<Pick<FaceitPlayer, "faceitId" | "nickname">>;
+  partyMembers: Pick<FaceitPlayer, "faceitId" | "nickname">[];
   totalHoursPlayed: number;
   winCount: number;
 }

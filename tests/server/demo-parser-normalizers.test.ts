@@ -311,6 +311,7 @@ describe("ingestParsedDemoFile", () => {
 
       const opts = baseOptions(store, createMinimalParsedDemo(), {
         parseDemoFile: async () => {
+          // biome-ignore lint/style/useThrowOnlyError: testing raw string error handling
           throw "raw string error";
         },
       });

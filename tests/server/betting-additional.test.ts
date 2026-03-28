@@ -25,6 +25,7 @@ const mocks = vi.hoisted(() => {
       Promise.resolve(responseQueue.shift() ?? { data: null, error: null })
     );
     // Make chain thenable so `await supabase.from(...).select(...).in(...)` works
+    // biome-ignore lint/suspicious/noThenProperty: required for Supabase query chain mock
     chain.then = (
       resolve: (v: unknown) => unknown,
       reject: (e: unknown) => unknown
