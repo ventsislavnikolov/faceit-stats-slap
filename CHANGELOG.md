@@ -1,3 +1,19 @@
+# [1.5.0](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.4.0...v1.5.0) (2026-03-28)
+
+
+### Features
+
+* **betting:** add BetCard component for match and prop bets ([3092a21](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/3092a21aadb06cdf726141751947b64bf9e6ad6c))
+* **betting:** add prop threshold generation logic ([be4f51f](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/be4f51fc91c37cefbb69473654a4b928a03d219f))
+* **betting:** add season and prop pool hooks ([4d9f873](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/4d9f873a8663019f3aac3749a3821b82c239c20d))
+* **betting:** add season server functions ([03d11bf](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/03d11bf5abe609cf4edd1453e78f9e1b9424699e))
+* **betting:** add season UI components ([f36d74c](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/f36d74c1dc7bbb4c98809e525435aad6f6f2688f))
+* **betting:** add season utility functions ([a46897f](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/a46897fb25b51cc60068a4dab047e101ee4d5ddc))
+* **betting:** generate and resolve prop pools in match lifecycle ([b19709b](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/b19709bde85e80dcc6756acd6d9366d1b574b51d))
+* **betting:** rebuild /bets route as season hub ([2ca4a47](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/2ca4a476e5051668449334b8dbe65a4352f1838d))
+* **db:** add season betting schema and RPCs ([a386ed8](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/a386ed89d0a6e202b49555665f2297654daa6683))
+* **types:** add Season, PropPool, SeasonParticipant types ([f8821fd](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/f8821fd69eaa94b5e5a97961edf2928a0114b297))
+
 # [1.4.0](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.3.1...v1.4.0) (2026-03-28)
 
 ## [1.3.1](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.3.0...v1.3.1) (2026-03-28)
