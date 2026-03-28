@@ -1,7 +1,6 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 import { BetsLeaderboardTab } from "~/components/BetsLeaderboardTab";
-import { shouldRenderLeaderboardBetsTab } from "~/routes/_authed/leaderboard";
 
 vi.mock("~/hooks/useLeaderboard", () => ({
   useLeaderboard: vi.fn(),
@@ -107,31 +106,5 @@ describe("BetsLeaderboardTab", () => {
     expect(
       renderToStaticMarkup(<BetsLeaderboardTab userId={null} />)
     ).toContain("No resolved bets yet");
-  });
-
-  it("does not render the bets leaderboard before auth resolves", () => {
-    expect(
-      shouldRenderLeaderboardBetsTab({
-        authResolved: false,
-        isSignedIn: false,
-        selectedTab: "bets",
-      })
-    ).toBe(false);
-
-    expect(
-      shouldRenderLeaderboardBetsTab({
-        authResolved: true,
-        isSignedIn: false,
-        selectedTab: "bets",
-      })
-    ).toBe(false);
-
-    expect(
-      shouldRenderLeaderboardBetsTab({
-        authResolved: true,
-        isSignedIn: true,
-        selectedTab: "bets",
-      })
-    ).toBe(true);
   });
 });

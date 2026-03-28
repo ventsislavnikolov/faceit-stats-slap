@@ -7,7 +7,7 @@ import {
 } from "~/lib/faceit";
 import type { FriendWithStats } from "~/lib/types";
 
-const FRIEND_LIMIT = 20;
+const FRIEND_LIMIT = 100;
 const FACEIT_BATCH_SIZE = 3;
 const BATCH_DELAY_MS = 300;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));

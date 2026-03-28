@@ -16,7 +16,7 @@ describe("player view shell", () => {
       to: "/history",
       search: {
         player: "soavarice",
-        matches: "yesterday",
+        matches: 20,
         queue: "party",
       },
     });

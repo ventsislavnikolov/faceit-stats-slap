@@ -29,7 +29,7 @@ export function getPlayerViewHref(
         to: "/history",
         search: {
           player: nickname,
-          matches: "yesterday",
+          matches: 20,
           queue: "party",
         },
       };

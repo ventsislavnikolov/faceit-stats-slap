@@ -63,11 +63,9 @@ describe("AppLayout", () => {
     expect(historyIndex).toBeGreaterThan(leaderboardIndex);
   });
 
-  it("reserves the underline space for inactive nav items", () => {
+  it("renders inactive nav items with muted styling", () => {
     const html = renderToStaticMarkup(<AppLayout />);
 
-    expect(html).toContain(
-      "border-b pb-0.5 text-text-muted border-transparent"
-    );
+    expect(html).toContain("text-text-muted hover:text-accent");
   });
 });

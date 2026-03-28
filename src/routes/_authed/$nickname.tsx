@@ -126,7 +126,7 @@ function PlayerDashboard() {
               {searchResult.friends.length} loaded
               {searchResult.limited && (
                 <span className="ml-1 text-error">
-                  (capped at 20 — player has {searchResult.totalFriends}{" "}
+                  (capped at 100 — player has {searchResult.totalFriends}{" "}
                   friends, more would exceed FACEIT rate limits)
                 </span>
               )}
@@ -141,7 +141,7 @@ function PlayerDashboard() {
         <div className="flex flex-1 items-center justify-center">
           <div className="animate-pulse text-accent text-sm">
             Loading friends for <span className="font-bold">{nickname}</span>{" "}
-            (up to 20)...
+            (up to 100)...
           </div>
         </div>
       ) : searchError ? (

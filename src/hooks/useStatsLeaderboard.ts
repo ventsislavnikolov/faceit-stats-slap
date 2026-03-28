@@ -5,7 +5,7 @@ import { getStatsLeaderboard } from "~/server/matches";
 export function useStatsLeaderboard(params: {
   targetPlayerId: string;
   playerIds: string[];
-  n: "yesterday" | 20 | 50 | 100;
+  n: 20 | 50 | 100;
   days: 30 | 90 | 180 | 365 | 730;
   queue: "all" | "solo" | "party";
 }) {

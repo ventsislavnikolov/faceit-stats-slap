@@ -5,6 +5,10 @@
     scrollbar-color: #1a1a1a transparent;
     scrollbar-width: thin;
   }
+
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.7);
+  }
 }
 
 @theme {

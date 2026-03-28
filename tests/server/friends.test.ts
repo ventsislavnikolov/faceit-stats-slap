@@ -107,11 +107,11 @@ describe("searchAndLoadFriends", () => {
     expect(fetchPlayerByNickname).toHaveBeenCalledWith("SoAvarice");
   });
 
-  it("uses uuid lookup, caps to 20 friends, and loads friend stats in batches", async () => {
+  it("uses uuid lookup, caps to 100 friends, and loads friend stats in batches", async () => {
     vi.useFakeTimers();
 
     const friendIds = Array.from(
-      { length: 21 },
+      { length: 101 },
       (_, index) => `friend-${index + 1}`
     );
     vi.mocked(fetchPlayer).mockImplementation(async (faceitId: string) => {
@@ -168,9 +168,9 @@ describe("searchAndLoadFriends", () => {
       faceitId: "15844c99-d26e-419e-bd14-30908f502c03",
       nickname: "soavarice",
     });
-    expect(result.totalFriends).toBe(21);
+    expect(result.totalFriends).toBe(101);
     expect(result.limited).toBe(true);
-    expect(result.friends).toHaveLength(20);
+    expect(result.friends).toHaveLength(100);
     expect(result.friends[0]).toEqual(
       expect.objectContaining({
         faceitId: "friend-1",
@@ -180,7 +180,7 @@ describe("searchAndLoadFriends", () => {
         currentMatchId: null,
       })
     );
-    expect(vi.mocked(fetchPlayerLifetimeStats)).toHaveBeenCalledTimes(20);
+    expect(vi.mocked(fetchPlayerLifetimeStats)).toHaveBeenCalledTimes(100);
   });
 
   it("keeps fulfilled friends when one batched lookup fails", async () => {

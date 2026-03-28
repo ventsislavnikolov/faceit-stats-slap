@@ -4,7 +4,7 @@ import { getPlayerStats } from "~/server/matches";
 
 export function usePlayerStats(
   playerId: string | null,
-  n: "yesterday" | number = 15,
+  n = 15,
   queue: "all" | "solo" | "party" = "all"
 ) {
   return useQuery<PlayerHistoryMatch[]>({

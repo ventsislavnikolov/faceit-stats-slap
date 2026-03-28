@@ -25,7 +25,6 @@ import {
   type SharedStatsLeaderboardRow,
 } from "~/lib/stats-leaderboard";
 import { createServerSupabase } from "~/lib/supabase.server";
-import { getPreviousCalendarDayRange } from "~/lib/time";
 import type {
   DemoMatchAnalytics,
   DemoPlayerAnalytics,
@@ -1036,7 +1035,7 @@ export const getStatsLeaderboard = createServerFn({ method: "GET" })
     (input: {
       targetPlayerId: string;
       playerIds: string[];
-      n: "yesterday" | 20 | 50 | 100;
+      n: 20 | 50 | 100;
       days: 30 | 90 | 180 | 365 | 730;
       queue?: "all" | "solo" | "party";
     }) => input
@@ -1046,8 +1045,6 @@ export const getStatsLeaderboard = createServerFn({ method: "GET" })
       data: { targetPlayerId, playerIds, n, days, queue = "all" },
     }): Promise<StatsLeaderboardResult> => {
       const supabase = createServerSupabase();
-      const yesterdayRange =
-        n === "yesterday" ? getPreviousCalendarDayRange() : null;
 
       const { data: friendRows } =
         playerIds.length === 0
@@ -1068,32 +1065,16 @@ export const getStatsLeaderboard = createServerFn({ method: "GET" })
         supabase,
         targetPlayerId,
         days,
-        cutoffIso: yesterdayRange?.startIso,
       });
-      const filteredTargetRows = yesterdayRange
-        ? targetRows.filter(
-            (row: any) =>
-              typeof row.played_at === "string" &&
-              row.played_at < yesterdayRange.endIso
-          )
-        : targetRows;
       const recentRows = await fetchRecentStatsLeaderboardRows({
         supabase,
         playerIds: [...new Set([targetPlayerId, ...playerIds])],
-        n: n === "yesterday" ? undefined : n,
-        cutoffIso: yesterdayRange?.startIso,
+        n,
       });
-      const filteredRecentRows = yesterdayRange
-        ? recentRows.filter(
-            (row: any) =>
-              typeof row.played_at === "string" &&
-              row.played_at < yesterdayRange.endIso
-          )
-        : recentRows;
 
       const normalizedRows = dedupeStatsLeaderboardRows(
         normalizeStatsLeaderboardRows({
-          rows: [...filteredTargetRows, ...filteredRecentRows],
+          rows: [...targetRows, ...recentRows],
           friendMap,
         })
       );
@@ -1117,9 +1098,8 @@ export const getStatsLeaderboard = createServerFn({ method: "GET" })
         rows: rowsForLeaderboard,
         targetPlayerId,
         friendIds: playerIds,
-        n: n === "yesterday" ? Number.MAX_SAFE_INTEGER : n,
-        days: yesterdayRange ? 1 : days,
-        now: yesterdayRange?.end,
+        n,
+        days,
       });
 
       const targetEntry = result.entries.find(
@@ -1176,7 +1156,7 @@ export const getPlayerStats = createServerFn({ method: "GET" })
   .inputValidator(
     (input: {
       playerId: string;
-      n: "yesterday" | number;
+      n: number;
       queue?: "all" | "solo" | "party";
     }) => input
   )
@@ -1189,24 +1169,10 @@ export const getPlayerStats = createServerFn({ method: "GET" })
         .catch(() => null);
 
       const matches: PlayerHistoryMatch[] = [];
-      const isYesterday = n === "yesterday";
-      const pageSize = typeof n === "number" ? Math.max(n, 20) : 20;
-      const historyForYesterday = isYesterday
-        ? await fetchPlayerHistoryRange({
-            faceitId: playerId,
-            ...getPreviousCalendarDayRange(),
-            pageSize,
-          })
-        : null;
+      const pageSize = Math.max(n, 20);
 
-      for (
-        let offset = 0;
-        isYesterday || matches.length < n;
-        offset += pageSize
-      ) {
-        const history =
-          historyForYesterday ??
-          (await fetchPlayerHistory(playerId, pageSize, offset));
+      for (let offset = 0; matches.length < n; offset += pageSize) {
+        const history = await fetchPlayerHistory(playerId, pageSize, offset);
         if (history.length === 0) {
           break;
         }

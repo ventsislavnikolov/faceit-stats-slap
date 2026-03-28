@@ -11,35 +11,6 @@ describe("stats leaderboard copy", () => {
     );
   });
 
-  it("formats the yesterday summary and empty-state copy", () => {
-    expect(
-      getStatsLeaderboardSummaryCopy("soavarice", 9, 30, "yesterday")
-    ).toBe(
-      "Showing friends of soavarice who played yesterday. Stats are from yesterday's matches only."
-    );
-
-    expect(
-      getStatsLeaderboardEmptyStateCopy({
-        targetNickname: "Target",
-        targetMatchCount: 0,
-        sharedFriendCount: 0,
-        days: 30,
-        n: "yesterday",
-      })
-    ).toBe("No friends of Target played yesterday.");
-
-    expect(
-      getStatsLeaderboardEmptyStateCopy({
-        targetNickname: "Target",
-        targetMatchCount: 2,
-        sharedFriendCount: 0,
-        days: 30,
-        n: "yesterday",
-        queue: "party",
-      })
-    ).toBe("No friends of Target played party matches yesterday.");
-  });
-
   it("supports the 730-day preset in summary and empty-state copy", () => {
     expect(getStatsLeaderboardSummaryCopy("soavarice", 9, 730, 50)).toBe(
       "Showing friends of soavarice in the last 730 days. Stats are from each player's own last 50 matches."
