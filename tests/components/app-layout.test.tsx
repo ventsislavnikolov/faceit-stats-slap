@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
-import { AppLayout } from "~/routes/_authed";
+import { AppLayout } from "~/components/AppLayout";
 
 vi.mock("~/components/CoinBalance", () => ({
   CoinBalance: () => <div>Coins</div>,
