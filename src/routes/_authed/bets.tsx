@@ -13,6 +13,7 @@ import { useLiveMatches } from "~/hooks/useLiveMatches";
 import { useSeasonCoinBalance } from "~/hooks/useSeasonCoinBalance";
 import { MY_NICKNAME } from "~/lib/constants";
 import { getTrackedWebhookPlayerIds } from "~/lib/faceit-webhooks";
+import type { Season } from "~/lib/types";
 
 type BetsTab = "leaderboard" | "live" | "my-bets" | "history";
 
@@ -39,6 +40,84 @@ const getProfileNickname = createIsomorphicFn()
       .single();
     return (data as { nickname: string } | null)?.nickname ?? null;
   });
+
+function UpcomingSeasonCountdown({ season }: { season: Season }) {
+  const [timeLeft, setTimeLeft] = useState("");
+
+  useEffect(() => {
+    const target = new Date(season.startsAt).getTime();
+    const tick = () => {
+      const diff = Math.max(0, target - Date.now());
+      if (diff === 0) {
+        setTimeLeft("Starting...");
+        return;
+      }
+      const days = Math.floor(diff / 86_400_000);
+      const hours = Math.floor((diff % 86_400_000) / 3_600_000);
+      const mins = Math.floor((diff % 3_600_000) / 60_000);
+      const secs = Math.floor((diff % 60_000) / 1000);
+      const parts: string[] = [];
+      if (days > 0) {
+        parts.push(`${days}d`);
+      }
+      if (hours > 0) {
+        parts.push(`${hours}h`);
+      }
+      if (mins > 0) {
+        parts.push(`${mins}m`);
+      }
+      parts.push(`${secs}s`);
+      setTimeLeft(parts.join(" "));
+    };
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, [season.startsAt]);
+
+  const prize = season.prizes[0];
+
+  return (
+    <div className="flex flex-col items-center gap-6 py-8">
+      <div className="text-sm text-text-dim uppercase tracking-wider">
+        Season starts in
+      </div>
+      <div className="font-bold font-mono text-4xl text-accent">{timeLeft}</div>
+
+      {prize?.imageUrl && (
+        <div className="flex flex-col items-center gap-3 rounded-lg border border-accent/20 bg-accent/5 p-6">
+          <img
+            alt={prize.skinName ?? prize.description}
+            className="h-36 object-contain drop-shadow-[0_0_12px_rgba(80,250,123,0.3)]"
+            src={prize.imageUrl}
+          />
+          <div className="text-center">
+            <div className="font-bold text-text">
+              {prize.skinName ?? prize.description}
+            </div>
+            {prize.wear && (
+              <span className="rounded bg-accent/15 px-1.5 py-0.5 font-bold text-accent text-xs">
+                {prize.wear}
+              </span>
+            )}
+          </div>
+          <div className="text-[10px] text-text-dim uppercase tracking-wider">
+            1st Place Prize
+          </div>
+        </div>
+      )}
+
+      {!prize?.imageUrl && prize && (
+        <div className="text-sm text-text-muted">
+          Prize: {prize.skinName ?? prize.description}
+        </div>
+      )}
+
+      <div className="text-text-dim text-xs">
+        Everyone starts with 1,000 coins. Go broke = sit out.
+      </div>
+    </div>
+  );
+}
 
 export const Route = createFileRoute("/_authed/bets")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -129,9 +208,8 @@ function BetsPage() {
         >
           <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6">
             <SeasonHeader season={season} userCoins={null} />
-            <div className="py-12 text-center text-sm text-text-dim">
-              Season starts soon.
-            </div>
+            <UpcomingSeasonCountdown season={season} />
+            <SeasonHistoryTab userId={userId} />
           </div>
         </div>
       </div>
