@@ -1,3 +1,10 @@
+# [1.7.0](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.6.1...v1.7.0) (2026-03-28)
+
+
+### Features
+
+* **betting:** add upcoming season countdown with prize display ([3014bc8](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/3014bc87465e3a134d1c4252b1ace0abbe18db95))
+
 ## [1.6.1](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.6.0...v1.6.1) (2026-03-28)
 
 
