@@ -1,3 +1,10 @@
+## [1.7.3](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.7.2...v1.7.3) (2026-03-29)
+
+
+### Bug Fixes
+
+* responsive sidebar layout and pass seasonId to BettingPanel ([#11](https://github.com/ventsislavnikolov/faceit-stats-slap/issues/11)) ([287d3ee](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/287d3ee0eba4fa7b524f871584396b16391f82cf))
+
 ## [1.7.2](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.7.1...v1.7.2) (2026-03-28)
 
 
