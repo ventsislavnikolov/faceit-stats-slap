@@ -11,6 +11,7 @@ import { placeBet } from "~/server/betting";
 interface BettingPanelProps {
   matchId: string;
   pool: BettingPool;
+  seasonId: string;
   userBet: Bet | null;
   userCoins: number;
   userId: string | null;
@@ -18,6 +19,7 @@ interface BettingPanelProps {
 
 export function BettingPanel({
   pool,
+  seasonId,
   userBet,
   userId,
   userCoins,
@@ -59,7 +61,7 @@ export function BettingPanel({
     setLoading(true);
     setError(null);
     const result = await placeBet({
-      data: { poolId: pool.id, side: selectedSide, amount, userId },
+      data: { seasonId, poolId: pool.id, side: selectedSide, amount, userId },
     });
     setLoading(false);
     if (!result.success) {

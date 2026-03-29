@@ -6,6 +6,7 @@ import { LiveMatchCard } from "./LiveMatchCard";
 interface HomeLiveMatchesSectionProps {
   authResolved: boolean;
   bettingContextReady: boolean;
+  seasonId?: string | null;
   userCoins?: number;
   userId?: string | null;
 }
@@ -13,6 +14,7 @@ interface HomeLiveMatchesSectionProps {
 export function HomeLiveMatchesSection({
   authResolved,
   bettingContextReady,
+  seasonId,
   userId,
   userCoins,
 }: HomeLiveMatchesSectionProps) {
@@ -70,6 +72,7 @@ export function HomeLiveMatchesSection({
             bettingContextReady={bettingContextReady}
             key={match.matchId}
             match={match}
+            seasonId={seasonId}
             userCoins={userCoins ?? 0}
             userId={userId ?? null}
           />
