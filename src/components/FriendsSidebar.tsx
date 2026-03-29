@@ -22,7 +22,7 @@ export function FriendsSidebar({
   const offline = friends.filter((f) => !f.isPlaying);
 
   return (
-    <aside className="w-[260px] flex-shrink-0 overflow-y-auto border-border border-r bg-bg-card p-3">
+    <aside className="h-full w-[260px] flex-shrink-0 overflow-y-auto border-border border-r bg-bg-card p-3">
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-1.5">
           {playing.length > 0 && (

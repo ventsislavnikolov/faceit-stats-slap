@@ -15,6 +15,7 @@ interface LiveMatchCardProps {
   authResolved?: boolean;
   bettingContextReady?: boolean;
   match: LiveMatch;
+  seasonId?: string | null;
   userCoins?: number;
   userId?: string | null;
 }
@@ -23,6 +24,7 @@ export function LiveMatchCard({
   match,
   authResolved = true,
   bettingContextReady = true,
+  seasonId,
   userId,
   userCoins,
 }: LiveMatchCardProps) {
@@ -170,10 +172,11 @@ export function LiveMatchCard({
       )}
 
       {/* Betting panel */}
-      {authResolved && bettingContextReady && betData?.pool && (
+      {authResolved && bettingContextReady && betData?.pool && seasonId && (
         <BettingPanel
           matchId={match.matchId}
           pool={betData.pool}
+          seasonId={seasonId}
           userBet={betData.userBet}
           userCoins={userCoins ?? 0}
           userId={userId ?? null}

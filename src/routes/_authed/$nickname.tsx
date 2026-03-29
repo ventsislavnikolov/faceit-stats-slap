@@ -7,6 +7,7 @@ import { LiveMatchCard } from "~/components/LiveMatchCard";
 import { PlayerSearchHeader } from "~/components/PlayerSearchHeader";
 import { RecentMatches } from "~/components/RecentMatches";
 import { TwitchEmbed } from "~/components/TwitchEmbed";
+import { useActiveSeason } from "~/hooks/useActiveSeason";
 import { useCoinBalance } from "~/hooks/useCoinBalance";
 import { useLiveMatches } from "~/hooks/useLiveMatches";
 import { usePlayerStats } from "~/hooks/usePlayerStats";
@@ -41,6 +42,9 @@ function PlayerDashboard() {
   }, []);
 
   const { data: userCoins = 0 } = useCoinBalance(userId);
+  const { data: activeSeason } = useActiveSeason();
+  const seasonId = activeSeason?.id ?? null;
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const {
     data: searchResult,
@@ -153,19 +157,58 @@ function PlayerDashboard() {
           This player has no friends on FACEIT.
         </div>
       ) : (
-        <div className="flex flex-1 overflow-hidden">
-          <FriendsSidebar
-            friends={enrichedFriends}
-            onSelectFriend={setSelectedFriendId}
-            selectedFriendId={selectedFriendId}
-            twitchStreams={twitchStreams}
-          />
+        <div className="relative flex flex-1 overflow-hidden">
+          {/* Mobile sidebar overlay */}
+          {sidebarOpen && (
+            <div
+              className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+              onClick={() => setSidebarOpen(false)}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") setSidebarOpen(false);
+              }}
+              role="button"
+              tabIndex={0}
+              aria-label="Close sidebar"
+            />
+          )}
+          {/* Mobile sidebar drawer */}
+          <aside
+            className={`fixed inset-y-0 left-0 z-50 w-[260px] transform transition-transform lg:hidden ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
+          >
+            <FriendsSidebar
+              friends={enrichedFriends}
+              onSelectFriend={(id) => {
+                setSelectedFriendId(id);
+                setSidebarOpen(false);
+              }}
+              selectedFriendId={selectedFriendId}
+              twitchStreams={twitchStreams}
+            />
+          </aside>
+          {/* Desktop sidebar */}
+          <div className="hidden lg:block">
+            <FriendsSidebar
+              friends={enrichedFriends}
+              onSelectFriend={setSelectedFriendId}
+              selectedFriendId={selectedFriendId}
+              twitchStreams={twitchStreams}
+            />
+          </div>
           <main className="flex-1 overflow-y-auto p-4">
+            {/* Mobile toggle button */}
+            <button
+              className="mb-3 flex items-center gap-1.5 rounded border border-border bg-bg-elevated px-3 py-1.5 text-text-muted text-xs lg:hidden"
+              onClick={() => setSidebarOpen(true)}
+              type="button"
+            >
+              <span className="text-sm">☰</span> Friends ({enrichedFriends.length})
+            </button>
             {liveStream && <TwitchEmbed stream={liveStream} />}
             {liveMatches.map((match) => (
               <LiveMatchCard
                 key={match.matchId}
                 match={match}
+                seasonId={seasonId}
                 userCoins={userCoins}
                 userId={userId}
               />
