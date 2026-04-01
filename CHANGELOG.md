@@ -1,3 +1,10 @@
+## [1.8.1](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.8.0...v1.8.1) (2026-04-01)
+
+
+### Bug Fixes
+
+* loading skeleton on top left ([71e05da](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/71e05da529ebc3b493c45aab14c4a21f42a55dcc))
+
 # [1.8.0](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.7.4...v1.8.0) (2026-04-01)
 
 
