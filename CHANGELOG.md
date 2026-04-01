@@ -1,3 +1,5 @@
+## [1.7.4](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.7.3...v1.7.4) (2026-04-01)
+
 ## [1.7.3](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.7.2...v1.7.3) (2026-03-29)
 
 
