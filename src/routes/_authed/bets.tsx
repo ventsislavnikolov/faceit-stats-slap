@@ -178,8 +178,47 @@ function BetsPage() {
 
   if (!authResolved || seasonLoading) {
     return (
-      <div className="flex flex-1 items-center justify-center">
-        <div className="animate-pulse text-accent text-sm">Loading...</div>
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <div
+          className="flex-1 overflow-y-auto"
+          style={{ scrollbarGutter: "stable" }}
+        >
+          <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6">
+            {/* Season header skeleton */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-5 w-32 animate-pulse rounded bg-border" />
+                <div className="h-4 w-24 animate-pulse rounded bg-border" />
+              </div>
+              <div className="h-4 w-20 animate-pulse rounded bg-border" />
+            </div>
+            {/* Tab bar skeleton */}
+            <div className="flex gap-2">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div
+                  className="h-8 w-24 animate-pulse rounded bg-bg-elevated"
+                  key={i}
+                />
+              ))}
+            </div>
+            {/* Leaderboard rows skeleton */}
+            <div className="flex flex-col gap-1">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div
+                  className="grid gap-2 rounded bg-bg-elevated px-3 py-2"
+                  key={i}
+                  style={{ gridTemplateColumns: "3rem 1fr 5rem 5rem 5rem" }}
+                >
+                  <div className="h-3 w-6 animate-pulse rounded bg-border" />
+                  <div className="h-3 w-24 animate-pulse rounded bg-border" />
+                  <div className="ml-auto h-3 w-10 animate-pulse rounded bg-border" />
+                  <div className="ml-auto h-3 w-8 animate-pulse rounded bg-border" />
+                  <div className="ml-auto h-3 w-8 animate-pulse rounded bg-border" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

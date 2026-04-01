@@ -27,8 +27,39 @@ export function HomeLiveMatchesSection({
 
   if (isLoading) {
     return (
-      <div className="animate-pulse py-8 text-center text-accent">
-        Loading live matches...
+      <div className="flex flex-col gap-4">
+        {Array.from({ length: 2 }).map((_, i) => (
+          <div
+            className="rounded-lg border border-border bg-bg-card p-4"
+            key={i}
+          >
+            <div className="mb-3 flex items-center gap-2">
+              <div className="h-3 w-10 animate-pulse rounded bg-border" />
+              <div className="h-4 w-20 animate-pulse rounded bg-border" />
+            </div>
+            <div className="mb-3 flex items-center justify-center gap-6">
+              <div className="flex flex-col items-center gap-1">
+                <div className="h-3 w-20 animate-pulse rounded bg-border" />
+                <div className="h-8 w-8 animate-pulse rounded bg-border" />
+              </div>
+              <div className="text-lg text-text-dim">vs</div>
+              <div className="flex flex-col items-center gap-1">
+                <div className="h-3 w-20 animate-pulse rounded bg-border" />
+                <div className="h-8 w-8 animate-pulse rounded bg-border" />
+              </div>
+            </div>
+            <div className="border-border border-t pt-3">
+              <div className="mb-2 flex justify-between">
+                <div className="h-2 w-16 animate-pulse rounded bg-border" />
+                <div className="h-2 w-20 animate-pulse rounded bg-border" />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="h-10 animate-pulse rounded bg-bg-elevated" />
+                <div className="h-10 animate-pulse rounded bg-bg-elevated" />
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
     );
   }

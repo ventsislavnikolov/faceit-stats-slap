@@ -167,8 +167,26 @@ function HistoryPage() {
           </div>
 
           {resolving || isLoading ? (
-            <div className="animate-pulse py-8 text-center text-accent">
-              Loading...
+            <div className="flex flex-col gap-1">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div
+                  className="grid min-w-[50rem] gap-2 rounded border-border border-l-2 bg-bg-elevated px-3 py-2"
+                  key={i}
+                  style={{
+                    gridTemplateColumns: "3rem 24rem 2.5rem repeat(7, 5rem)",
+                  }}
+                >
+                  <div className="h-3 w-8 animate-pulse rounded bg-border" />
+                  <div className="h-3 w-20 animate-pulse rounded bg-border" />
+                  <div className="mx-auto h-3 w-3 animate-pulse rounded bg-border" />
+                  {Array.from({ length: 7 }).map((_, j) => (
+                    <div
+                      className="ml-auto h-3 w-10 animate-pulse rounded bg-border"
+                      key={j}
+                    />
+                  ))}
+                </div>
+              ))}
             </div>
           ) : player ? (
             <HistoryMatchesTable matches={matches} />

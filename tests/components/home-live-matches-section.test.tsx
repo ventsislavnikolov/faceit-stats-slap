@@ -33,7 +33,7 @@ describe("HomeLiveMatchesSection", () => {
           bettingContextReady={true}
         />
       )
-    ).toContain("Loading live matches");
+    ).toContain("animate-pulse");
 
     vi.mocked(useLiveMatches).mockReturnValue({
       data: [],
@@ -88,7 +88,7 @@ describe("HomeLiveMatchesSection", () => {
     expect(html).toContain("match-1");
     expect(html).toContain("public");
     expect(html).toContain("betting-hidden");
-    expect(html).not.toContain("Loading live matches");
+    expect(html).not.toContain("animate-pulse");
   });
 
   it("renders live cards with betting context", () => {

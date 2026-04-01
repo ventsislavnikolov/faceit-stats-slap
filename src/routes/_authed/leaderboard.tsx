@@ -458,13 +458,51 @@ function StatsTab({
         }))}
       />
       {isResolvingTarget ? (
-        <div className="animate-pulse py-8 text-center text-accent">
-          Loading...
+        <div className="flex flex-col gap-1">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div
+              className="grid items-center gap-2 rounded bg-bg-elevated px-3 py-2"
+              key={i}
+              style={{ gridTemplateColumns: "3rem 1fr 4rem repeat(7, 5rem)" }}
+            >
+              <div className="h-3 w-6 animate-pulse rounded bg-border" />
+              <div className="flex items-baseline gap-1.5">
+                <div className="h-3 w-24 animate-pulse rounded bg-border" />
+                <div className="h-2 w-8 animate-pulse rounded bg-border" />
+              </div>
+              <div className="ml-auto h-3 w-6 animate-pulse rounded bg-border" />
+              {Array.from({ length: 7 }).map((_, j) => (
+                <div
+                  className="ml-auto h-3 w-10 animate-pulse rounded bg-border"
+                  key={j}
+                />
+              ))}
+            </div>
+          ))}
         </div>
       ) : targetPlayerId || hasSearchTarget ? (
         isLoading ? (
-          <div className="animate-pulse py-8 text-center text-accent">
-            Loading...
+          <div className="flex flex-col gap-1">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div
+                className="grid items-center gap-2 rounded bg-bg-elevated px-3 py-2"
+                key={i}
+                style={{ gridTemplateColumns: "3rem 1fr 4rem repeat(7, 5rem)" }}
+              >
+                <div className="h-3 w-6 animate-pulse rounded bg-border" />
+                <div className="flex items-baseline gap-1.5">
+                  <div className="h-3 w-24 animate-pulse rounded bg-border" />
+                  <div className="h-2 w-8 animate-pulse rounded bg-border" />
+                </div>
+                <div className="ml-auto h-3 w-6 animate-pulse rounded bg-border" />
+                {Array.from({ length: 7 }).map((_, j) => (
+                  <div
+                    className="ml-auto h-3 w-10 animate-pulse rounded bg-border"
+                    key={j}
+                  />
+                ))}
+              </div>
+            ))}
           </div>
         ) : (
           <div className="flex w-full flex-col gap-1">

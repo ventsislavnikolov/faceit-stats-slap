@@ -145,10 +145,51 @@ function PlayerDashboard() {
 
       {/* Main layout */}
       {searchLoading ? (
-        <div className="flex flex-1 items-center justify-center">
-          <div className="animate-pulse text-accent text-sm">
-            Loading friends for <span className="font-bold">{nickname}</span>{" "}
-            (up to 100)...
+        <div className="flex h-full">
+          {/* Sidebar skeleton */}
+          <div className="hidden h-full w-[260px] flex-shrink-0 border-border border-r bg-bg-card p-3 lg:block">
+            <div className="flex flex-col gap-2">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div
+                  className="rounded-lg border border-transparent bg-bg-elevated p-2.5"
+                  key={i}
+                >
+                  <div className="mb-2 flex items-center gap-2">
+                    <div className="h-8 w-8 animate-pulse rounded-full bg-border" />
+                    <div className="flex flex-1 flex-col gap-1">
+                      <div className="h-3 w-20 animate-pulse rounded bg-border" />
+                      <div className="h-2 w-16 animate-pulse rounded bg-border" />
+                    </div>
+                  </div>
+                  <div className="mb-1.5 grid grid-cols-2 gap-1">
+                    {Array.from({ length: 4 }).map((_, j) => (
+                      <div
+                        className="h-3 animate-pulse rounded bg-border"
+                        key={j}
+                      />
+                    ))}
+                  </div>
+                  <div className="h-1.5 w-full animate-pulse rounded bg-border" />
+                </div>
+              ))}
+            </div>
+          </div>
+          {/* Main content skeleton */}
+          <div className="flex-1 p-4">
+            <div className="flex flex-col gap-2">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div
+                  className="flex items-center rounded border-border border-l-[3px] bg-bg-card px-2.5 py-2"
+                  key={i}
+                >
+                  <div className="h-3 w-4 animate-pulse rounded bg-border" />
+                  <div className="ml-2 h-3 w-20 animate-pulse rounded bg-border" />
+                  <div className="ml-2 h-3 w-16 animate-pulse rounded bg-border" />
+                  <div className="ml-2 h-3 w-12 animate-pulse rounded bg-border" />
+                  <div className="ml-2 h-3 w-32 animate-pulse rounded bg-border" />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       ) : searchError ? (
@@ -221,8 +262,19 @@ function PlayerDashboard() {
             ))}
             {selectedFriendId ? (
               statsLoading ? (
-                <div className="animate-pulse py-12 text-center text-accent text-sm">
-                  Loading match history...
+                <div className="flex flex-col gap-2">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <div
+                      className="flex items-center rounded border-border border-l-[3px] bg-bg-card px-2.5 py-2"
+                      key={i}
+                    >
+                      <div className="h-3 w-4 animate-pulse rounded bg-border" />
+                      <div className="ml-2 h-3 w-20 animate-pulse rounded bg-border" />
+                      <div className="ml-2 h-3 w-16 animate-pulse rounded bg-border" />
+                      <div className="ml-2 h-3 w-12 animate-pulse rounded bg-border" />
+                      <div className="ml-2 h-3 w-32 animate-pulse rounded bg-border" />
+                    </div>
+                  ))}
                 </div>
               ) : (
                 <RecentMatches matches={recentMatches} />

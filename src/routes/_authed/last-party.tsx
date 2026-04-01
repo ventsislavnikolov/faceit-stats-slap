@@ -119,8 +119,45 @@ function LastPartyPage() {
           </div>
 
           {(resolving || sessionLoading) && urlPlayer && (
-            <div className="animate-pulse py-8 text-center text-accent">
-              Loading party session...
+            <div className="flex flex-col gap-6">
+              {/* Header summary skeleton */}
+              <div className="flex items-center gap-6">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div className="flex flex-col gap-1" key={i}>
+                    <div className="h-2 w-12 animate-pulse rounded bg-border" />
+                    <div className="h-4 w-16 animate-pulse rounded bg-border" />
+                  </div>
+                ))}
+              </div>
+              {/* Stats table skeleton */}
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr>
+                      {Array.from({ length: 8 }).map((_, i) => (
+                        <th className="px-2 py-1" key={i}>
+                          <div className="mx-auto h-2 w-8 animate-pulse rounded bg-border" />
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <tr className="border-border border-t" key={i}>
+                        {Array.from({ length: 8 }).map((_, j) => (
+                          <td className="px-2 py-1.5" key={j}>
+                            <div
+                              className={`mx-auto h-3 animate-pulse rounded bg-border ${j === 0 ? "w-16" : "w-8"}`}
+                            />
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {/* Map distribution skeleton */}
+              <div className="h-8 w-full animate-pulse rounded bg-bg-elevated" />
             </div>
           )}
 

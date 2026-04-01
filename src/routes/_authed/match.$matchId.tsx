@@ -32,10 +32,43 @@ function MatchDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-1 items-center justify-center">
-        <span className="animate-pulse text-accent text-sm">
-          Loading match...
-        </span>
+      <div className="mx-auto max-w-6xl p-4">
+        {/* Header skeleton */}
+        <div className="mb-4 rounded-lg border border-border p-4">
+          <div className="mb-3 flex items-center gap-2">
+            <div className="h-4 w-16 animate-pulse rounded bg-border" />
+            <div className="h-4 w-20 animate-pulse rounded bg-border" />
+          </div>
+          {/* Score skeleton */}
+          <div className="mb-3 flex items-center justify-center gap-6">
+            <div className="flex flex-col items-center gap-1">
+              <div className="h-3 w-20 animate-pulse rounded bg-border" />
+              <div className="h-8 w-8 animate-pulse rounded bg-border" />
+            </div>
+            <div className="h-4 w-4 animate-pulse rounded bg-border" />
+            <div className="flex flex-col items-center gap-1">
+              <div className="h-3 w-20 animate-pulse rounded bg-border" />
+              <div className="h-8 w-8 animate-pulse rounded bg-border" />
+            </div>
+          </div>
+        </div>
+        {/* Scoreboard skeleton */}
+        <div className="flex flex-col gap-1">
+          {Array.from({ length: 10 }).map((_, i) => (
+            <div
+              className="flex items-center gap-3 rounded bg-bg-elevated px-3 py-2"
+              key={i}
+            >
+              <div className="h-3 w-20 animate-pulse rounded bg-border" />
+              <div className="ml-auto h-3 w-8 animate-pulse rounded bg-border" />
+              <div className="h-3 w-8 animate-pulse rounded bg-border" />
+              <div className="h-3 w-8 animate-pulse rounded bg-border" />
+              <div className="h-3 w-10 animate-pulse rounded bg-border" />
+              <div className="h-3 w-8 animate-pulse rounded bg-border" />
+              <div className="h-3 w-8 animate-pulse rounded bg-border" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }

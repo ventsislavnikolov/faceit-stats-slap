@@ -25,8 +25,30 @@ export function SeasonHistoryTab({ userId }: SeasonHistoryTabProps) {
 
   if (isLoading) {
     return (
-      <div className="animate-pulse py-8 text-center text-accent">
-        Loading...
+      <div className="flex flex-col gap-4">
+        <div className="flex gap-2">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div
+              className="h-8 w-28 animate-pulse rounded bg-bg-elevated"
+              key={i}
+            />
+          ))}
+        </div>
+        <div className="flex flex-col gap-1">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div
+              className="grid gap-2 rounded bg-bg-elevated px-3 py-2"
+              key={i}
+              style={{ gridTemplateColumns: "3rem 1fr 5rem 5rem 5rem" }}
+            >
+              <div className="h-3 w-6 animate-pulse rounded bg-border" />
+              <div className="h-3 w-24 animate-pulse rounded bg-border" />
+              <div className="ml-auto h-3 w-10 animate-pulse rounded bg-border" />
+              <div className="ml-auto h-3 w-8 animate-pulse rounded bg-border" />
+              <div className="ml-auto h-3 w-8 animate-pulse rounded bg-border" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }

@@ -53,8 +53,21 @@ export function SeasonMyBetsTab({
 
   if (isLoading) {
     return (
-      <div className="animate-pulse py-8 text-center text-accent">
-        Loading...
+      <div className="flex flex-col gap-1">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div
+            className="grid gap-2 rounded bg-bg-elevated px-3 py-2"
+            key={i}
+            style={{ gridTemplateColumns: "1.5fr 1fr 0.7fr 0.7fr 0.7fr 0.8fr" }}
+          >
+            <div className="h-3 w-28 animate-pulse rounded bg-border" />
+            <div className="ml-auto h-3 w-16 animate-pulse rounded bg-border" />
+            <div className="ml-auto h-3 w-8 animate-pulse rounded bg-border" />
+            <div className="ml-auto h-3 w-8 animate-pulse rounded bg-border" />
+            <div className="ml-auto h-3 w-8 animate-pulse rounded bg-border" />
+            <div className="ml-auto h-3 w-12 animate-pulse rounded bg-border" />
+          </div>
+        ))}
       </div>
     );
   }
