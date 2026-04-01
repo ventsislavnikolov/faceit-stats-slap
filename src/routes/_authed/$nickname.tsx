@@ -204,7 +204,7 @@ function PlayerDashboard() {
               onClick={() => setSidebarOpen(true)}
               type="button"
             >
-              <span className="text-sm">☰</span> Friends ({enrichedFriends.length})
+              <span className="text-sm">☰</span> Live Party ({enrichedFriends.length})
             </button>
             {liveStream && <TwitchEmbed stream={liveStream} />}
             {liveMatches.map((match) => (

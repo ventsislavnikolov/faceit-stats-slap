@@ -167,7 +167,7 @@ export function AppLayout() {
                   search={friendsHref.search as never}
                   to={friendsHref.to as never}
                 >
-                  Friends
+                  Live Party
                 </Link>
                 <Link
                   activeProps={{ className: mobileNavLinkActive }}
@@ -261,7 +261,7 @@ export function AppLayout() {
               search={friendsHref.search as never}
               to={friendsHref.to as never}
             >
-              Friends
+              Live Party
             </Link>
             <Link
               activeProps={{ className: desktopNavLinkActive }}
