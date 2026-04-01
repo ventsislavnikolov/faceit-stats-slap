@@ -934,7 +934,7 @@ describe("syncAllPlayerHistory", () => {
       },
     ]);
     supabaseState.matchesSelectIn.mockResolvedValueOnce({
-      data: [{ faceit_match_id: "history-match-1" }],
+      data: [{ faceit_match_id: "history-match-1", status: "FINISHED" }],
     });
 
     await runWithStartContext(

@@ -32,6 +32,10 @@ export const TRACKED_WEBHOOK_PLAYERS = {
     faceitId: "8e42d5f3-b4e9-4a67-b402-be0ac3c0260b",
     nickname: "TibaBG",
   },
+  vandaloo: {
+    faceitId: "156e72ec-e758-42e4-9fd7-3acaefa332f5",
+    nickname: "VanDaLoo",
+  },
 } as const;
 
 export function getTrackedWebhookPlayerIds(): string[] {

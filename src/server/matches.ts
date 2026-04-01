@@ -155,12 +155,12 @@ async function syncHistoryItems(history: any[]): Promise<void> {
       ? { data: [] }
       : await supabase
           .from("matches")
-          .select("faceit_match_id")
+          .select("faceit_match_id, status")
           .in("faceit_match_id", historyMatchIds);
-  const missingHistory = filterUnsyncedHistoryItems(
-    history,
-    (existingMatches || []).map((match: any) => match.faceit_match_id)
-  );
+  const finishedMatchIds = (existingMatches || [])
+    .filter((m: any) => m.status === "FINISHED")
+    .map((m: any) => m.faceit_match_id);
+  const missingHistory = filterUnsyncedHistoryItems(history, finishedMatchIds);
 
   for (let i = 0; i < missingHistory.length; i += HISTORY_SYNC_BATCH_SIZE) {
     if (i > 0) {
@@ -1239,21 +1239,37 @@ export const getStatsLeaderboard = createServerFn({ method: "GET" })
         days,
       });
 
-      const targetEntry = result.entries.find(
-        (entry) => entry.faceitId === targetPlayerId
-      );
-      if (targetEntry) {
+      const missingEloIds = result.entries
+        .filter((entry) => entry.elo <= 0)
+        .map((entry) => entry.faceitId);
+
+      if (missingEloIds.length > 0) {
         try {
           const { fetchPlayer } = await import("~/lib/faceit");
-          const target = await fetchPlayer(targetPlayerId);
-          result = {
-            ...result,
-            entries: result.entries.map((entry) =>
-              entry.faceitId === targetPlayerId
-                ? { ...entry, elo: target.elo }
-                : entry
-            ),
-          };
+          const eloResults = await Promise.allSettled(
+            missingEloIds.map(async (id) => {
+              const player = await fetchPlayer(id);
+              return { id, elo: player.elo };
+            })
+          );
+
+          const eloUpdates = new Map<string, number>();
+          for (const r of eloResults) {
+            if (r.status === "fulfilled" && r.value.elo > 0) {
+              eloUpdates.set(r.value.id, r.value.elo);
+            }
+          }
+
+          if (eloUpdates.size > 0) {
+            result = {
+              ...result,
+              entries: result.entries.map((entry) =>
+                eloUpdates.has(entry.faceitId)
+                  ? { ...entry, elo: eloUpdates.get(entry.faceitId)! }
+                  : entry
+              ),
+            };
+          }
         } catch {
           // Preserve the leaderboard if the live ELO lookup fails.
         }
