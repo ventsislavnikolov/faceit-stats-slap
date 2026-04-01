@@ -234,6 +234,7 @@ export function AppLayout() {
                   <Link
                     className="px-3 py-2 text-accent text-xs hover:bg-accent/10"
                     onClick={() => setMenuOpen(false)}
+                    search={{ redirect: pathname }}
                     to="/sign-in"
                   >
                     Sign In
@@ -317,6 +318,7 @@ export function AppLayout() {
           ) : (
             <Link
               className="rounded border border-accent/40 px-3 py-1 text-accent text-xs hover:bg-accent/10"
+              search={{ redirect: pathname }}
               to="/sign-in"
             >
               Sign In

@@ -84,7 +84,11 @@ export function SignUpForm() {
       >
         {loading ? "..." : "Sign Up"}
       </button>
-      <Link className="text-sm text-text-muted hover:text-accent" to="/sign-in">
+      <Link
+        className="text-sm text-text-muted hover:text-accent"
+        search={{ redirect: undefined }}
+        to="/sign-in"
+      >
         Already have an account? Sign in
       </Link>
     </form>

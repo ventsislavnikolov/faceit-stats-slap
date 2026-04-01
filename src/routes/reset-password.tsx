@@ -87,6 +87,7 @@ function ResetPasswordPage() {
         <p className="text-accent text-sm">Password updated successfully.</p>
         <Link
           className="text-sm text-text-muted hover:text-accent"
+          search={{ redirect: undefined }}
           to="/sign-in"
         >
           Sign in with your new password
@@ -101,6 +102,7 @@ function ResetPasswordPage() {
         <p className="text-error text-sm">Invalid or expired reset link.</p>
         <Link
           className="text-sm text-text-muted hover:text-accent"
+          search={{ redirect: undefined }}
           to="/sign-in"
         >
           Back to sign in

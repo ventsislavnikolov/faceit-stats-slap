@@ -61,7 +61,11 @@ export function ForgotPasswordForm() {
       >
         {loading ? "..." : "Send Reset Link"}
       </button>
-      <Link className="text-sm text-text-muted hover:text-accent" to="/sign-in">
+      <Link
+        className="text-sm text-text-muted hover:text-accent"
+        search={{ redirect: undefined }}
+        to="/sign-in"
+      >
         Back to sign in
       </Link>
     </form>

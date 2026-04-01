@@ -158,7 +158,11 @@ function BetsPage() {
 
   useEffect(() => {
     if (authResolved && !isSignedIn) {
-      navigate({ to: "/sign-in", replace: true });
+      navigate({
+        to: "/sign-in",
+        search: { redirect: "/bets" },
+        replace: true,
+      });
     }
   }, [authResolved, isSignedIn, navigate]);
 

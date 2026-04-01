@@ -129,7 +129,10 @@ export function BettingPanel({
   if (!userId) {
     return (
       <div className="mt-3 border-border border-t pt-3 text-center text-text-dim text-xs">
-        <a className="text-accent hover:underline" href="/sign-in">
+        <a
+          className="text-accent hover:underline"
+          href={`/sign-in?redirect=${encodeURIComponent(window.location.pathname)}`}
+        >
           Sign in
         </a>{" "}
         to bet
