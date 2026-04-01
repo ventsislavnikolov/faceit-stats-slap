@@ -1,5 +1,6 @@
 export type HistoryMatchCount = 20 | 50 | 100;
 export type HistoryQueueFilter = "all" | "solo" | "party";
+export type LeaderboardDays = 30 | 90 | 180 | 365 | 730;
 
 const HISTORY_MATCH_COUNT_OPTIONS: Array<{
   value: HistoryMatchCount;
@@ -44,4 +45,17 @@ export function normalizeHistoryQueueFilter(
   return value === "solo" || value === "party" || value === "all"
     ? value
     : "party";
+}
+
+const LEADERBOARD_DAYS_OPTIONS: LeaderboardDays[] = [30, 90, 180, 365, 730];
+
+export function getLeaderboardDaysOptions(): LeaderboardDays[] {
+  return LEADERBOARD_DAYS_OPTIONS;
+}
+
+export function normalizeLeaderboardDays(value: unknown): LeaderboardDays {
+  const numericValue = typeof value === "number" ? value : Number(value);
+  return LEADERBOARD_DAYS_OPTIONS.includes(numericValue as LeaderboardDays)
+    ? (numericValue as LeaderboardDays)
+    : 30;
 }

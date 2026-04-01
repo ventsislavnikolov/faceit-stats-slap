@@ -38,6 +38,9 @@ export function getPlayerViewHref(
         to: "/leaderboard",
         search: {
           player: nickname,
+          matches: 20,
+          queue: "party",
+          last: 30,
         },
       };
     case "last-party":

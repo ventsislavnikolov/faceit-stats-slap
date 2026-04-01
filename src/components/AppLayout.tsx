@@ -48,6 +48,7 @@ function getCurrentNickname(
   if (
     pathname === "/" ||
     pathname === "/sign-in" ||
+    pathname === "/bets" ||
     pathname.startsWith("/match/")
   ) {
     return null;
@@ -81,7 +82,10 @@ export function AppLayout() {
       };
   const leaderboardHref = currentNickname
     ? getPlayerViewHref("leaderboard", currentNickname)
-    : { to: "/leaderboard", search: { player: undefined } };
+    : {
+        to: "/leaderboard",
+        search: { player: undefined, matches: 20, queue: "party", last: 30 },
+      };
   const lastPartyHref = currentNickname
     ? getPlayerViewHref("last-party", currentNickname)
     : { to: "/last-party", search: { player: undefined } };

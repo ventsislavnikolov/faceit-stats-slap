@@ -10,6 +10,10 @@ import {
   getHistoryMatchCountOptions,
   getHistoryQueueOptions,
   type HistoryMatchCount,
+  type LeaderboardDays,
+  normalizeHistoryMatchCount,
+  normalizeHistoryQueueFilter,
+  normalizeLeaderboardDays,
 } from "~/lib/history-page";
 import {
   getStatsLeaderboardEmptyStateCopy,
@@ -26,6 +30,9 @@ import { searchAndLoadFriends } from "~/server/friends";
 export const Route = createFileRoute("/_authed/leaderboard")({
   validateSearch: (search: Record<string, unknown>) => ({
     player: (search.player as string) || undefined,
+    matches: normalizeHistoryMatchCount(search.matches),
+    queue: normalizeHistoryQueueFilter(search.queue),
+    last: normalizeLeaderboardDays(search.last),
   }),
   component: LeaderboardPage,
 });
@@ -172,16 +179,25 @@ function StatsTab({
   playerIds,
   hasSearchTarget,
   isResolvingTarget,
+  n,
+  days,
+  queue,
+  onUpdateSearch,
 }: {
   targetPlayerId: string;
   targetNickname: string;
   playerIds: string[];
   hasSearchTarget: boolean;
   isResolvingTarget: boolean;
+  n: HistoryMatchCount;
+  days: LeaderboardDays;
+  queue: "all" | "solo" | "party";
+  onUpdateSearch: (next: {
+    matches?: HistoryMatchCount;
+    queue?: "all" | "solo" | "party";
+    last?: LeaderboardDays;
+  }) => void;
 }) {
-  const [n, setN] = useState<HistoryMatchCount>(20);
-  const [days, setDays] = useState<30 | 90 | 180 | 365 | 730>(30);
-  const [queue, setQueue] = useState<"all" | "solo" | "party">("party");
   const [sortKey, setSortKey] = useState<SortKey>("avgImpact");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [statGroup, setStatGroup] = useState<StatGroup>("combat");
@@ -282,7 +298,7 @@ function StatsTab({
               <button
                 className={`rounded px-3 py-1.5 transition-colors ${n === option.value ? "bg-accent font-bold text-bg" : "bg-bg-elevated text-text-muted hover:text-text"}`}
                 key={option.value}
-                onClick={() => setN(option.value)}
+                onClick={() => onUpdateSearch({ matches: option.value })}
                 type="button"
               >
                 {option.label}
@@ -298,7 +314,7 @@ function StatsTab({
               <button
                 className={`rounded px-3 py-1.5 transition-colors ${queue === option.value ? "bg-accent font-bold text-bg" : "bg-bg-elevated text-text-muted hover:text-text"}`}
                 key={option.value}
-                onClick={() => setQueue(option.value)}
+                onClick={() => onUpdateSearch({ queue: option.value })}
                 type="button"
               >
                 {option.label}
@@ -313,7 +329,7 @@ function StatsTab({
               <button
                 className={`rounded px-3 py-1.5 transition-colors ${days === v ? "bg-accent font-bold text-bg" : "bg-bg-elevated text-text-muted hover:text-text"}`}
                 key={v}
-                onClick={() => setDays(v)}
+                onClick={() => onUpdateSearch({ last: v })}
                 type="button"
               >
                 {v}
@@ -472,7 +488,12 @@ function StatsTab({
 
 function LeaderboardPage() {
   const navigate = useNavigate();
-  const { player: urlPlayer } = Route.useSearch();
+  const {
+    player: urlPlayer,
+    matches: selectedMatchCount,
+    queue: selectedQueue,
+    last: selectedDays,
+  } = Route.useSearch();
   const [input, setInput] = useState(urlPlayer ?? "");
 
   const {
@@ -498,6 +519,23 @@ function LeaderboardPage() {
   const isResolvingTarget =
     hasSearchTarget && searchLoading && !searchError && !targetPlayerId;
 
+  const updateSearch = (next: {
+    player?: string;
+    matches?: HistoryMatchCount;
+    queue?: "all" | "solo" | "party";
+    last?: LeaderboardDays;
+  }) => {
+    navigate({
+      to: "/leaderboard",
+      search: {
+        player: next.player ?? urlPlayer,
+        matches: next.matches ?? selectedMatchCount,
+        queue: next.queue ?? selectedQueue,
+        last: next.last ?? selectedDays,
+      },
+    });
+  };
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const target = resolveFaceitSearchTarget(input);
@@ -510,12 +548,7 @@ function LeaderboardPage() {
       return;
     }
 
-    navigate({
-      to: "/leaderboard",
-      search: {
-        player: target.value,
-      },
-    });
+    updateSearch({ player: target.value });
   };
 
   return (
@@ -535,9 +568,13 @@ function LeaderboardPage() {
       >
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6">
           <StatsTab
+            days={selectedDays}
             hasSearchTarget={hasSearchTarget}
             isResolvingTarget={isResolvingTarget}
+            n={selectedMatchCount}
+            onUpdateSearch={updateSearch}
             playerIds={friendIds}
+            queue={selectedQueue}
             targetNickname={targetNickname}
             targetPlayerId={targetPlayerId}
           />
