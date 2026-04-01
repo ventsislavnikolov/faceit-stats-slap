@@ -1,3 +1,16 @@
+# [1.9.0](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.8.1...v1.9.0) (2026-04-01)
+
+
+### Bug Fixes
+
+* replace all loading text with pulsing skeleton UIs ([c411b4f](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/c411b4fa72d324cea435f9f7a0138d4f86e4f5dc))
+* resolve one-sided betting pools instead of refunding ([fdea79b](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/fdea79bfcca660b31488cf7c4a33db186eb070f7))
+
+
+### Features
+
+* persist leaderboard filter settings in URL params ([a143a9e](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/a143a9ecb20c18e28078aec73a7d4d76198589b5))
+
 ## [1.8.1](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.8.0...v1.8.1) (2026-04-01)
 
 
