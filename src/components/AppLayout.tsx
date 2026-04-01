@@ -62,6 +62,7 @@ export function AppLayout() {
   const location = useRouterState({
     select: (state) => state.location,
   });
+  const [authResolved, setAuthResolved] = useState(false);
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const { data: activeSeason } = useActiveSeason();
@@ -118,6 +119,7 @@ export function AppLayout() {
     subscribeToAuthSession((session) => {
       setIsSignedIn(!!session);
       setUserId(session?.user.id ?? null);
+      setAuthResolved(true);
     }).then((sub) => {
       subscription = sub;
     });
@@ -213,32 +215,38 @@ export function AppLayout() {
 
                 <div className="my-1 border-border border-t" />
 
-                {isSignedIn ? (
-                  <>
-                    {userId && (
-                      <div className="px-3 py-2">
-                        <CoinBalance seasonId={seasonId} userId={userId} />
-                      </div>
-                    )}
-                    <button
-                      className="px-3 py-2 text-left text-text-muted text-xs hover:bg-error/10 hover:text-error"
-                      onClick={() => {
-                        setMenuOpen(false);
-                        handleSignOut();
-                      }}
+                {authResolved ? (
+                  isSignedIn ? (
+                    <>
+                      {userId && (
+                        <div className="px-3 py-2">
+                          <CoinBalance seasonId={seasonId} userId={userId} />
+                        </div>
+                      )}
+                      <button
+                        className="px-3 py-2 text-left text-text-muted text-xs hover:bg-error/10 hover:text-error"
+                        onClick={() => {
+                          setMenuOpen(false);
+                          handleSignOut();
+                        }}
+                      >
+                        Sign Out
+                      </button>
+                    </>
+                  ) : (
+                    <Link
+                      className="px-3 py-2 text-accent text-xs hover:bg-accent/10"
+                      onClick={() => setMenuOpen(false)}
+                      search={{ redirect: pathname }}
+                      to="/sign-in"
                     >
-                      Sign Out
-                    </button>
-                  </>
+                      Sign In
+                    </Link>
+                  )
                 ) : (
-                  <Link
-                    className="px-3 py-2 text-accent text-xs hover:bg-accent/10"
-                    onClick={() => setMenuOpen(false)}
-                    search={{ redirect: pathname }}
-                    to="/sign-in"
-                  >
-                    Sign In
-                  </Link>
+                  <div className="flex items-center gap-2 px-3 py-2">
+                    <div className="h-3 w-16 animate-pulse rounded bg-border" />
+                  </div>
                 )}
               </div>
             </div>
@@ -305,24 +313,31 @@ export function AppLayout() {
         </div>
 
         <div className="hidden items-center gap-3 lg:flex">
-          {isSignedIn ? (
-            <>
-              {userId && <CoinBalance seasonId={seasonId} userId={userId} />}
-              <button
-                className="text-text-muted text-xs hover:text-error"
-                onClick={handleSignOut}
+          {authResolved ? (
+            isSignedIn ? (
+              <>
+                {userId && <CoinBalance seasonId={seasonId} userId={userId} />}
+                <button
+                  className="text-text-muted text-xs hover:text-error"
+                  onClick={handleSignOut}
+                >
+                  Sign Out
+                </button>
+              </>
+            ) : (
+              <Link
+                className="rounded border border-accent/40 px-3 py-1 text-accent text-xs hover:bg-accent/10"
+                search={{ redirect: pathname }}
+                to="/sign-in"
               >
-                Sign Out
-              </button>
-            </>
+                Sign In
+              </Link>
+            )
           ) : (
-            <Link
-              className="rounded border border-accent/40 px-3 py-1 text-accent text-xs hover:bg-accent/10"
-              search={{ redirect: pathname }}
-              to="/sign-in"
-            >
-              Sign In
-            </Link>
+            <div className="flex items-center gap-3">
+              <div className="h-4 w-14 animate-pulse rounded bg-border" />
+              <div className="h-4 w-12 animate-pulse rounded bg-border" />
+            </div>
           )}
         </div>
       </nav>
