@@ -191,7 +191,7 @@ export function BettingPanel({
       {isOpen && (
         <div className="flex items-center gap-2">
           <input
-            className="w-24 rounded border border-border bg-bg-elevated px-2 py-1 text-xs text-text focus:border-accent focus:outline-none"
+            className="w-24 rounded border border-border bg-bg-elevated px-2 py-1 text-text text-xs focus:border-accent focus:outline-none"
             max={userCoins}
             min={1}
             onChange={(e) => {

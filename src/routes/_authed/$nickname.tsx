@@ -164,14 +164,16 @@ function PlayerDashboard() {
           {/* Mobile sidebar overlay */}
           {sidebarOpen && (
             <div
+              aria-label="Close sidebar"
               className="fixed inset-0 z-40 bg-black/50 lg:hidden"
               onClick={() => setSidebarOpen(false)}
               onKeyDown={(e) => {
-                if (e.key === "Escape") setSidebarOpen(false);
+                if (e.key === "Escape") {
+                  setSidebarOpen(false);
+                }
               }}
               role="button"
               tabIndex={0}
-              aria-label="Close sidebar"
             />
           )}
           {/* Mobile sidebar drawer */}
@@ -204,7 +206,8 @@ function PlayerDashboard() {
               onClick={() => setSidebarOpen(true)}
               type="button"
             >
-              <span className="text-sm">☰</span> Live Party ({enrichedFriends.length})
+              <span className="text-sm">☰</span> Live Party (
+              {enrichedFriends.length})
             </button>
             {liveStream && <TwitchEmbed stream={liveStream} />}
             {liveMatches.map((match) => (
