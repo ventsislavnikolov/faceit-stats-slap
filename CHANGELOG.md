@@ -1,3 +1,10 @@
+# [1.8.0](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.7.4...v1.8.0) (2026-04-01)
+
+
+### Features
+
+* redirect to previous page after sign-in instead of always /history ([3e96f42](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/3e96f427294bb6a2e7e8501a8763d077a5b96dce))
+
 ## [1.7.4](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.7.3...v1.7.4) (2026-04-01)
 
 ## [1.7.3](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.7.2...v1.7.3) (2026-03-29)
