@@ -58,12 +58,12 @@ describe("AppLayout", () => {
   it("renders leaderboard before history in the top navigation", () => {
     const html = renderToStaticMarkup(<AppLayout />);
 
-    const friendsIndex = html.indexOf(">Friends<");
+    const livePartyIndex = html.indexOf(">Live Party<");
     const leaderboardIndex = html.indexOf(">Leaderboard<");
     const historyIndex = html.indexOf(">History<");
 
-    expect(friendsIndex).toBeGreaterThan(-1);
-    expect(leaderboardIndex).toBeGreaterThan(friendsIndex);
+    expect(livePartyIndex).toBeGreaterThan(-1);
+    expect(leaderboardIndex).toBeGreaterThan(livePartyIndex);
     expect(historyIndex).toBeGreaterThan(leaderboardIndex);
   });
 

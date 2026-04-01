@@ -135,6 +135,7 @@ describe("LiveMatchCard", () => {
         authResolved={true}
         bettingContextReady={true}
         match={match}
+        seasonId="season-1"
         userCoins={1234}
         userId="user-1"
       />
