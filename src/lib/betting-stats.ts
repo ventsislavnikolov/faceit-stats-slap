@@ -15,11 +15,11 @@ export function getBetOutcomeLabel(bet: BetWithPool): BetOutcomeLabel {
     return "Pending";
   }
 
-  if (bet.payout === null) {
-    return "Lost";
+  if (bet.pool.winningTeam && bet.side === bet.pool.winningTeam) {
+    return "Won";
   }
 
-  return bet.payout > bet.amount ? "Won" : "Lost";
+  return "Lost";
 }
 
 export function buildBetHistorySummary(
@@ -50,7 +50,7 @@ export function buildBetHistorySummary(
     resolvedBets += 1;
     totalReturned += bet.payout ?? 0;
 
-    if ((bet.payout ?? 0) > bet.amount) {
+    if (bet.pool.winningTeam && bet.side === bet.pool.winningTeam) {
       betsWon += 1;
     }
   }

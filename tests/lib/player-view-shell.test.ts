@@ -25,6 +25,9 @@ describe("player view shell", () => {
       to: "/leaderboard",
       search: {
         player: "soavarice",
+        matches: 20,
+        queue: "party",
+        last: 30,
       },
     });
   });

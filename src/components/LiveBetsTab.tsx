@@ -61,8 +61,8 @@ function MatchBets({ match, seasonId, userCoins, userId }: MatchBetsProps) {
   const pool = data?.pool ?? null;
   const userBet = data?.userBet ?? null;
 
-  const team1Name = match.teams.faction1.name;
-  const team2Name = match.teams.faction2.name;
+  const team1Name = pool?.team1Name ?? match.teams.faction1.name;
+  const team2Name = pool?.team2Name ?? match.teams.faction2.name;
 
   return (
     <div className="flex flex-col gap-3">
@@ -91,6 +91,7 @@ function MatchBets({ match, seasonId, userCoins, userId }: MatchBetsProps) {
           type="match"
           userCoins={userCoins}
           userId={userId}
+          winningTeam={pool.winningTeam}
         />
       )}
 

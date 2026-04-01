@@ -26,6 +26,7 @@ interface BetCardProps {
   type: "match" | "prop";
   userCoins: number;
   userId: string | null;
+  winningTeam?: string | null;
 }
 
 export function BetCard({
@@ -41,6 +42,7 @@ export function BetCard({
   type,
   userCoins,
   userId,
+  winningTeam,
 }: BetCardProps) {
   const queryClient = useQueryClient();
   const side1Key = type === "match" ? "team1" : "yes";
@@ -123,8 +125,8 @@ export function BetCard({
     const isResolved = status === "RESOLVED" || status === "resolved";
     const isRefunded = status === "REFUNDED" || status === "refunded";
     const won =
-      existingBet.payout !== null && existingBet.payout > existingBet.amount;
-    const lost = existingBet.payout !== null && existingBet.payout === 0;
+      isResolved && winningTeam != null && existingBet.side === winningTeam;
+    const lost = isResolved && !won;
 
     return (
       <div className="rounded-lg border border-border bg-bg-elevated p-4">
@@ -143,10 +145,10 @@ export function BetCard({
             className={`mt-1 font-bold text-xs ${won ? "text-accent" : "text-error"}`}
           >
             {won
-              ? `Won ${existingBet.payout} coins! (+${existingBet.payout - existingBet.amount})`
-              : lost
-                ? "Lost this bet."
-                : `Returned ${existingBet.payout} coins.`}
+              ? (existingBet.payout ?? 0) > existingBet.amount
+                ? `Won ${existingBet.payout} coins! (+${(existingBet.payout ?? 0) - existingBet.amount})`
+                : "Correct pick! Bet returned."
+              : "Lost this bet."}
           </div>
         )}
         {isRefunded && (

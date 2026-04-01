@@ -108,12 +108,14 @@ export function BettingPanel({
             </span>
           </span>
         </div>
-        {pool.status === "RESOLVED" && userBet.payout !== null && (
+        {pool.status === "RESOLVED" && (
           <div
-            className={`mt-1 font-bold ${userBet.payout > userBet.amount ? "text-accent" : "text-error"}`}
+            className={`mt-1 font-bold ${userBet.side === pool.winningTeam ? "text-accent" : "text-error"}`}
           >
-            {userBet.payout > userBet.amount
-              ? `Won ${userBet.payout} coins! (+${userBet.payout - userBet.amount})`
+            {userBet.side === pool.winningTeam
+              ? (userBet.payout ?? 0) > userBet.amount
+                ? `Won ${userBet.payout} coins! (+${(userBet.payout ?? 0) - userBet.amount})`
+                : "Correct pick! Bet returned."
               : "Lost this bet."}
           </div>
         )}

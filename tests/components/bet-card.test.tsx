@@ -84,6 +84,7 @@ describe("BetCard", () => {
         {...baseProps}
         existingBet={{ side: "team1", amount: 25, payout: 50 }}
         status="RESOLVED"
+        winningTeam="team1"
       />
     );
 
@@ -97,6 +98,7 @@ describe("BetCard", () => {
         {...baseProps}
         existingBet={{ side: "team2", amount: 25, payout: 0 }}
         status="RESOLVED"
+        winningTeam="team1"
       />
     );
 

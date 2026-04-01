@@ -7,20 +7,17 @@ interface SeasonMyBetsTabProps {
 
 function formatBetStatus(
   poolStatus: string,
-  payout: number | null,
-  amount: number
+  side: string,
+  winningTeam: string | null
 ): { label: string; className: string } {
   if (poolStatus === "REFUNDED" || poolStatus === "refunded") {
     return { label: "Refunded", className: "text-text-muted" };
   }
   if (poolStatus === "RESOLVED" || poolStatus === "resolved") {
-    if (payout !== null && payout > amount) {
+    if (winningTeam && side === winningTeam) {
       return { label: "Won", className: "text-accent" };
     }
-    if (payout !== null && payout === 0) {
-      return { label: "Lost", className: "text-error" };
-    }
-    return { label: "Resolved", className: "text-text-muted" };
+    return { label: "Lost", className: "text-error" };
   }
   return { label: "Pending", className: "text-text-muted" };
 }
@@ -101,8 +98,8 @@ export function SeasonMyBetsTab({
           bet.side === "team1" ? bet.pool.team1Name : bet.pool.team2Name;
         const { label: statusLabel, className: statusClass } = formatBetStatus(
           poolStatus,
-          bet.payout,
-          bet.amount
+          bet.side,
+          bet.pool.winningTeam
         );
         const payout =
           poolStatus === "REFUNDED"
