@@ -116,36 +116,70 @@ export const getSeasonLeaderboard = createServerFn({ method: "GET" })
       (profiles ?? []).map((p: any) => [p.id, p.nickname])
     );
 
-    // Count bets per user for this season via prop_pools + bets
+    const betCountMap = new Map<string, number>();
+    const betWonMap = new Map<string, number>();
+
+    // Match bets via betting_pools with this season_id
+    const { data: matchPools } = await supabase
+      .from("betting_pools")
+      .select("id, status, winning_team")
+      .eq("season_id", seasonId);
+
+    const matchPoolIds = (matchPools ?? []).map((p: any) => p.id);
+    const matchPoolMap = new Map((matchPools ?? []).map((p: any) => [p.id, p]));
+
+    if (matchPoolIds.length > 0) {
+      const { data: matchBets } = await supabase
+        .from("bets")
+        .select("user_id, side, pool_id")
+        .in("pool_id", matchPoolIds);
+
+      for (const bet of matchBets ?? []) {
+        betCountMap.set(bet.user_id, (betCountMap.get(bet.user_id) ?? 0) + 1);
+        const pool = matchPoolMap.get(bet.pool_id);
+        if (pool?.status === "RESOLVED" && bet.side === pool.winning_team) {
+          betWonMap.set(bet.user_id, (betWonMap.get(bet.user_id) ?? 0) + 1);
+        }
+      }
+    }
+
+    // Prop bets via prop_pools with this season_id
     const { data: propPools } = await supabase
       .from("prop_pools")
-      .select("id")
+      .select("id, status, outcome")
       .eq("season_id", seasonId);
 
     const propPoolIds = (propPools ?? []).map((p: any) => p.id);
-
-    const betCountMap = new Map<string, number>();
+    const propPoolMap = new Map((propPools ?? []).map((p: any) => [p.id, p]));
 
     if (propPoolIds.length > 0) {
-      const { data: bets } = await supabase
+      const { data: propBets } = await supabase
         .from("bets")
-        .select("user_id")
+        .select("user_id, side, prop_pool_id")
         .in("prop_pool_id", propPoolIds);
 
-      for (const bet of bets ?? []) {
+      for (const bet of propBets ?? []) {
         betCountMap.set(bet.user_id, (betCountMap.get(bet.user_id) ?? 0) + 1);
+        const prop = propPoolMap.get(bet.prop_pool_id);
+        if (prop?.status === "resolved") {
+          const winningSide = prop.outcome ? "yes" : "no";
+          if (bet.side === winningSide) {
+            betWonMap.set(bet.user_id, (betWonMap.get(bet.user_id) ?? 0) + 1);
+          }
+        }
       }
     }
 
     return participants.map((p: any) => {
       const betsPlaced = betCountMap.get(p.user_id) ?? 0;
+      const betsWon = betWonMap.get(p.user_id) ?? 0;
       return {
         userId: p.user_id,
         nickname: nicknameMap.get(p.user_id) ?? "Unknown",
         coins: p.coins,
         betsPlaced,
-        betsWon: 0,
-        winRate: 0,
+        betsWon,
+        winRate: betsPlaced > 0 ? Math.round((betsWon / betsPlaced) * 100) : 0,
       };
     });
   });
