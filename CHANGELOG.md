@@ -1,3 +1,10 @@
+## [1.9.1](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.9.0...v1.9.1) (2026-04-02)
+
+
+### Bug Fixes
+
+* correct season leaderboard bet counting and one-sided pool display ([00b0999](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/00b0999263bdfc1f6ebd1ce4427f6eea45f0351b))
+
 # [1.9.0](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.8.1...v1.9.0) (2026-04-01)
 
 
