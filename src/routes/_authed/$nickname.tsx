@@ -148,47 +148,137 @@ function PlayerDashboard() {
         <div className="flex h-full">
           {/* Sidebar skeleton */}
           <div className="hidden h-full w-[260px] flex-shrink-0 border-border border-r bg-bg-card p-3 lg:block">
+            {/* "PLAYING" header */}
+            <div className="mb-3 flex items-center gap-1.5">
+              <div className="h-2 w-2 animate-pulse rounded-full bg-border" />
+              <div className="h-2.5 w-20 animate-pulse rounded bg-border" />
+            </div>
             <div className="flex flex-col gap-2">
-              {Array.from({ length: 6 }).map((_, i) => (
+              {Array.from({ length: 2 }).map((_, i) => (
                 <div
                   className="rounded-lg border border-transparent bg-bg-elevated p-2.5"
-                  key={i}
+                  key={`playing-${i}`}
                 >
                   <div className="mb-2 flex items-center gap-2">
                     <div className="h-8 w-8 animate-pulse rounded-full bg-border" />
                     <div className="flex flex-1 flex-col gap-1">
                       <div className="h-3 w-20 animate-pulse rounded bg-border" />
-                      <div className="h-2 w-16 animate-pulse rounded bg-border" />
+                      <div className="h-2 w-24 animate-pulse rounded bg-border" />
                     </div>
                   </div>
                   <div className="mb-1.5 grid grid-cols-2 gap-1">
                     {Array.from({ length: 4 }).map((_, j) => (
-                      <div
-                        className="h-3 animate-pulse rounded bg-border"
+                      <div className="rounded bg-bg-card px-1.5 py-1" key={j}>
+                        <div className="mb-1 h-2 w-6 animate-pulse rounded bg-border" />
+                        <div className="h-4 w-10 animate-pulse rounded bg-border" />
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: 5 }).map((_, j) => (
+                      <span
+                        className="h-1.5 w-3.5 animate-pulse rounded-sm bg-border"
                         key={j}
                       />
                     ))}
+                    <span className="ml-1 h-2 w-8 animate-pulse rounded bg-border" />
                   </div>
-                  <div className="h-1.5 w-full animate-pulse rounded bg-border" />
+                </div>
+              ))}
+            </div>
+            {/* "NOT PLAYING" header */}
+            <div className="mt-4 mb-2">
+              <div className="h-2.5 w-28 animate-pulse rounded bg-border" />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div
+                  className="rounded-lg border border-transparent bg-bg-elevated p-2.5"
+                  key={`offline-${i}`}
+                >
+                  <div className="mb-2 flex items-center gap-2">
+                    <div className="h-8 w-8 animate-pulse rounded-full bg-border" />
+                    <div className="flex flex-1 flex-col gap-1">
+                      <div className="h-3 w-20 animate-pulse rounded bg-border" />
+                      <div className="h-2 w-24 animate-pulse rounded bg-border" />
+                    </div>
+                  </div>
+                  <div className="mb-1.5 grid grid-cols-2 gap-1">
+                    {Array.from({ length: 4 }).map((_, j) => (
+                      <div className="rounded bg-bg-card px-1.5 py-1" key={j}>
+                        <div className="mb-1 h-2 w-6 animate-pulse rounded bg-border" />
+                        <div className="h-4 w-10 animate-pulse rounded bg-border" />
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: 5 }).map((_, j) => (
+                      <span
+                        className="h-1.5 w-3.5 animate-pulse rounded-sm bg-border"
+                        key={j}
+                      />
+                    ))}
+                    <span className="ml-1 h-2 w-8 animate-pulse rounded bg-border" />
+                  </div>
                 </div>
               ))}
             </div>
           </div>
-          {/* Main content skeleton */}
+          {/* Main content skeleton — LiveMatchCard shape */}
           <div className="flex-1 p-4">
-            <div className="flex flex-col gap-2">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <div
-                  className="flex items-center rounded border-border border-l-[3px] bg-bg-card px-2.5 py-2"
-                  key={i}
-                >
-                  <div className="h-3 w-4 animate-pulse rounded bg-border" />
-                  <div className="ml-2 h-3 w-20 animate-pulse rounded bg-border" />
-                  <div className="ml-2 h-3 w-16 animate-pulse rounded bg-border" />
-                  <div className="ml-2 h-3 w-12 animate-pulse rounded bg-border" />
-                  <div className="ml-2 h-3 w-32 animate-pulse rounded bg-border" />
+            <div className="rounded-lg border border-border bg-gradient-to-br from-bg-elevated/50 to-bg-card p-4">
+              {/* Card header */}
+              <div className="mb-3 flex items-center gap-2">
+                <div className="h-2 w-2 animate-pulse rounded-full bg-border" />
+                <div className="h-3 w-16 animate-pulse rounded bg-border" />
+                <div className="h-4 w-20 animate-pulse rounded bg-border" />
+              </div>
+              {/* Score section */}
+              <div className="mb-3 flex items-center justify-center gap-6">
+                <div className="text-center">
+                  <div className="mx-auto mb-1 h-3 w-16 animate-pulse rounded bg-border" />
+                  <div className="mx-auto h-8 w-8 animate-pulse rounded bg-border" />
                 </div>
-              ))}
+                <div className="h-4 w-6 animate-pulse rounded bg-border" />
+                <div className="text-center">
+                  <div className="mx-auto mb-1 h-3 w-16 animate-pulse rounded bg-border" />
+                  <div className="mx-auto h-8 w-8 animate-pulse rounded bg-border" />
+                </div>
+              </div>
+              {/* Player name pills */}
+              <div className="mb-4 flex justify-center gap-1.5">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div
+                    className="h-5 w-16 animate-pulse rounded bg-border"
+                    key={i}
+                  />
+                ))}
+              </div>
+              {/* Scoreboard table */}
+              <div className="rounded border border-border bg-bg-card p-2">
+                <div className="mb-2 h-3 w-24 animate-pulse rounded bg-border" />
+                <div className="mb-1 grid grid-cols-[1fr_32px_32px_32px_40px_36px] gap-1">
+                  <div className="h-2.5 w-12 animate-pulse rounded bg-border" />
+                  <div className="h-2.5 animate-pulse rounded bg-border" />
+                  <div className="h-2.5 animate-pulse rounded bg-border" />
+                  <div className="h-2.5 animate-pulse rounded bg-border" />
+                  <div className="h-2.5 animate-pulse rounded bg-border" />
+                  <div className="h-2.5 animate-pulse rounded bg-border" />
+                </div>
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div
+                    className="grid grid-cols-[1fr_32px_32px_32px_40px_36px] gap-1 py-1"
+                    key={i}
+                  >
+                    <div className="h-3 w-20 animate-pulse rounded bg-border" />
+                    <div className="h-3 animate-pulse rounded bg-border" />
+                    <div className="h-3 animate-pulse rounded bg-border" />
+                    <div className="h-3 animate-pulse rounded bg-border" />
+                    <div className="h-3 animate-pulse rounded bg-border" />
+                    <div className="h-3 animate-pulse rounded bg-border" />
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -263,16 +353,19 @@ function PlayerDashboard() {
             {selectedFriendId ? (
               statsLoading ? (
                 <div className="flex flex-col gap-2">
+                  <div className="mb-1 h-3 w-28 animate-pulse rounded bg-border" />
                   {Array.from({ length: 5 }).map((_, i) => (
                     <div
-                      className="flex items-center rounded border-border border-l-[3px] bg-bg-card px-2.5 py-2"
+                      className={`flex items-center rounded border-l-[3px] bg-bg-card px-2.5 py-2 ${i % 2 === 0 ? "border-accent/40" : "border-error/40"}`}
                       key={i}
                     >
-                      <div className="h-3 w-4 animate-pulse rounded bg-border" />
+                      <div
+                        className={`h-3 w-4 animate-pulse rounded ${i % 2 === 0 ? "bg-accent/30" : "bg-error/30"}`}
+                      />
                       <div className="ml-2 h-3 w-20 animate-pulse rounded bg-border" />
-                      <div className="ml-2 h-3 w-16 animate-pulse rounded bg-border" />
-                      <div className="ml-2 h-3 w-12 animate-pulse rounded bg-border" />
-                      <div className="ml-2 h-3 w-32 animate-pulse rounded bg-border" />
+                      <div className="ml-2 h-4 w-16 animate-pulse rounded bg-border" />
+                      <div className="ml-2 h-3 w-14 animate-pulse rounded bg-border" />
+                      <div className="ml-2 h-3 w-40 animate-pulse rounded bg-border" />
                     </div>
                   ))}
                 </div>

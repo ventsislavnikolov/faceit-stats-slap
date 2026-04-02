@@ -18,20 +18,48 @@ export function SeasonLeaderboardTab({
 
   if (isLoading) {
     return (
-      <div className="flex flex-col gap-1">
-        {Array.from({ length: 5 }).map((_, i) => (
+      <div className="flex flex-col gap-4">
+        {/* Leaderboard table skeleton */}
+        <div className="flex flex-col gap-1">
+          {/* Column header skeleton */}
           <div
-            className="grid gap-2 rounded bg-bg-elevated px-3 py-2"
-            key={i}
+            className="grid gap-2 px-3 pb-1"
             style={{ gridTemplateColumns: "3rem 1fr 5rem 5rem 5rem" }}
           >
-            <div className="h-3 w-6 animate-pulse rounded bg-border" />
-            <div className="h-3 w-24 animate-pulse rounded bg-border" />
-            <div className="ml-auto h-3 w-10 animate-pulse rounded bg-border" />
-            <div className="ml-auto h-3 w-8 animate-pulse rounded bg-border" />
-            <div className="ml-auto h-3 w-8 animate-pulse rounded bg-border" />
+            <div className="h-2 w-3 animate-pulse rounded bg-border" />
+            <div className="h-2 w-12 animate-pulse rounded bg-border" />
+            <div className="ml-auto h-2 w-10 animate-pulse rounded bg-border" />
+            <div className="ml-auto h-2 w-8 animate-pulse rounded bg-border" />
+            <div className="ml-auto h-2 w-10 animate-pulse rounded bg-border" />
           </div>
-        ))}
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div
+              className="grid gap-2 rounded bg-bg-elevated px-3 py-2"
+              key={i}
+              style={{ gridTemplateColumns: "3rem 1fr 5rem 5rem 5rem" }}
+            >
+              <div className="h-3 w-6 animate-pulse rounded bg-border" />
+              <div className="h-3 w-24 animate-pulse rounded bg-border" />
+              <div className="ml-auto h-3 w-10 animate-pulse rounded bg-border" />
+              <div className="ml-auto h-3 w-8 animate-pulse rounded bg-border" />
+              <div className="ml-auto h-3 w-8 animate-pulse rounded bg-border" />
+            </div>
+          ))}
+        </div>
+        {/* Prize card skeleton */}
+        <div className="rounded-lg border border-accent/30 bg-gradient-to-r from-accent/10 via-bg-elevated to-accent/5 p-4">
+          <div className="flex items-center gap-4">
+            <div className="h-24 w-32 shrink-0 animate-pulse rounded bg-border" />
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <div className="h-5 w-5 animate-pulse rounded bg-border" />
+                <div className="h-2.5 w-24 animate-pulse rounded bg-border" />
+              </div>
+              <div className="h-5 w-44 animate-pulse rounded bg-border" />
+              <div className="h-5 w-8 animate-pulse rounded bg-accent/15" />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
