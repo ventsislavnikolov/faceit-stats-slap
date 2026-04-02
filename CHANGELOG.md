@@ -1,3 +1,11 @@
+## [1.9.2](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.9.1...v1.9.2) (2026-04-02)
+
+
+### Bug Fixes
+
+* add notFoundComponent to authed layout route ([cec6c49](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/cec6c493dfe5ccfbc22f958960a20031f2d765a1))
+* pay 2x for one-sided pool wins instead of returning bet amount ([393250d](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/393250d51c0237f132378bf3a799560a65c73b30))
+
 ## [1.9.1](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.9.0...v1.9.1) (2026-04-02)
 
 
