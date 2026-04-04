@@ -294,7 +294,7 @@ function PlayerDashboard() {
         <div className="relative flex flex-1 overflow-hidden">
           {/* Mobile sidebar overlay */}
           {sidebarOpen && (
-            <div
+            <button
               aria-label="Close sidebar"
               className="fixed inset-0 z-40 bg-black/50 lg:hidden"
               onClick={() => setSidebarOpen(false)}
@@ -303,8 +303,7 @@ function PlayerDashboard() {
                   setSidebarOpen(false);
                 }
               }}
-              role="button"
-              tabIndex={0}
+              type="button"
             />
           )}
           {/* Mobile sidebar drawer */}

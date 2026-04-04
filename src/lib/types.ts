@@ -452,15 +452,19 @@ export interface AggregatePlayerStats {
   avgRws?: number;
   avgTradeKills?: number;
   avgUtilityDamage?: number;
+  bestMapId?: string;
   faceitId: string;
   gamesPlayed: number;
   nickname: string;
+  scoreBreakdown?: SessionScoreBreakdown;
+  sessionScore?: number;
   totalClutchWins?: number;
   totalMvps: number;
   totalPentaKills: number;
   totalQuadroKills: number;
   totalTripleKills: number;
   wins: number;
+  worstMapId?: string;
 }
 
 export interface SessionAward {
@@ -470,6 +474,43 @@ export interface SessionAward {
   requiresDemo: boolean;
   title: string;
   value: string;
+}
+
+export interface SessionScoreCategory {
+  key: string;
+  label: string;
+  score: number;
+  weight?: number;
+}
+
+export interface SessionScoreBreakdown {
+  categories: SessionScoreCategory[];
+  sessionScore: number;
+  strongestReasons: string[];
+  weakestCategory?: string;
+}
+
+export interface SessionPodiumEntry {
+  badge: string;
+  faceitId: string;
+  nickname: string;
+  rank: number;
+  sessionScore: number;
+  verdict: string;
+}
+
+export interface SessionRivalryCard {
+  evidence: string[];
+  id: string;
+  playerIds: string[];
+  summary: string;
+  title: string;
+}
+
+export interface SessionRivalryData {
+  playerBreakdowns: Record<string, SessionScoreBreakdown>;
+  podium: SessionPodiumEntry[];
+  rivalryCards: SessionRivalryCard[];
 }
 
 export interface MapStats {
@@ -492,6 +533,7 @@ export interface PartySessionData {
   matches: PlayerHistoryMatch[];
   matchStats: Record<string, MatchPlayerStats[]>;
   partyMembers: Pick<FaceitPlayer, "faceitId" | "nickname">[];
+  rivalries?: SessionRivalryData;
   totalHoursPlayed: number;
   winCount: number;
 }

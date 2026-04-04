@@ -88,7 +88,9 @@ function UpcomingSeasonCountdown({ season }: { season: Season }) {
           <img
             alt={prize.skinName ?? prize.description}
             className="h-36 object-contain drop-shadow-[0_0_12px_rgba(80,250,123,0.3)]"
+            height={144}
             src={prize.imageUrl}
+            width={144}
           />
           <div className="text-center">
             <div className="font-bold text-text">

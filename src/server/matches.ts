@@ -1432,8 +1432,12 @@ export const getPartySessionStats = createServerFn({ method: "GET" })
   .inputValidator((input: { playerId: string; date: string }) => input)
   .handler(async ({ data: { playerId, date } }): Promise<PartySessionData> => {
     const { getCalendarDayRange } = await import("~/lib/time");
-    const { computeAggregateStats, computeAwards, computeMapDistribution } =
-      await import("~/lib/last-party");
+    const {
+      buildSessionRivalries,
+      computeAggregateStats,
+      computeAwards,
+      computeMapDistribution,
+    } = await import("~/lib/last-party");
 
     // 1. Resolve friend list and elo
     const targetPlayer = await fetchPlayer(playerId).catch(() => null);
@@ -1589,6 +1593,12 @@ export const getPartySessionStats = createServerFn({ method: "GET" })
       playerId,
       date,
     });
+    const rivalries = buildSessionRivalries({
+      aggregateStats,
+      allHaveDemo,
+      matchStats: allMatchStats,
+      matches: partyMatches,
+    });
 
     // 8. Compute totals
     const winCount = partyMatches.filter((m) => m.result).length;
@@ -1611,6 +1621,7 @@ export const getPartySessionStats = createServerFn({ method: "GET" })
       partyMembers,
       aggregateStats,
       awards,
+      rivalries,
       mapDistribution,
       totalHoursPlayed,
       winCount,
