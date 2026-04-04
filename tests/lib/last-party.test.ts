@@ -5,7 +5,11 @@ import {
   computeMapDistribution,
   computeSessionStreak,
 } from "~/lib/last-party";
-import type { MatchPlayerStats } from "~/lib/types";
+import type {
+  AggregatePlayerStats,
+  MatchPlayerStats,
+  PartySessionData,
+} from "~/lib/types";
 
 const makePlayer = (
   overrides: Partial<MatchPlayerStats> & { playerId: string; nickname: string }
@@ -189,5 +193,14 @@ describe("computeSessionStreak", () => {
   it("handles single match", () => {
     const matches = [{ result: true, startedAt: 1 }] as any[];
     expect(computeSessionStreak(matches)).toEqual({ type: "win", count: 1 });
+  });
+});
+
+describe("rivalry session types", () => {
+  it("exposes rivalry fields on session and aggregate shapes", () => {
+    const _sessionRivalries: PartySessionData["rivalries"] = undefined;
+    const _sessionScore: AggregatePlayerStats["sessionScore"] = undefined;
+    const _scoreBreakdown: AggregatePlayerStats["scoreBreakdown"] = undefined;
+    void [_sessionRivalries, _sessionScore, _scoreBreakdown];
   });
 });
