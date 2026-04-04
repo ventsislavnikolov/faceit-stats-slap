@@ -15,6 +15,7 @@ import type {
 interface MatchAccordionProps {
   demoMatches: Record<string, DemoMatchAnalytics>;
   eloMap: Record<string, number>;
+  initialOpenMatchId?: string | null;
   matches: PlayerHistoryMatch[];
   matchStats: Record<string, MatchPlayerStats[]>;
   partyMemberIds: string[];
@@ -49,9 +50,12 @@ export function MatchAccordion({
   matchStats,
   demoMatches,
   eloMap,
+  initialOpenMatchId = null,
   partyMemberIds,
 }: MatchAccordionProps) {
-  const [openMatchId, setOpenMatchId] = useState<string | null>(null);
+  const [openMatchId, setOpenMatchId] = useState<string | null>(
+    initialOpenMatchId
+  );
   const partySet = new Set(partyMemberIds);
 
   return (
@@ -77,6 +81,20 @@ export function MatchAccordion({
           const topFragger = players[0];
           const bottomFragger =
             players.length > 1 ? players[players.length - 1] : null;
+          const playerImpacts = players.map((player) => ({
+            player,
+            impact: getPlayerImpact(player, eloMap[player.playerId] ?? 1225),
+          }));
+          const averageImpact =
+            playerImpacts.reduce((sum, entry) => sum + entry.impact, 0) /
+            (playerImpacts.length || 1);
+          const swingPlayer = [...playerImpacts]
+            .sort(
+              (a, b) =>
+                Math.abs(b.impact - averageImpact) -
+                  Math.abs(a.impact - averageImpact) ||
+                a.player.nickname.localeCompare(b.player.nickname)
+            )[0]?.player;
 
           return (
             <div
@@ -225,6 +243,28 @@ export function MatchAccordion({
                       </tbody>
                     </table>
                   </div>
+
+                  {topFragger && bottomFragger && swingPlayer ? (
+                    <div className="mt-2 rounded border border-border bg-bg-elevated/40 px-3 py-2 text-[10px] text-text-dim">
+                      <div className="mb-1 uppercase tracking-wider">
+                        Rivalry receipt
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <span>
+                          <span className="text-text">Best</span>{" "}
+                          {topFragger.nickname}
+                        </span>
+                        <span>
+                          <span className="text-text">Weakest</span>{" "}
+                          {bottomFragger.nickname}
+                        </span>
+                        <span>
+                          <span className="text-text">Swing</span>{" "}
+                          {swingPlayer.nickname}
+                        </span>
+                      </div>
+                    </div>
+                  ) : null}
 
                   {topFragger && bottomFragger && (
                     <div className="mt-2 border-border border-t pt-2 text-center">
