@@ -5,6 +5,8 @@ import { LastPartyHeader } from "~/components/last-party/LastPartyHeader";
 import { MapDistribution } from "~/components/last-party/MapDistribution";
 import { MatchAccordion } from "~/components/last-party/MatchAccordion";
 import { PartyAwards } from "~/components/last-party/PartyAwards";
+import { SessionPodium } from "~/components/last-party/SessionPodium";
+import { SessionRivalryCards } from "~/components/last-party/SessionRivalryCards";
 import { SessionAnalyst } from "~/components/last-party/SessionAnalyst";
 import { SessionStatsTable } from "~/components/last-party/SessionStatsTable";
 import { PlayerSearchHeader } from "~/components/PlayerSearchHeader";
@@ -145,6 +147,54 @@ function LastPartyPage() {
                 </div>
               </div>
 
+              {/* Session podium skeleton */}
+              <div>
+                <div className="mb-3 h-2.5 w-20 animate-pulse rounded bg-border" />
+                <div className="grid grid-cols-1 gap-2 lg:grid-cols-3">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div
+                      className={`rounded border bg-bg-card p-3 ${i === 0 ? "border-accent/30 bg-accent/5" : "border-border"}`}
+                      key={i}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <div className="h-8 w-8 animate-pulse rounded-full bg-border" />
+                          <div className="flex flex-col gap-1">
+                            <div className="h-2 w-12 animate-pulse rounded bg-border" />
+                            <div className="h-4 w-20 animate-pulse rounded bg-border" />
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-end gap-1">
+                          <div className="h-5 w-12 animate-pulse rounded bg-border" />
+                          <div className="h-2.5 w-8 animate-pulse rounded bg-border" />
+                        </div>
+                      </div>
+                      <div className="mt-3 h-6 w-full animate-pulse rounded border border-border bg-bg-elevated" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Rivalry cards skeleton */}
+              <div>
+                <div className="mb-3 h-2.5 w-24 animate-pulse rounded bg-border" />
+                <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                  {Array.from({ length: 2 }).map((_, i) => (
+                    <div
+                      className="rounded border border-border bg-bg-card p-3"
+                      key={i}
+                    >
+                      <div className="h-2.5 w-16 animate-pulse rounded bg-border" />
+                      <div className="mt-2 h-4 w-40 animate-pulse rounded bg-border" />
+                      <div className="mt-3 flex flex-wrap gap-1.5">
+                        <div className="h-4 w-20 animate-pulse rounded-full bg-border" />
+                        <div className="h-4 w-24 animate-pulse rounded-full bg-border" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               {/* Awards skeleton */}
               <div>
                 <div className="mb-3 h-2.5 w-14 animate-pulse rounded bg-border" />
@@ -269,6 +319,12 @@ function LastPartyPage() {
                 totalHoursPlayed={session.totalHoursPlayed}
                 winCount={session.winCount}
               />
+              {session.rivalries?.podium?.length ? (
+                <SessionPodium entries={session.rivalries.podium} />
+              ) : null}
+              {session.rivalries?.rivalryCards?.length ? (
+                <SessionRivalryCards cards={session.rivalries.rivalryCards} />
+              ) : null}
               <PartyAwards awards={session.awards} />
               <SessionStatsTable
                 allHaveDemo={session.allHaveDemo}
