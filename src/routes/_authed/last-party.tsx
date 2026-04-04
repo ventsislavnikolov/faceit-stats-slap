@@ -29,7 +29,7 @@ export const Route = createFileRoute("/_authed/last-party")({
   component: LastPartyPage,
 });
 
-function LastPartyPage() {
+export function LastPartyPage() {
   const navigate = useNavigate();
   const { player: urlPlayer, date: urlDate } = Route.useSearch();
   const [input, setInput] = useState(urlPlayer ?? "");
@@ -148,7 +148,7 @@ function LastPartyPage() {
               </div>
 
               {/* Session podium skeleton */}
-              <div>
+              <div data-testid="last-party-podium-skeleton">
                 <div className="mb-3 h-2.5 w-20 animate-pulse rounded bg-border" />
                 <div className="grid grid-cols-1 gap-2 lg:grid-cols-3">
                   {Array.from({ length: 3 }).map((_, i) => (
@@ -176,7 +176,7 @@ function LastPartyPage() {
               </div>
 
               {/* Rivalry cards skeleton */}
-              <div>
+              <div data-testid="last-party-rivalry-skeleton">
                 <div className="mb-3 h-2.5 w-24 animate-pulse rounded bg-border" />
                 <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
                   {Array.from({ length: 2 }).map((_, i) => (
