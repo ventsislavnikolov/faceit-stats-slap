@@ -23,7 +23,9 @@ export function SessionRivalryCards({ cards }: SessionRivalryCardsProps) {
             <div className="text-[10px] text-text-dim uppercase tracking-wider">
               {card.title}
             </div>
-            <div className="mt-1 font-bold text-sm text-text">{card.summary}</div>
+            <div className="mt-1 font-bold text-sm text-text">
+              {card.summary}
+            </div>
             {card.evidence.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {card.evidence.map((line) => (

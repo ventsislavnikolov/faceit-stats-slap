@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fetchMatchStats, fetchPlayer, fetchPlayerHistory, parseMatchStats } from "~/lib/faceit";
+import {
+  fetchMatchStats,
+  fetchPlayer,
+  fetchPlayerHistory,
+  parseMatchStats,
+} from "~/lib/faceit";
 import { getPartySessionStats } from "~/server/matches";
 import { runWithStartContext } from "../start-context";
 
@@ -47,9 +52,8 @@ const supabaseMocks = vi.hoisted(() => ({
 }));
 
 vi.mock("~/lib/faceit", async () => {
-  const actual = await vi.importActual<typeof import("~/lib/faceit")>(
-    "~/lib/faceit"
-  );
+  const actual =
+    await vi.importActual<typeof import("~/lib/faceit")>("~/lib/faceit");
   return {
     ...actual,
     fetchPlayer: faceitMocks.fetchPlayer,

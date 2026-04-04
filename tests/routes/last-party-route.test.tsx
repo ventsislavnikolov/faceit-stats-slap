@@ -2,7 +2,10 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  search: { player: undefined as string | undefined, date: undefined as string | undefined },
+  search: {
+    player: undefined as string | undefined,
+    date: undefined as string | undefined,
+  },
   navigate: vi.fn(),
   query: { data: null as any, isLoading: false, isError: false },
   session: { data: null as any, isLoading: false },
@@ -14,14 +17,12 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
 
   return {
     ...actual,
-    createFileRoute:
-      () =>
-      (options: Record<string, unknown>) =>
-        ({
-          ...options,
-          options,
-          useSearch: () => mocks.search,
-        }) as any,
+    createFileRoute: () => (options: Record<string, unknown>) =>
+      ({
+        ...options,
+        options,
+        useSearch: () => mocks.search,
+      }) as any,
     lazyRouteComponent: (component: unknown) => component,
     useNavigate: () => mocks.navigate,
   };

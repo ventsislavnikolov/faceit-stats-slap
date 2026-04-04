@@ -121,7 +121,7 @@ export function SessionStatsTableView({
                       <button
                         aria-controls={`session-breakdown-${e.faceitId}`}
                         aria-expanded={expandedPlayerId === e.faceitId}
-                        className="mt-1 text-[10px] uppercase tracking-wider text-text-dim hover:text-text"
+                        className="mt-1 text-[10px] text-text-dim uppercase tracking-wider hover:text-text"
                         onClick={() => onToggleExpandedPlayer(e.faceitId)}
                         type="button"
                       >
@@ -190,14 +190,17 @@ export function SessionStatsTableView({
                   <td className="px-2 text-center text-accent">{e.wins}</td>
                 </tr>
                 {e.scoreBreakdown && expandedPlayerId === e.faceitId ? (
-                  <tr className="border-border/60 border-t" key={`${e.faceitId}-details`}>
+                  <tr
+                    className="border-border/60 border-t"
+                    key={`${e.faceitId}-details`}
+                  >
                     <td
                       className="bg-bg-elevated/40 px-3 py-2"
                       colSpan={allHaveDemo ? 16 : 10}
                     >
                       <div
-                        id={`session-breakdown-${e.faceitId}`}
                         className="mt-0"
+                        id={`session-breakdown-${e.faceitId}`}
                       >
                         <PlayerSessionBreakdown
                           bestMapId={e.bestMapId}

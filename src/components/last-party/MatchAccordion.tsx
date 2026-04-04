@@ -69,9 +69,7 @@ export function MatchAccordion({
       matches={matches}
       matchStats={matchStats}
       onToggleMatchId={(matchId) =>
-        setOpenMatchId((current) =>
-          current === matchId ? null : matchId
-        )
+        setOpenMatchId((current) => (current === matchId ? null : matchId))
       }
       openMatchId={openMatchId}
       partyMemberIds={partyMemberIds}
@@ -120,13 +118,12 @@ export function MatchAccordionView({
           const averageImpact =
             playerImpacts.reduce((sum, entry) => sum + entry.impact, 0) /
             (playerImpacts.length || 1);
-          const swingPlayer = [...playerImpacts]
-            .sort(
-              (a, b) =>
-                Math.abs(b.impact - averageImpact) -
-                  Math.abs(a.impact - averageImpact) ||
-                a.player.nickname.localeCompare(b.player.nickname)
-            )[0]?.player;
+          const swingPlayer = [...playerImpacts].sort(
+            (a, b) =>
+              Math.abs(b.impact - averageImpact) -
+                Math.abs(a.impact - averageImpact) ||
+              a.player.nickname.localeCompare(b.player.nickname)
+          )[0]?.player;
 
           return (
             <div

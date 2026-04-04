@@ -10,11 +10,11 @@ import type {
   MapStats,
   MatchPlayerStats,
   PlayerHistoryMatch,
+  SessionAward,
   SessionPodiumEntry,
   SessionRivalryCard,
   SessionRivalryData,
   SessionScoreBreakdown,
-  SessionAward,
 } from "~/lib/types";
 
 export const MAP_COLORS: Record<string, string> = {
@@ -475,7 +475,9 @@ const DEMO_CATEGORIES: SessionCategoryDefinition[] = [
   },
 ];
 
-function getSessionCategories(allHaveDemo: boolean): SessionCategoryDefinition[] {
+function getSessionCategories(
+  allHaveDemo: boolean
+): SessionCategoryDefinition[] {
   return allHaveDemo
     ? [...SAFE_CATEGORIES, ...DEMO_CATEGORIES]
     : SAFE_CATEGORIES;
@@ -578,7 +580,9 @@ function buildScoreBreakdowns(
     result[entry.faceitId] = {
       categories: sortedCategories,
       sessionScore,
-      strongestReasons: sortedCategories.slice(0, 2).map((category) => category.label),
+      strongestReasons: sortedCategories
+        .slice(0, 2)
+        .map((category) => category.label),
       weakestCategory:
         sortedCategories[sortedCategories.length - 1]?.label ?? undefined,
     };
@@ -647,24 +651,26 @@ function buildPairSummaries(params: {
     const stats = matchStats[match.matchId] ?? [];
     for (let i = 0; i < players.length; i++) {
       for (let j = i + 1; j < players.length; j++) {
-        const playerA = stats.find((entry) => entry.playerId === players[i].faceitId);
-        const playerB = stats.find((entry) => entry.playerId === players[j].faceitId);
-        if (!playerA || !playerB) {
+        const playerA = stats.find(
+          (entry) => entry.playerId === players[i].faceitId
+        );
+        const playerB = stats.find(
+          (entry) => entry.playerId === players[j].faceitId
+        );
+        if (!(playerA && playerB)) {
           continue;
         }
         const key = [players[i].faceitId, players[j].faceitId].sort().join("|");
-        const existing =
-          pairMap.get(key) ??
-          {
-            faceitIdA: players[i].faceitId,
-            faceitIdB: players[j].faceitId,
-            nicknameA: players[i].nickname,
-            nicknameB: players[j].nickname,
-            sharedMaps: 0,
-            winsA: 0,
-            winsB: 0,
-            totalMargin: 0,
-          };
+        const existing = pairMap.get(key) ?? {
+          faceitIdA: players[i].faceitId,
+          faceitIdB: players[j].faceitId,
+          nicknameA: players[i].nickname,
+          nicknameB: players[j].nickname,
+          sharedMaps: 0,
+          winsA: 0,
+          winsB: 0,
+          totalMargin: 0,
+        };
         const diff = compareImpact(playerA, playerB);
         existing.sharedMaps += 1;
         if (diff > 0) {
@@ -741,7 +747,9 @@ function buildRivalryCards(pairSummaries: PairSummary[]): SessionRivalryCard[] {
       widestGap.winsA > widestGap.winsB ||
       (widestGap.winsA === widestGap.winsB &&
         widestGap.nicknameA.localeCompare(widestGap.nicknameB) <= 0);
-    const winnerNickname = winnerIsA ? widestGap.nicknameA : widestGap.nicknameB;
+    const winnerNickname = winnerIsA
+      ? widestGap.nicknameA
+      : widestGap.nicknameB;
     const loserNickname = winnerIsA ? widestGap.nicknameB : widestGap.nicknameA;
     const winnerWins = winnerIsA ? widestGap.winsA : widestGap.winsB;
     const loserWins = winnerIsA ? widestGap.winsB : widestGap.winsA;
@@ -783,12 +791,14 @@ export function buildSessionRivalries(params: {
       const breakdown = playerBreakdowns[player.faceitId];
       const sessionScore = breakdown?.sessionScore ?? 0;
       return {
-        badge: getBadgeFromBreakdown(breakdown ?? {
-          categories: [],
-          sessionScore: 0,
-          strongestReasons: [],
-          weakestCategory: undefined,
-        }),
+        badge: getBadgeFromBreakdown(
+          breakdown ?? {
+            categories: [],
+            sessionScore: 0,
+            strongestReasons: [],
+            weakestCategory: undefined,
+          }
+        ),
         faceitId: player.faceitId,
         nickname: player.nickname,
         rank: 0,

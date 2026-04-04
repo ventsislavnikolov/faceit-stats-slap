@@ -141,7 +141,9 @@ export function SeasonLeaderboardTab({
                     <img
                       alt={prize.skinName ?? prize.description}
                       className="h-24 w-auto object-contain drop-shadow-[0_0_8px_rgba(80,250,123,0.3)]"
+                      height={96}
                       src={prize.imageUrl}
+                      width={96}
                     />
                   </div>
                 )}

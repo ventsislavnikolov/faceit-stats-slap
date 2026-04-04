@@ -73,7 +73,9 @@ function getTextContent(node: unknown): string {
   }
 
   if (typeof node === "object" && "props" in node) {
-    return getTextContent((node as { props?: { children?: unknown } }).props?.children);
+    return getTextContent(
+      (node as { props?: { children?: unknown } }).props?.children
+    );
   }
 
   return "";
@@ -154,7 +156,10 @@ describe("SessionStatsTable", () => {
       onToggleExpandedPlayer,
     });
 
-    const expandedButton = findButtonByLabel(expandedView, "Hide score breakdown");
+    const expandedButton = findButtonByLabel(
+      expandedView,
+      "Hide score breakdown"
+    );
 
     expect(expandedButton).not.toBeNull();
     expect(expandedButton?.props["aria-expanded"]).toBe(true);

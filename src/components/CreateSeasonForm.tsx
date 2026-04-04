@@ -242,7 +242,9 @@ export function CreateSeasonForm({ userId }: CreateSeasonFormProps) {
               <img
                 alt={skinName}
                 className="h-32 object-contain"
+                height={128}
                 src={displayImageUrl}
+                width={128}
               />
               <span className="font-bold text-accent text-xs">
                 {skinName} ({skinWear})

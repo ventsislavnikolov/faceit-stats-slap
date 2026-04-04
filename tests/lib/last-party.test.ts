@@ -1,16 +1,16 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildSessionRivalries,
   computeAggregateStats,
   computeAwards,
   computeMapDistribution,
   computeSessionStreak,
-  buildSessionRivalries,
 } from "~/lib/last-party";
 import type {
   AggregatePlayerStats,
   MatchPlayerStats,
-  PlayerHistoryMatch,
   PartySessionData,
+  PlayerHistoryMatch,
 } from "~/lib/types";
 
 const makePlayer = (
@@ -274,7 +274,7 @@ describe("rivalry session types", () => {
     const _sessionRivalries: PartySessionData["rivalries"] = undefined;
     const _sessionScore: AggregatePlayerStats["sessionScore"] = undefined;
     const _scoreBreakdown: AggregatePlayerStats["scoreBreakdown"] = undefined;
-    void [_sessionRivalries, _sessionScore, _scoreBreakdown];
+    expect([_sessionRivalries, _sessionScore, _scoreBreakdown]).toHaveLength(3);
   });
 });
 
@@ -328,19 +328,64 @@ describe("buildSessionRivalries", () => {
     ];
     const matchStats: Record<string, MatchPlayerStats[]> = {
       "match-1": [
-        makePlayer({ playerId: "p1", nickname: "Alice", kills: 25, result: true }),
-        makePlayer({ playerId: "p2", nickname: "Bob", kills: 20, result: false }),
-        makePlayer({ playerId: "p3", nickname: "Cara", kills: 15, result: false }),
+        makePlayer({
+          playerId: "p1",
+          nickname: "Alice",
+          kills: 25,
+          result: true,
+        }),
+        makePlayer({
+          playerId: "p2",
+          nickname: "Bob",
+          kills: 20,
+          result: false,
+        }),
+        makePlayer({
+          playerId: "p3",
+          nickname: "Cara",
+          kills: 15,
+          result: false,
+        }),
       ],
       "match-2": [
-        makePlayer({ playerId: "p1", nickname: "Alice", kills: 18, result: false }),
-        makePlayer({ playerId: "p2", nickname: "Bob", kills: 22, result: true }),
-        makePlayer({ playerId: "p3", nickname: "Cara", kills: 10, result: false }),
+        makePlayer({
+          playerId: "p1",
+          nickname: "Alice",
+          kills: 18,
+          result: false,
+        }),
+        makePlayer({
+          playerId: "p2",
+          nickname: "Bob",
+          kills: 22,
+          result: true,
+        }),
+        makePlayer({
+          playerId: "p3",
+          nickname: "Cara",
+          kills: 10,
+          result: false,
+        }),
       ],
       "match-3": [
-        makePlayer({ playerId: "p1", nickname: "Alice", kills: 24, result: true }),
-        makePlayer({ playerId: "p2", nickname: "Bob", kills: 19, result: false }),
-        makePlayer({ playerId: "p3", nickname: "Cara", kills: 12, result: false }),
+        makePlayer({
+          playerId: "p1",
+          nickname: "Alice",
+          kills: 24,
+          result: true,
+        }),
+        makePlayer({
+          playerId: "p2",
+          nickname: "Bob",
+          kills: 19,
+          result: false,
+        }),
+        makePlayer({
+          playerId: "p3",
+          nickname: "Cara",
+          kills: 12,
+          result: false,
+        }),
       ],
     };
 
@@ -393,19 +438,54 @@ describe("buildSessionRivalries", () => {
     ];
     const matchStats: Record<string, MatchPlayerStats[]> = {
       "match-1": [
-        makePlayer({ playerId: "p1", nickname: "Alice", kills: 25, result: true }),
-        makePlayer({ playerId: "p2", nickname: "Bob", kills: 20, result: false }),
+        makePlayer({
+          playerId: "p1",
+          nickname: "Alice",
+          kills: 25,
+          result: true,
+        }),
+        makePlayer({
+          playerId: "p2",
+          nickname: "Bob",
+          kills: 20,
+          result: false,
+        }),
       ],
       "match-2": [
-        makePlayer({ playerId: "p1", nickname: "Alice", kills: 18, result: false }),
-        makePlayer({ playerId: "p2", nickname: "Bob", kills: 22, result: true }),
+        makePlayer({
+          playerId: "p1",
+          nickname: "Alice",
+          kills: 18,
+          result: false,
+        }),
+        makePlayer({
+          playerId: "p2",
+          nickname: "Bob",
+          kills: 22,
+          result: true,
+        }),
       ],
       "match-3": [
-        makePlayer({ playerId: "p1", nickname: "Alice", kills: 24, result: true }),
-        makePlayer({ playerId: "p2", nickname: "Bob", kills: 19, result: false }),
+        makePlayer({
+          playerId: "p1",
+          nickname: "Alice",
+          kills: 24,
+          result: true,
+        }),
+        makePlayer({
+          playerId: "p2",
+          nickname: "Bob",
+          kills: 19,
+          result: false,
+        }),
       ],
       "match-4": [
-        makePlayer({ playerId: "p1", nickname: "Alice", kills: 11, result: false }),
+        makePlayer({
+          playerId: "p1",
+          nickname: "Alice",
+          kills: 11,
+          result: false,
+        }),
       ],
     };
 
@@ -450,16 +530,46 @@ describe("buildSessionRivalries", () => {
     ];
     const matchStats: Record<string, MatchPlayerStats[]> = {
       "match-1": [
-        makePlayer({ playerId: "p1", nickname: "Alice", kills: 24, result: true }),
-        makePlayer({ playerId: "p2", nickname: "Bob", kills: 20, result: false }),
+        makePlayer({
+          playerId: "p1",
+          nickname: "Alice",
+          kills: 24,
+          result: true,
+        }),
+        makePlayer({
+          playerId: "p2",
+          nickname: "Bob",
+          kills: 20,
+          result: false,
+        }),
       ],
       "match-2": [
-        makePlayer({ playerId: "p1", nickname: "Alice", kills: 18, result: false }),
-        makePlayer({ playerId: "p2", nickname: "Bob", kills: 26, result: true }),
+        makePlayer({
+          playerId: "p1",
+          nickname: "Alice",
+          kills: 18,
+          result: false,
+        }),
+        makePlayer({
+          playerId: "p2",
+          nickname: "Bob",
+          kills: 26,
+          result: true,
+        }),
       ],
       "match-3": [
-        makePlayer({ playerId: "p1", nickname: "Alice", kills: 16, result: false }),
-        makePlayer({ playerId: "p2", nickname: "Bob", kills: 28, result: true }),
+        makePlayer({
+          playerId: "p1",
+          nickname: "Alice",
+          kills: 16,
+          result: false,
+        }),
+        makePlayer({
+          playerId: "p2",
+          nickname: "Bob",
+          kills: 28,
+          result: true,
+        }),
       ],
     };
 
@@ -502,12 +612,32 @@ describe("buildSessionRivalries", () => {
     ];
     const matchStats: Record<string, MatchPlayerStats[]> = {
       "match-1": [
-        makePlayer({ playerId: "p1", nickname: "Alice", kills: 15, result: false }),
-        makePlayer({ playerId: "p2", nickname: "Bob", kills: 20, result: true }),
+        makePlayer({
+          playerId: "p1",
+          nickname: "Alice",
+          kills: 15,
+          result: false,
+        }),
+        makePlayer({
+          playerId: "p2",
+          nickname: "Bob",
+          kills: 20,
+          result: true,
+        }),
       ],
       "match-2": [
-        makePlayer({ playerId: "p1", nickname: "Alice", kills: 12, result: false }),
-        makePlayer({ playerId: "p2", nickname: "Bob", kills: 22, result: true }),
+        makePlayer({
+          playerId: "p1",
+          nickname: "Alice",
+          kills: 12,
+          result: false,
+        }),
+        makePlayer({
+          playerId: "p2",
+          nickname: "Bob",
+          kills: 22,
+          result: true,
+        }),
       ],
     };
 
@@ -548,8 +678,18 @@ describe("buildSessionRivalries", () => {
     ];
     const matchStats: Record<string, MatchPlayerStats[]> = {
       "match-1": [
-        makePlayer({ playerId: "p1", nickname: "Alice", kills: 18, result: true }),
-        makePlayer({ playerId: "p2", nickname: "Bob", kills: 18, result: true }),
+        makePlayer({
+          playerId: "p1",
+          nickname: "Alice",
+          kills: 18,
+          result: true,
+        }),
+        makePlayer({
+          playerId: "p2",
+          nickname: "Bob",
+          kills: 18,
+          result: true,
+        }),
       ],
     };
 

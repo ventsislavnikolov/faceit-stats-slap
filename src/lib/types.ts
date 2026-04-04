@@ -447,24 +447,24 @@ export interface AggregatePlayerStats {
   avgKast?: number;
   avgKd: number;
   avgKrRatio: number;
-  bestMapId?: string;
   // Demo-only (present when allHaveDemo)
   avgRating?: number;
   avgRws?: number;
   avgTradeKills?: number;
   avgUtilityDamage?: number;
+  bestMapId?: string;
   faceitId: string;
   gamesPlayed: number;
   nickname: string;
   scoreBreakdown?: SessionScoreBreakdown;
   sessionScore?: number;
-  worstMapId?: string;
   totalClutchWins?: number;
   totalMvps: number;
   totalPentaKills: number;
   totalQuadroKills: number;
   totalTripleKills: number;
   wins: number;
+  worstMapId?: string;
 }
 
 export interface SessionAward {

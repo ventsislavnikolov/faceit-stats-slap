@@ -31,7 +31,9 @@ const podium = [
 
 describe("SessionPodium", () => {
   it("renders the top three podium entries with badges and verdicts", () => {
-    const html = renderToStaticMarkup(<SessionPodium entries={podium as any} />);
+    const html = renderToStaticMarkup(
+      <SessionPodium entries={podium as any} />
+    );
 
     expect(html).toContain("Session Podium");
     expect(html).toContain("1");
