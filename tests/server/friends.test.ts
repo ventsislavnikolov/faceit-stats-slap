@@ -5,7 +5,7 @@ import {
   fetchPlayerLifetimeStats,
 } from "~/lib/faceit";
 import { resolvePlayer, searchAndLoadFriends } from "~/server/friends";
-import { runWithStartContext } from "../../node_modules/.pnpm/@tanstack+start-storage-context@1.166.20/node_modules/@tanstack/start-storage-context/dist/esm/index.js";
+import { runWithStartContext } from "../start-context";
 
 vi.mock("~/lib/faceit", async () => {
   const actual =
