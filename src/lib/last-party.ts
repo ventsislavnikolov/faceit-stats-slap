@@ -737,12 +737,23 @@ function buildRivalryCards(pairSummaries: PairSummary[]): SessionRivalryCard[] {
       a.nicknameB.localeCompare(b.nicknameB)
   )[0];
   if (widestGap) {
+    const winnerIsA =
+      widestGap.winsA > widestGap.winsB ||
+      (widestGap.winsA === widestGap.winsB &&
+        widestGap.nicknameA.localeCompare(widestGap.nicknameB) <= 0);
+    const winnerNickname = winnerIsA ? widestGap.nicknameA : widestGap.nicknameB;
+    const loserNickname = winnerIsA ? widestGap.nicknameB : widestGap.nicknameA;
+    const winnerWins = winnerIsA ? widestGap.winsA : widestGap.winsB;
+    const loserWins = winnerIsA ? widestGap.winsB : widestGap.winsA;
     rivalryCards.push({
       id: "wide-gap",
       title: "Widest Gap",
       playerIds: [widestGap.faceitIdA, widestGap.faceitIdB],
-      summary: `${widestGap.nicknameA} had the bigger edge in shared maps`,
-      evidence: [`${widestGap.sharedMaps} shared maps`, `${widestGap.winsA}-${widestGap.winsB}`],
+      summary: `${winnerNickname} had the bigger edge over ${loserNickname}`,
+      evidence: [
+        `${widestGap.sharedMaps} shared maps`,
+        `${winnerWins}-${loserWins}`,
+      ],
     });
   }
 

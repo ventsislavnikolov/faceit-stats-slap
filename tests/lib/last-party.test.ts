@@ -424,6 +424,57 @@ describe("buildSessionRivalries", () => {
     expect(headToHead?.evidence.join(" ")).toContain("3 shared maps");
   });
 
+  it("attributes the wide-gap card to the actual winner", () => {
+    const aggregateStats = {
+      p1: makeAggregatePlayer({
+        faceitId: "p1",
+        nickname: "Alice",
+        avgImpact: 12,
+        avgKd: 1.0,
+        avgAdr: 72,
+        wins: 1,
+      }),
+      p2: makeAggregatePlayer({
+        faceitId: "p2",
+        nickname: "Bob",
+        avgImpact: 19,
+        avgKd: 1.7,
+        avgAdr: 91,
+        wins: 3,
+      }),
+    };
+    const matches = [
+      makeSessionMatch({ matchId: "match-1", map: "de_inferno", startedAt: 1 }),
+      makeSessionMatch({ matchId: "match-2", map: "de_mirage", startedAt: 2 }),
+      makeSessionMatch({ matchId: "match-3", map: "de_nuke", startedAt: 3 }),
+    ];
+    const matchStats: Record<string, MatchPlayerStats[]> = {
+      "match-1": [
+        makePlayer({ playerId: "p1", nickname: "Alice", kills: 24, result: true }),
+        makePlayer({ playerId: "p2", nickname: "Bob", kills: 20, result: false }),
+      ],
+      "match-2": [
+        makePlayer({ playerId: "p1", nickname: "Alice", kills: 18, result: false }),
+        makePlayer({ playerId: "p2", nickname: "Bob", kills: 26, result: true }),
+      ],
+      "match-3": [
+        makePlayer({ playerId: "p1", nickname: "Alice", kills: 16, result: false }),
+        makePlayer({ playerId: "p2", nickname: "Bob", kills: 28, result: true }),
+      ],
+    };
+
+    const result = buildSessionRivalries({
+      aggregateStats,
+      allHaveDemo: false,
+      matchStats,
+      matches,
+    });
+
+    const wideGap = result.rivalryCards.find((card) => card.id === "wide-gap");
+    expect(wideGap?.summary).toContain("Bob");
+    expect(wideGap?.evidence.join(" ")).toContain("2-1");
+  });
+
   it("ignores demo ratings when demo coverage is partial", () => {
     const aggregateStats = {
       p1: makeAggregatePlayer({
