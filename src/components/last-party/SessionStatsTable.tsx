@@ -1,10 +1,17 @@
-import { Fragment } from "react";
+import { Fragment, useState } from "react";
 import { PlayerSessionBreakdown } from "~/components/last-party/PlayerSessionBreakdown";
 import type { AggregatePlayerStats } from "~/lib/types";
 
 interface SessionStatsTableProps {
   allHaveDemo: boolean;
   stats: Record<string, AggregatePlayerStats>;
+}
+
+interface SessionStatsTableViewProps {
+  allHaveDemo: boolean;
+  entries: AggregatePlayerStats[];
+  expandedPlayerId: string | null;
+  onToggleExpandedPlayer: (playerId: string) => void;
 }
 
 const ratingColor = (r: number) =>
@@ -18,10 +25,16 @@ const ratingColor = (r: number) =>
 
 const kdColor = (kd: number) => (kd >= 1 ? "text-accent" : "text-error/70");
 
+export const toggleExpandedPlayerId = (
+  currentPlayerId: string | null,
+  nextPlayerId: string
+) => (currentPlayerId === nextPlayerId ? null : nextPlayerId);
+
 export function SessionStatsTable({
   stats,
   allHaveDemo,
 }: SessionStatsTableProps) {
+  const [expandedPlayerId, setExpandedPlayerId] = useState<string | null>(null);
   const entries = Object.values(stats).sort(
     (a, b) =>
       (b.sessionScore ?? b.avgImpact) - (a.sessionScore ?? a.avgImpact) ||
@@ -31,6 +44,30 @@ export function SessionStatsTable({
         : b.avgKd - a.avgKd)
   );
 
+  if (entries.length === 0) {
+    return null;
+  }
+
+  const onToggleExpandedPlayer = (playerId: string) => {
+    setExpandedPlayerId((current) => toggleExpandedPlayerId(current, playerId));
+  };
+
+  return (
+    <SessionStatsTableView
+      allHaveDemo={allHaveDemo}
+      entries={entries}
+      expandedPlayerId={expandedPlayerId}
+      onToggleExpandedPlayer={onToggleExpandedPlayer}
+    />
+  );
+}
+
+export function SessionStatsTableView({
+  allHaveDemo,
+  entries,
+  expandedPlayerId,
+  onToggleExpandedPlayer,
+}: SessionStatsTableViewProps) {
   if (entries.length === 0) {
     return null;
   }
@@ -78,7 +115,22 @@ export function SessionStatsTable({
             {entries.map((e) => (
               <Fragment key={e.faceitId}>
                 <tr className="border-border border-t">
-                  <td className="py-1.5 font-semibold text-text">{e.nickname}</td>
+                  <td className="py-1.5 font-semibold text-text">
+                    <div>{e.nickname}</div>
+                    {e.scoreBreakdown ? (
+                      <button
+                        aria-controls={`session-breakdown-${e.faceitId}`}
+                        aria-expanded={expandedPlayerId === e.faceitId}
+                        className="mt-1 text-[10px] uppercase tracking-wider text-text-dim hover:text-text"
+                        onClick={() => onToggleExpandedPlayer(e.faceitId)}
+                        type="button"
+                      >
+                        {expandedPlayerId === e.faceitId
+                          ? "Hide score breakdown"
+                          : "Score breakdown"}
+                      </button>
+                    ) : null}
+                  </td>
                   <td className="px-2 text-center font-bold text-accent">
                     {(e.sessionScore ?? e.avgImpact).toFixed(1)}
                   </td>
@@ -137,14 +189,22 @@ export function SessionStatsTable({
                   </td>
                   <td className="px-2 text-center text-accent">{e.wins}</td>
                 </tr>
-                {e.scoreBreakdown ? (
+                {e.scoreBreakdown && expandedPlayerId === e.faceitId ? (
                   <tr className="border-border/60 border-t" key={`${e.faceitId}-details`}>
-                    <td className="bg-bg-elevated/40 px-3 py-2" colSpan={allHaveDemo ? 16 : 10}>
-                      <PlayerSessionBreakdown
-                        bestMapId={e.bestMapId}
-                        breakdown={e.scoreBreakdown}
-                        worstMapId={e.worstMapId}
-                      />
+                    <td
+                      className="bg-bg-elevated/40 px-3 py-2"
+                      colSpan={allHaveDemo ? 16 : 10}
+                    >
+                      <div
+                        id={`session-breakdown-${e.faceitId}`}
+                        className="mt-0"
+                      >
+                        <PlayerSessionBreakdown
+                          bestMapId={e.bestMapId}
+                          breakdown={e.scoreBreakdown}
+                          worstMapId={e.worstMapId}
+                        />
+                      </div>
                     </td>
                   </tr>
                 ) : null}
