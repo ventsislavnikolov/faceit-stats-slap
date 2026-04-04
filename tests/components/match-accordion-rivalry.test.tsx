@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
-import { MatchAccordion } from "~/components/last-party/MatchAccordion";
+import { MatchAccordionView } from "~/components/last-party/MatchAccordion";
 import type { MatchPlayerStats, PlayerHistoryMatch } from "~/lib/types";
 
 vi.mock("@tanstack/react-router", () => ({
@@ -57,10 +57,9 @@ const match: PlayerHistoryMatch = {
 describe("MatchAccordion rivalry receipts", () => {
   it("renders a compact rivalry strip for an opened match", () => {
     const html = renderToStaticMarkup(
-      <MatchAccordion
+      <MatchAccordionView
         demoMatches={{}}
         eloMap={{ p1: 2000, p2: 1800, p3: 1700 }}
-        initialOpenMatchId="match-1"
         matches={[match]}
         matchStats={{
           "match-1": [
@@ -87,6 +86,8 @@ describe("MatchAccordion rivalry receipts", () => {
             }),
           ],
         }}
+        onToggleMatchId={() => {}}
+        openMatchId="match-1"
         partyMemberIds={["p1", "p2", "p3"]}
       />
     );

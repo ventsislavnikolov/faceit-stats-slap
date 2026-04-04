@@ -15,9 +15,18 @@ import type {
 interface MatchAccordionProps {
   demoMatches: Record<string, DemoMatchAnalytics>;
   eloMap: Record<string, number>;
-  initialOpenMatchId?: string | null;
   matches: PlayerHistoryMatch[];
   matchStats: Record<string, MatchPlayerStats[]>;
+  partyMemberIds: string[];
+}
+
+interface MatchAccordionViewProps {
+  demoMatches: Record<string, DemoMatchAnalytics>;
+  eloMap: Record<string, number>;
+  matches: PlayerHistoryMatch[];
+  matchStats: Record<string, MatchPlayerStats[]>;
+  onToggleMatchId: (matchId: string) => void;
+  openMatchId: string | null;
   partyMemberIds: string[];
 }
 
@@ -50,12 +59,35 @@ export function MatchAccordion({
   matchStats,
   demoMatches,
   eloMap,
-  initialOpenMatchId = null,
   partyMemberIds,
 }: MatchAccordionProps) {
-  const [openMatchId, setOpenMatchId] = useState<string | null>(
-    initialOpenMatchId
+  const [openMatchId, setOpenMatchId] = useState<string | null>(null);
+  return (
+    <MatchAccordionView
+      demoMatches={demoMatches}
+      eloMap={eloMap}
+      matches={matches}
+      matchStats={matchStats}
+      onToggleMatchId={(matchId) =>
+        setOpenMatchId((current) =>
+          current === matchId ? null : matchId
+        )
+      }
+      openMatchId={openMatchId}
+      partyMemberIds={partyMemberIds}
+    />
   );
+}
+
+export function MatchAccordionView({
+  matches,
+  matchStats,
+  demoMatches,
+  eloMap,
+  openMatchId,
+  onToggleMatchId,
+  partyMemberIds,
+}: MatchAccordionViewProps) {
   const partySet = new Set(partyMemberIds);
 
   return (
@@ -103,7 +135,7 @@ export function MatchAccordion({
             >
               <button
                 className="flex w-full items-center gap-3 px-3 py-2 text-left text-xs"
-                onClick={() => setOpenMatchId(isOpen ? null : match.matchId)}
+                onClick={() => onToggleMatchId(match.matchId)}
                 type="button"
               >
                 <div
