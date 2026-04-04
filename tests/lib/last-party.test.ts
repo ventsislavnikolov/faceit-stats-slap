@@ -4,10 +4,12 @@ import {
   computeAwards,
   computeMapDistribution,
   computeSessionStreak,
+  buildSessionRivalries,
 } from "~/lib/last-party";
 import type {
   AggregatePlayerStats,
   MatchPlayerStats,
+  PlayerHistoryMatch,
   PartySessionData,
 } from "~/lib/types";
 
@@ -42,6 +44,77 @@ const makePlayer = (
   sniperKills: 0,
   tripleKills: 0,
   utilityDamage: 50,
+  ...overrides,
+});
+
+const makeSessionMatch = (
+  overrides: Partial<PlayerHistoryMatch> & {
+    matchId: string;
+    map: string;
+    startedAt: number;
+  }
+): PlayerHistoryMatch => ({
+  adr: 80,
+  assists: 3,
+  clutchKills: 0,
+  damage: 1600,
+  deaths: 15,
+  doubleKills: 0,
+  enemiesFlashed: 2,
+  entryCount: 3,
+  entryWins: 1,
+  firstKills: 1,
+  flashCount: 5,
+  headshots: 8,
+  hsPercent: 50,
+  kdRatio: 1.0,
+  kills: 15,
+  krRatio: 0.6,
+  knownQueuedFriendCount: 2,
+  knownQueuedFriendIds: ["p2", "p3"],
+  map: "de_inferno",
+  matchId: "match-1",
+  mvps: 2,
+  oneV1Count: 0,
+  oneV1Wins: 0,
+  oneV2Count: 0,
+  oneV2Wins: 0,
+  partySize: 3,
+  pentaKills: 0,
+  pistolKills: 1,
+  playerId: "p1",
+  queueBucket: "party",
+  quadroKills: 0,
+  result: true,
+  score: "13-8",
+  sniperKills: 0,
+  startedAt: 1,
+  tripleKills: 0,
+  utilityDamage: 50,
+  finishedAt: 2,
+  hasDemoAnalytics: false,
+  ...overrides,
+});
+
+const makeAggregatePlayer = (
+  overrides: Partial<AggregatePlayerStats> & {
+    faceitId: string;
+    nickname: string;
+  }
+): AggregatePlayerStats => ({
+  avgAdr: 80,
+  avgHsPercent: 50,
+  avgImpact: 10,
+  avgKd: 1,
+  avgKrRatio: 0.6,
+  faceitId: "p1",
+  gamesPlayed: 3,
+  nickname: "Alice",
+  totalMvps: 2,
+  totalPentaKills: 0,
+  totalQuadroKills: 0,
+  totalTripleKills: 0,
+  wins: 2,
   ...overrides,
 });
 
@@ -202,5 +275,243 @@ describe("rivalry session types", () => {
     const _sessionScore: AggregatePlayerStats["sessionScore"] = undefined;
     const _scoreBreakdown: AggregatePlayerStats["scoreBreakdown"] = undefined;
     void [_sessionRivalries, _sessionScore, _scoreBreakdown];
+  });
+});
+
+describe("buildSessionRivalries", () => {
+  it("ranks the podium by session score", () => {
+    const aggregateStats = {
+      p1: makeAggregatePlayer({
+        faceitId: "p1",
+        nickname: "Alice",
+        avgImpact: 20,
+        avgKd: 1.8,
+        avgAdr: 95,
+        avgHsPercent: 60,
+        wins: 3,
+      }),
+      p2: makeAggregatePlayer({
+        faceitId: "p2",
+        nickname: "Bob",
+        avgImpact: 15,
+        avgKd: 1.4,
+        avgAdr: 85,
+        avgHsPercent: 50,
+        wins: 2,
+      }),
+      p3: makeAggregatePlayer({
+        faceitId: "p3",
+        nickname: "Cara",
+        avgImpact: 10,
+        avgKd: 1.1,
+        avgAdr: 75,
+        avgHsPercent: 45,
+        wins: 1,
+      }),
+    };
+    const matches = [
+      makeSessionMatch({
+        matchId: "match-1",
+        map: "de_inferno",
+        startedAt: 1,
+      }),
+      makeSessionMatch({
+        matchId: "match-2",
+        map: "de_mirage",
+        startedAt: 2,
+      }),
+      makeSessionMatch({
+        matchId: "match-3",
+        map: "de_nuke",
+        startedAt: 3,
+      }),
+    ];
+    const matchStats: Record<string, MatchPlayerStats[]> = {
+      "match-1": [
+        makePlayer({ playerId: "p1", nickname: "Alice", kills: 25, result: true }),
+        makePlayer({ playerId: "p2", nickname: "Bob", kills: 20, result: false }),
+        makePlayer({ playerId: "p3", nickname: "Cara", kills: 15, result: false }),
+      ],
+      "match-2": [
+        makePlayer({ playerId: "p1", nickname: "Alice", kills: 18, result: false }),
+        makePlayer({ playerId: "p2", nickname: "Bob", kills: 22, result: true }),
+        makePlayer({ playerId: "p3", nickname: "Cara", kills: 10, result: false }),
+      ],
+      "match-3": [
+        makePlayer({ playerId: "p1", nickname: "Alice", kills: 24, result: true }),
+        makePlayer({ playerId: "p2", nickname: "Bob", kills: 19, result: false }),
+        makePlayer({ playerId: "p3", nickname: "Cara", kills: 12, result: false }),
+      ],
+    };
+
+    const result = buildSessionRivalries({
+      aggregateStats,
+      allHaveDemo: false,
+      matchStats,
+      matches,
+    });
+
+    expect(result.podium.map((entry) => entry.nickname)).toEqual([
+      "Alice",
+      "Bob",
+      "Cara",
+    ]);
+    expect(result.podium[0]?.sessionScore).toBeGreaterThan(
+      result.podium[1]?.sessionScore ?? 0
+    );
+  });
+
+  it("builds head-to-head evidence from shared session maps only", () => {
+    const aggregateStats = {
+      p1: makeAggregatePlayer({
+        faceitId: "p1",
+        nickname: "Alice",
+        avgImpact: 18,
+        avgKd: 1.5,
+        avgAdr: 90,
+        wins: 3,
+      }),
+      p2: makeAggregatePlayer({
+        faceitId: "p2",
+        nickname: "Bob",
+        avgImpact: 16,
+        avgKd: 1.3,
+        avgAdr: 84,
+        wins: 2,
+      }),
+    };
+    const matches = [
+      makeSessionMatch({ matchId: "match-1", map: "de_inferno", startedAt: 1 }),
+      makeSessionMatch({ matchId: "match-2", map: "de_mirage", startedAt: 2 }),
+      makeSessionMatch({ matchId: "match-3", map: "de_nuke", startedAt: 3 }),
+      makeSessionMatch({
+        matchId: "match-4",
+        map: "de_ancient",
+        startedAt: 4,
+        knownQueuedFriendIds: [],
+      }),
+    ];
+    const matchStats: Record<string, MatchPlayerStats[]> = {
+      "match-1": [
+        makePlayer({ playerId: "p1", nickname: "Alice", kills: 25, result: true }),
+        makePlayer({ playerId: "p2", nickname: "Bob", kills: 20, result: false }),
+      ],
+      "match-2": [
+        makePlayer({ playerId: "p1", nickname: "Alice", kills: 18, result: false }),
+        makePlayer({ playerId: "p2", nickname: "Bob", kills: 22, result: true }),
+      ],
+      "match-3": [
+        makePlayer({ playerId: "p1", nickname: "Alice", kills: 24, result: true }),
+        makePlayer({ playerId: "p2", nickname: "Bob", kills: 19, result: false }),
+      ],
+      "match-4": [
+        makePlayer({ playerId: "p1", nickname: "Alice", kills: 11, result: false }),
+      ],
+    };
+
+    const result = buildSessionRivalries({
+      aggregateStats,
+      allHaveDemo: false,
+      matchStats,
+      matches,
+    });
+
+    const headToHead = result.rivalryCards.find(
+      (card) => card.id === "head-to-head"
+    );
+    expect(headToHead?.playerIds).toEqual(["p1", "p2"]);
+    expect(headToHead?.summary).toContain("2-1");
+    expect(headToHead?.evidence.join(" ")).toContain("3 shared maps");
+  });
+
+  it("ignores demo ratings when demo coverage is partial", () => {
+    const aggregateStats = {
+      p1: makeAggregatePlayer({
+        faceitId: "p1",
+        nickname: "Alice",
+        avgImpact: 12,
+        avgKd: 1.0,
+        avgAdr: 68,
+        avgRating: 2.5,
+        wins: 1,
+      }),
+      p2: makeAggregatePlayer({
+        faceitId: "p2",
+        nickname: "Bob",
+        avgImpact: 18,
+        avgKd: 1.6,
+        avgAdr: 88,
+        avgRating: 0.5,
+        wins: 3,
+      }),
+    };
+    const matches = [
+      makeSessionMatch({ matchId: "match-1", map: "de_inferno", startedAt: 1 }),
+      makeSessionMatch({ matchId: "match-2", map: "de_mirage", startedAt: 2 }),
+    ];
+    const matchStats: Record<string, MatchPlayerStats[]> = {
+      "match-1": [
+        makePlayer({ playerId: "p1", nickname: "Alice", kills: 15, result: false }),
+        makePlayer({ playerId: "p2", nickname: "Bob", kills: 20, result: true }),
+      ],
+      "match-2": [
+        makePlayer({ playerId: "p1", nickname: "Alice", kills: 12, result: false }),
+        makePlayer({ playerId: "p2", nickname: "Bob", kills: 22, result: true }),
+      ],
+    };
+
+    const result = buildSessionRivalries({
+      aggregateStats,
+      allHaveDemo: false,
+      matchStats,
+      matches,
+    });
+
+    expect(result.podium[0]?.nickname).toBe("Bob");
+    expect(result.podium[0]?.sessionScore).toBeGreaterThan(
+      result.podium[1]?.sessionScore ?? 0
+    );
+  });
+
+  it("breaks ties alphabetically", () => {
+    const aggregateStats = {
+      p1: makeAggregatePlayer({
+        faceitId: "p1",
+        nickname: "Alice",
+        avgImpact: 15,
+        avgKd: 1.3,
+        avgAdr: 82,
+        wins: 2,
+      }),
+      p2: makeAggregatePlayer({
+        faceitId: "p2",
+        nickname: "Bob",
+        avgImpact: 15,
+        avgKd: 1.3,
+        avgAdr: 82,
+        wins: 2,
+      }),
+    };
+    const matches = [
+      makeSessionMatch({ matchId: "match-1", map: "de_inferno", startedAt: 1 }),
+    ];
+    const matchStats: Record<string, MatchPlayerStats[]> = {
+      "match-1": [
+        makePlayer({ playerId: "p1", nickname: "Alice", kills: 18, result: true }),
+        makePlayer({ playerId: "p2", nickname: "Bob", kills: 18, result: true }),
+      ],
+    };
+
+    const result = buildSessionRivalries({
+      aggregateStats,
+      allHaveDemo: false,
+      matchStats,
+      matches,
+    });
+
+    expect(result.podium.map((entry) => entry.nickname)).toEqual([
+      "Alice",
+      "Bob",
+    ]);
   });
 });
