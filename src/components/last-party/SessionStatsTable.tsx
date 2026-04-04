@@ -1,3 +1,5 @@
+import { Fragment } from "react";
+import { PlayerSessionBreakdown } from "~/components/last-party/PlayerSessionBreakdown";
 import type { AggregatePlayerStats } from "~/lib/types";
 
 interface SessionStatsTableProps {
@@ -22,6 +24,7 @@ export function SessionStatsTable({
 }: SessionStatsTableProps) {
   const entries = Object.values(stats).sort(
     (a, b) =>
+      (b.sessionScore ?? b.avgImpact) - (a.sessionScore ?? a.avgImpact) ||
       b.avgImpact - a.avgImpact ||
       (allHaveDemo
         ? (b.avgRating ?? 0) - (a.avgRating ?? 0)
@@ -42,6 +45,9 @@ export function SessionStatsTable({
           <thead>
             <tr className="text-[9px] text-text-dim">
               <th className="py-1 text-left font-normal">Player</th>
+              <th className="px-2 py-1 text-center font-normal">
+                Session Score
+              </th>
               <th className="px-2 py-1 text-center font-normal">Impact</th>
               {allHaveDemo && (
                 <>
@@ -70,63 +76,79 @@ export function SessionStatsTable({
           </thead>
           <tbody>
             {entries.map((e) => (
-              <tr className="border-border border-t" key={e.faceitId}>
-                <td className="py-1.5 font-semibold text-text">{e.nickname}</td>
-                <td className="px-2 text-center font-bold text-accent">
-                  {e.avgImpact.toFixed(1)}
-                </td>
-                {allHaveDemo && (
-                  <>
-                    <td
-                      className={`px-2 text-center font-bold ${ratingColor(e.avgRating ?? 0)}`}
-                    >
-                      {(e.avgRating ?? 0).toFixed(2)}
-                    </td>
-                    <td className="px-2 text-center text-text-muted">
-                      {(e.avgRws ?? 0).toFixed(1)}
-                    </td>
-                  </>
-                )}
-                <td
-                  className={`px-2 text-center font-bold ${kdColor(e.avgKd)}`}
-                >
-                  {e.avgKd.toFixed(2)}
-                </td>
-                <td className="px-2 text-center text-text-muted">
-                  {Math.round(e.avgAdr)}
-                </td>
-                {allHaveDemo && (
-                  <td className="px-2 text-center text-text-muted">
-                    {(e.avgKast ?? 0).toFixed(0)}%
+              <Fragment key={e.faceitId}>
+                <tr className="border-border border-t">
+                  <td className="py-1.5 font-semibold text-text">{e.nickname}</td>
+                  <td className="px-2 text-center font-bold text-accent">
+                    {(e.sessionScore ?? e.avgImpact).toFixed(1)}
                   </td>
-                )}
-                <td className="px-2 text-center text-text-muted">
-                  {Math.round(e.avgHsPercent)}%
-                </td>
-                {allHaveDemo && (
-                  <>
+                  <td className="px-2 text-center font-bold text-accent">
+                    {e.avgImpact.toFixed(1)}
+                  </td>
+                  {allHaveDemo && (
+                    <>
+                      <td
+                        className={`px-2 text-center font-bold ${ratingColor(e.avgRating ?? 0)}`}
+                      >
+                        {(e.avgRating ?? 0).toFixed(2)}
+                      </td>
+                      <td className="px-2 text-center text-text-muted">
+                        {(e.avgRws ?? 0).toFixed(1)}
+                      </td>
+                    </>
+                  )}
+                  <td
+                    className={`px-2 text-center font-bold ${kdColor(e.avgKd)}`}
+                  >
+                    {e.avgKd.toFixed(2)}
+                  </td>
+                  <td className="px-2 text-center text-text-muted">
+                    {Math.round(e.avgAdr)}
+                  </td>
+                  {allHaveDemo && (
                     <td className="px-2 text-center text-text-muted">
-                      {(e.avgTradeKills ?? 0).toFixed(1)}
+                      {(e.avgKast ?? 0).toFixed(0)}%
                     </td>
-                    <td className="px-2 text-center text-text-muted">
-                      {Math.round(e.avgUtilityDamage ?? 0)}
+                  )}
+                  <td className="px-2 text-center text-text-muted">
+                    {Math.round(e.avgHsPercent)}%
+                  </td>
+                  {allHaveDemo && (
+                    <>
+                      <td className="px-2 text-center text-text-muted">
+                        {(e.avgTradeKills ?? 0).toFixed(1)}
+                      </td>
+                      <td className="px-2 text-center text-text-muted">
+                        {Math.round(e.avgUtilityDamage ?? 0)}
+                      </td>
+                      <td className="px-2 text-center text-text-muted">
+                        {((e.avgEntryRate ?? 0) * 100).toFixed(0)}%
+                      </td>
+                    </>
+                  )}
+                  <td className="px-2 text-center text-text-muted">
+                    {e.avgKrRatio.toFixed(2)}
+                  </td>
+                  <td className="px-2 text-center text-text-muted">
+                    {e.totalMvps}
+                  </td>
+                  <td className="px-2 text-center text-text-muted">
+                    {e.gamesPlayed}
+                  </td>
+                  <td className="px-2 text-center text-accent">{e.wins}</td>
+                </tr>
+                {e.scoreBreakdown ? (
+                  <tr className="border-border/60 border-t" key={`${e.faceitId}-details`}>
+                    <td className="bg-bg-elevated/40 px-3 py-2" colSpan={allHaveDemo ? 16 : 10}>
+                      <PlayerSessionBreakdown
+                        bestMapId={e.bestMapId}
+                        breakdown={e.scoreBreakdown}
+                        worstMapId={e.worstMapId}
+                      />
                     </td>
-                    <td className="px-2 text-center text-text-muted">
-                      {((e.avgEntryRate ?? 0) * 100).toFixed(0)}%
-                    </td>
-                  </>
-                )}
-                <td className="px-2 text-center text-text-muted">
-                  {e.avgKrRatio.toFixed(2)}
-                </td>
-                <td className="px-2 text-center text-text-muted">
-                  {e.totalMvps}
-                </td>
-                <td className="px-2 text-center text-text-muted">
-                  {e.gamesPlayed}
-                </td>
-                <td className="px-2 text-center text-accent">{e.wins}</td>
-              </tr>
+                  </tr>
+                ) : null}
+              </Fragment>
             ))}
           </tbody>
         </table>
