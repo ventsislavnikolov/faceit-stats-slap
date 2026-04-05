@@ -6,7 +6,7 @@ import {
   type SharedStatsLeaderboardRow,
 } from "~/lib/stats-leaderboard";
 import { getStatsLeaderboard } from "~/server/matches";
-import { runWithStartContext } from "../../node_modules/.pnpm/@tanstack+start-storage-context@1.166.20/node_modules/@tanstack/start-storage-context/dist/esm/index.js";
+import { runWithStartContext } from "../start-context";
 
 vi.mock("~/lib/stats-leaderboard", async () => {
   const actual = await vi.importActual<

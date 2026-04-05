@@ -11,6 +11,10 @@ import type {
   MatchPlayerStats,
   PlayerHistoryMatch,
   SessionAward,
+  SessionPodiumEntry,
+  SessionRivalryCard,
+  SessionRivalryData,
+  SessionScoreBreakdown,
 } from "~/lib/types";
 
 export const MAP_COLORS: Record<string, string> = {
@@ -360,4 +364,473 @@ export function computeSessionStreak(
   }
 
   return maxStreak;
+}
+
+type SessionCategoryDefinition = {
+  key: keyof AggregatePlayerStats | "winRate";
+  label: string;
+  weight: number;
+  read: (stats: AggregatePlayerStats) => number;
+};
+
+type PairSummary = {
+  faceitIdA: string;
+  faceitIdB: string;
+  nicknameA: string;
+  nicknameB: string;
+  sharedMaps: number;
+  winsA: number;
+  winsB: number;
+  totalMargin: number;
+};
+
+const SAFE_CATEGORIES: SessionCategoryDefinition[] = [
+  {
+    key: "avgImpact",
+    label: "Impact",
+    weight: 4,
+    read: (stats) => stats.avgImpact,
+  },
+  {
+    key: "avgKd",
+    label: "K/D",
+    weight: 3,
+    read: (stats) => stats.avgKd,
+  },
+  {
+    key: "avgAdr",
+    label: "ADR",
+    weight: 3,
+    read: (stats) => stats.avgAdr,
+  },
+  {
+    key: "avgHsPercent",
+    label: "HS%",
+    weight: 2,
+    read: (stats) => stats.avgHsPercent,
+  },
+  {
+    key: "winRate",
+    label: "Win rate",
+    weight: 4,
+    read: (stats) =>
+      stats.gamesPlayed > 0 ? (stats.wins / stats.gamesPlayed) * 100 : 0,
+  },
+];
+
+const DEMO_CATEGORIES: SessionCategoryDefinition[] = [
+  {
+    key: "avgRating",
+    label: "Rating",
+    weight: 4,
+    read: (stats) => stats.avgRating ?? 0,
+  },
+  {
+    key: "avgRws",
+    label: "RWS",
+    weight: 3,
+    read: (stats) => stats.avgRws ?? 0,
+  },
+  {
+    key: "avgKast",
+    label: "KAST%",
+    weight: 2,
+    read: (stats) => stats.avgKast ?? 0,
+  },
+  {
+    key: "avgTradeKills",
+    label: "Trade kills",
+    weight: 2,
+    read: (stats) => stats.avgTradeKills ?? 0,
+  },
+  {
+    key: "avgUtilityDamage",
+    label: "Utility damage",
+    weight: 2,
+    read: (stats) => stats.avgUtilityDamage ?? 0,
+  },
+  {
+    key: "avgEntryRate",
+    label: "Entry rate",
+    weight: 2,
+    read: (stats) => stats.avgEntryRate ?? 0,
+  },
+  {
+    key: "avgEnemiesFlashed",
+    label: "Enemies flashed",
+    weight: 1,
+    read: (stats) => stats.avgEnemiesFlashed ?? 0,
+  },
+  {
+    key: "avgEconomyEfficiency",
+    label: "Economy efficiency",
+    weight: 2,
+    read: (stats) => stats.avgEconomyEfficiency ?? 0,
+  },
+  {
+    key: "totalClutchWins",
+    label: "Clutches",
+    weight: 1,
+    read: (stats) => stats.totalClutchWins ?? 0,
+  },
+];
+
+function getSessionCategories(
+  allHaveDemo: boolean
+): SessionCategoryDefinition[] {
+  return allHaveDemo
+    ? [...SAFE_CATEGORIES, ...DEMO_CATEGORIES]
+    : SAFE_CATEGORIES;
+}
+
+function normalizeValue(min: number, max: number, value: number): number {
+  if (Number.isNaN(value)) {
+    return 0;
+  }
+  if (max === min) {
+    return 100;
+  }
+  return ((value - min) / (max - min)) * 100;
+}
+
+function getBadgeFromBreakdown(breakdown: SessionScoreBreakdown): string {
+  const best = breakdown.categories[0]?.key ?? "";
+  if (best === "avgEntryRate") {
+    return "Entry King";
+  }
+  if (best === "avgUtilityDamage" || best === "avgEnemiesFlashed") {
+    return "Utility";
+  }
+  if (best === "avgRating" || best === "avgImpact") {
+    return "Carry";
+  }
+  if (best === "winRate") {
+    return "Closer";
+  }
+  return "Balanced";
+}
+
+function getVerdictFromBreakdown(breakdown: SessionScoreBreakdown): string {
+  const top = breakdown.strongestReasons[0];
+  const bottom = breakdown.weakestCategory;
+  if (top && bottom) {
+    return `${top} over ${bottom}`;
+  }
+  return top ?? "Steady session";
+}
+
+function buildScoreBreakdowns(
+  aggregateStats: Record<string, AggregatePlayerStats>,
+  categories: SessionCategoryDefinition[]
+): Record<string, SessionScoreBreakdown> {
+  const entries = Object.values(aggregateStats);
+  const scoresByCategory = new Map<
+    SessionCategoryDefinition["key"],
+    { min: number; max: number; values: Record<string, number> }
+  >();
+
+  for (const category of categories) {
+    const values: Record<string, number> = {};
+    let min = Number.POSITIVE_INFINITY;
+    let max = Number.NEGATIVE_INFINITY;
+    for (const entry of entries) {
+      const value = category.read(entry);
+      values[entry.faceitId] = value;
+      if (value < min) {
+        min = value;
+      }
+      if (value > max) {
+        max = value;
+      }
+    }
+    scoresByCategory.set(category.key, { min, max, values });
+  }
+
+  const result: Record<string, SessionScoreBreakdown> = {};
+  for (const entry of entries) {
+    const categoriesWithScores = categories.map((category) => {
+      const scoreData = scoresByCategory.get(category.key);
+      const raw = scoreData?.values[entry.faceitId] ?? 0;
+      return {
+        key: String(category.key),
+        label: category.label,
+        score: normalizeValue(scoreData?.min ?? 0, scoreData?.max ?? 0, raw),
+        weight: category.weight,
+      };
+    });
+
+    const weightedTotal = categoriesWithScores.reduce(
+      (sum, category) => sum + category.score * (category.weight ?? 1),
+      0
+    );
+    const weightTotal = categoriesWithScores.reduce(
+      (sum, category) => sum + (category.weight ?? 1),
+      0
+    );
+    const sessionScore =
+      weightTotal > 0 ? Math.round((weightedTotal / weightTotal) * 10) / 10 : 0;
+
+    const sortedCategories = [...categoriesWithScores].sort(
+      (a, b) =>
+        b.score - a.score ||
+        b.weight - a.weight ||
+        a.label.localeCompare(b.label)
+    );
+
+    result[entry.faceitId] = {
+      categories: sortedCategories,
+      sessionScore,
+      strongestReasons: sortedCategories
+        .slice(0, 2)
+        .map((category) => category.label),
+      weakestCategory:
+        sortedCategories[sortedCategories.length - 1]?.label ?? undefined,
+    };
+  }
+
+  return result;
+}
+
+function compareImpact(
+  left: MatchPlayerStats,
+  right: MatchPlayerStats
+): number {
+  const leftRow: SharedStatsLeaderboardRow = {
+    matchId: "",
+    playedAt: null,
+    faceitId: left.playerId,
+    nickname: left.nickname,
+    elo: 1225,
+    kills: left.kills,
+    kdRatio: left.kdRatio,
+    adr: left.adr,
+    hsPercent: left.hsPercent,
+    krRatio: left.krRatio,
+    win: left.result,
+    firstKills: left.firstKills,
+    clutchKills: left.clutchKills,
+    utilityDamage: left.utilityDamage,
+    enemiesFlashed: left.enemiesFlashed,
+    entryCount: left.entryCount,
+    entryWins: left.entryWins,
+    sniperKills: left.sniperKills,
+  };
+  const rightRow: SharedStatsLeaderboardRow = {
+    matchId: "",
+    playedAt: null,
+    faceitId: right.playerId,
+    nickname: right.nickname,
+    elo: 1225,
+    kills: right.kills,
+    kdRatio: right.kdRatio,
+    adr: right.adr,
+    hsPercent: right.hsPercent,
+    krRatio: right.krRatio,
+    win: right.result,
+    firstKills: right.firstKills,
+    clutchKills: right.clutchKills,
+    utilityDamage: right.utilityDamage,
+    enemiesFlashed: right.enemiesFlashed,
+    entryCount: right.entryCount,
+    entryWins: right.entryWins,
+    sniperKills: right.sniperKills,
+  };
+  return computeImpactScore(leftRow) - computeImpactScore(rightRow);
+}
+
+function buildPairSummaries(params: {
+  matchStats: Record<string, MatchPlayerStats[]>;
+  matches: Pick<PlayerHistoryMatch, "matchId" | "startedAt" | "map">[];
+  players: AggregatePlayerStats[];
+}): PairSummary[] {
+  const { matchStats, matches, players } = params;
+  const pairMap = new Map<string, PairSummary>();
+  const sortedMatches = [...matches].sort((a, b) => a.startedAt - b.startedAt);
+
+  for (const match of sortedMatches) {
+    const stats = matchStats[match.matchId] ?? [];
+    for (let i = 0; i < players.length; i++) {
+      for (let j = i + 1; j < players.length; j++) {
+        const playerA = stats.find(
+          (entry) => entry.playerId === players[i].faceitId
+        );
+        const playerB = stats.find(
+          (entry) => entry.playerId === players[j].faceitId
+        );
+        if (!(playerA && playerB)) {
+          continue;
+        }
+        const key = [players[i].faceitId, players[j].faceitId].sort().join("|");
+        const existing = pairMap.get(key) ?? {
+          faceitIdA: players[i].faceitId,
+          faceitIdB: players[j].faceitId,
+          nicknameA: players[i].nickname,
+          nicknameB: players[j].nickname,
+          sharedMaps: 0,
+          winsA: 0,
+          winsB: 0,
+          totalMargin: 0,
+        };
+        const diff = compareImpact(playerA, playerB);
+        existing.sharedMaps += 1;
+        if (diff > 0) {
+          existing.winsA += 1;
+        } else if (diff < 0) {
+          existing.winsB += 1;
+        }
+        existing.totalMargin += Math.abs(diff);
+        pairMap.set(key, existing);
+      }
+    }
+  }
+
+  return [...pairMap.values()].sort(
+    (a, b) =>
+      b.sharedMaps - a.sharedMaps ||
+      b.totalMargin - a.totalMargin ||
+      a.nicknameA.localeCompare(b.nicknameA) ||
+      a.nicknameB.localeCompare(b.nicknameB)
+  );
+}
+
+function buildRivalryCards(pairSummaries: PairSummary[]): SessionRivalryCard[] {
+  const rivalryCards: SessionRivalryCard[] = [];
+  const bestHeadToHead = pairSummaries
+    .filter((pair) => pair.sharedMaps > 0 && pair.winsA !== pair.winsB)
+    .sort(
+      (a, b) =>
+        b.sharedMaps - a.sharedMaps ||
+        Math.abs(b.winsA - b.winsB) - Math.abs(a.winsA - a.winsB) ||
+        b.totalMargin - a.totalMargin
+    )[0];
+
+  if (bestHeadToHead) {
+    const winnerIsA = bestHeadToHead.winsA > bestHeadToHead.winsB;
+    rivalryCards.push({
+      id: "head-to-head",
+      title: "Head-to-Head",
+      playerIds: winnerIsA
+        ? [bestHeadToHead.faceitIdA, bestHeadToHead.faceitIdB]
+        : [bestHeadToHead.faceitIdB, bestHeadToHead.faceitIdA],
+      summary: `${winnerIsA ? bestHeadToHead.nicknameA : bestHeadToHead.nicknameB} beat ${winnerIsA ? bestHeadToHead.nicknameB : bestHeadToHead.nicknameA} ${winnerIsA ? bestHeadToHead.winsA : bestHeadToHead.winsB}-${winnerIsA ? bestHeadToHead.winsB : bestHeadToHead.winsA}`,
+      evidence: [`${bestHeadToHead.sharedMaps} shared maps`],
+    });
+  }
+
+  const closestDuel = pairSummaries
+    .filter((pair) => pair.sharedMaps >= 2)
+    .sort(
+      (a, b) =>
+        Math.abs(a.winsA - a.winsB) - Math.abs(b.winsA - b.winsB) ||
+        b.sharedMaps - a.sharedMaps ||
+        a.totalMargin - b.totalMargin
+    )[0];
+  if (closestDuel) {
+    rivalryCards.push({
+      id: "closest-duel",
+      title: "Closest Duel",
+      playerIds: [closestDuel.faceitIdA, closestDuel.faceitIdB],
+      summary: `${closestDuel.nicknameA} vs ${closestDuel.nicknameB} was ${closestDuel.winsA}-${closestDuel.winsB}`,
+      evidence: [`${closestDuel.sharedMaps} shared maps`],
+    });
+  }
+
+  const widestGap = [...pairSummaries].sort(
+    (a, b) =>
+      b.totalMargin - a.totalMargin ||
+      b.sharedMaps - a.sharedMaps ||
+      a.nicknameA.localeCompare(b.nicknameA) ||
+      a.nicknameB.localeCompare(b.nicknameB)
+  )[0];
+  if (widestGap) {
+    const winnerIsA =
+      widestGap.winsA > widestGap.winsB ||
+      (widestGap.winsA === widestGap.winsB &&
+        widestGap.nicknameA.localeCompare(widestGap.nicknameB) <= 0);
+    const winnerNickname = winnerIsA
+      ? widestGap.nicknameA
+      : widestGap.nicknameB;
+    const loserNickname = winnerIsA ? widestGap.nicknameB : widestGap.nicknameA;
+    const winnerWins = winnerIsA ? widestGap.winsA : widestGap.winsB;
+    const loserWins = winnerIsA ? widestGap.winsB : widestGap.winsA;
+    rivalryCards.push({
+      id: "wide-gap",
+      title: "Widest Gap",
+      playerIds: [widestGap.faceitIdA, widestGap.faceitIdB],
+      summary: `${winnerNickname} had the bigger edge over ${loserNickname}`,
+      evidence: [
+        `${widestGap.sharedMaps} shared maps`,
+        `${winnerWins}-${loserWins}`,
+      ],
+    });
+  }
+
+  return rivalryCards;
+}
+
+export function buildSessionRivalries(params: {
+  aggregateStats: Record<string, AggregatePlayerStats>;
+  allHaveDemo: boolean;
+  matchStats: Record<string, MatchPlayerStats[]>;
+  matches: Pick<PlayerHistoryMatch, "matchId" | "startedAt" | "map">[];
+}): SessionRivalryData {
+  const { aggregateStats, allHaveDemo, matchStats, matches } = params;
+  const players = Object.values(aggregateStats);
+  if (players.length === 0) {
+    return {
+      playerBreakdowns: {},
+      podium: [],
+      rivalryCards: [],
+    };
+  }
+
+  const categories = getSessionCategories(allHaveDemo);
+  const playerBreakdowns = buildScoreBreakdowns(aggregateStats, categories);
+  const podium: SessionPodiumEntry[] = players
+    .map((player) => {
+      const breakdown = playerBreakdowns[player.faceitId];
+      const sessionScore = breakdown?.sessionScore ?? 0;
+      return {
+        badge: getBadgeFromBreakdown(
+          breakdown ?? {
+            categories: [],
+            sessionScore: 0,
+            strongestReasons: [],
+            weakestCategory: undefined,
+          }
+        ),
+        faceitId: player.faceitId,
+        nickname: player.nickname,
+        rank: 0,
+        sessionScore,
+        verdict: getVerdictFromBreakdown(
+          breakdown ?? {
+            categories: [],
+            sessionScore: 0,
+            strongestReasons: [],
+            weakestCategory: undefined,
+          }
+        ),
+      };
+    })
+    .sort(
+      (a, b) =>
+        b.sessionScore - a.sessionScore || a.nickname.localeCompare(b.nickname)
+    )
+    .map((entry, index) => ({
+      ...entry,
+      rank: index + 1,
+    }));
+
+  const pairSummaries = buildPairSummaries({
+    matchStats,
+    matches,
+    players,
+  });
+
+  return {
+    playerBreakdowns,
+    podium,
+    rivalryCards: buildRivalryCards(pairSummaries),
+  };
 }
