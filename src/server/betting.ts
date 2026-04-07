@@ -3,8 +3,8 @@ import { createServerSupabase } from "~/lib/supabase.server";
 import type {
   Bet,
   BetAuditEvent,
+  BetHistoryItem,
   BettingPool,
-  BetWithPool,
   PropPool,
 } from "~/lib/types";
 
@@ -28,6 +28,27 @@ function rowToPool(r: any): BettingPool {
     opensAt: r.opens_at,
     closesAt: r.closes_at,
     resolvedAt: r.resolved_at,
+  };
+}
+
+function rowToPropPool(row: any): PropPool {
+  return {
+    id: row.id,
+    seasonId: row.season_id,
+    faceitMatchId: row.faceit_match_id,
+    playerId: row.player_id,
+    playerNickname: row.player_nickname,
+    statKey: row.stat_key,
+    threshold: Number(row.threshold),
+    description: row.description,
+    yesPool: row.yes_pool,
+    noPool: row.no_pool,
+    outcome: row.outcome,
+    status: row.status,
+    opensAt: row.opens_at,
+    closesAt: row.closes_at,
+    resolvedAt: row.resolved_at,
+    createdAt: row.created_at,
   };
 }
 
@@ -246,6 +267,7 @@ export const getUserBetForMatch = createServerFn({ method: "GET" })
     return {
       id: betRow.id,
       poolId: betRow.pool_id,
+      propPoolId: null,
       userId: betRow.user_id,
       side: betRow.side,
       amount: betRow.amount,
@@ -254,15 +276,49 @@ export const getUserBetForMatch = createServerFn({ method: "GET" })
     };
   });
 
+export const getUserPropBetsForMatch = createServerFn({ method: "GET" })
+  .inputValidator((input: { faceitMatchId: string; userId: string }) => input)
+  .handler(async ({ data }): Promise<Bet[]> => {
+    const supabase = createServerSupabase();
+
+    const { data: propRows } = await supabase
+      .from("prop_pools")
+      .select("id")
+      .eq("faceit_match_id", data.faceitMatchId);
+
+    const propPoolIds = (propRows ?? []).map((row: any) => row.id).filter(Boolean);
+
+    if (!propPoolIds.length) {
+      return [];
+    }
+
+    const { data: betRows } = await supabase
+      .from("bets")
+      .select("*")
+      .eq("user_id", data.userId)
+      .in("prop_pool_id", propPoolIds);
+
+    return (betRows ?? []).map((betRow: any) => ({
+      id: betRow.id,
+      poolId: betRow.pool_id,
+      propPoolId: betRow.prop_pool_id,
+      userId: betRow.user_id,
+      side: betRow.side,
+      amount: betRow.amount,
+      payout: betRow.payout,
+      createdAt: betRow.created_at,
+    }));
+  });
+
 // ── getUserBetHistory ─────────────────────────────────────────
 
 export const getUserBetHistory = createServerFn({ method: "GET" })
   .inputValidator((userId: string) => userId)
-  .handler(async ({ data: userId }): Promise<BetWithPool[]> => {
+  .handler(async ({ data: userId }): Promise<BetHistoryItem[]> => {
     const supabase = createServerSupabase();
     const { data } = await supabase
       .from("bets")
-      .select("*, betting_pools(*)")
+      .select("*, betting_pools(*), prop_pools(*)")
       .eq("user_id", userId)
       .order("created_at", { ascending: false });
 
@@ -274,17 +330,41 @@ export const getUserBetHistory = createServerFn({ method: "GET" })
       (auditRows ?? []).map((row: any) => [row.bet_id, rowToBetAuditEvent(row)])
     );
 
-    return (data ?? []).map((row: any) => ({
-      id: row.id,
-      poolId: row.pool_id,
-      userId: row.user_id,
-      side: row.side,
-      amount: row.amount,
-      payout: row.payout,
-      createdAt: row.created_at,
-      pool: rowToPool(row.betting_pools),
-      audit: auditByBetId.get(row.id) ?? null,
-    }));
+    return (data ?? []).flatMap((row: any) => {
+      const baseBet = {
+        id: row.id,
+        poolId: row.pool_id,
+        propPoolId: row.prop_pool_id,
+        userId: row.user_id,
+        side: row.side,
+        amount: row.amount,
+        payout: row.payout,
+        createdAt: row.created_at,
+        audit: auditByBetId.get(row.id) ?? null,
+      };
+
+      if (row.betting_pools) {
+        return [
+          {
+            ...baseBet,
+            kind: "match" as const,
+            pool: rowToPool(row.betting_pools),
+          },
+        ];
+      }
+
+      if (row.prop_pools) {
+        return [
+          {
+            ...baseBet,
+            kind: "prop" as const,
+            prop: rowToPropPool(row.prop_pools),
+          },
+        ];
+      }
+
+      return [];
+    });
   });
 
 export const getBetAuditLog = createServerFn({ method: "GET" })

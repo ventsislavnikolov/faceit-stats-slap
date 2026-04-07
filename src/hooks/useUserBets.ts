@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import type { BetWithPool } from "~/lib/types";
+import type { BetHistoryItem } from "~/lib/types";
 import { getUserBetHistory } from "~/server/betting";
 
 export function useUserBets(userId: string | null) {
-  return useQuery<BetWithPool[]>({
+  return useQuery<BetHistoryItem[]>({
     queryKey: ["user-bets", userId],
     queryFn: () => getUserBetHistory({ data: userId! }),
     enabled: !!userId,

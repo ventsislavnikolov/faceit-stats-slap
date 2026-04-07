@@ -2,6 +2,12 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 import { LiveMatchCard } from "~/components/LiveMatchCard";
 
+vi.mock("@tanstack/react-query", () => ({
+  useQueryClient: () => ({
+    invalidateQueries: vi.fn(),
+  }),
+}));
+
 vi.mock("~/hooks/useBettingPool", () => ({
   useBettingPool: vi.fn(),
 }));
@@ -41,8 +47,27 @@ const match = {
   friendIds: ["friend-1"],
 } as any;
 
-describe("LiveMatchCard", () => {
-  it("renders the public match card before auth resolves without betting ui", () => {
+const openProp = {
+  id: "prop-1",
+  seasonId: "season-1",
+  faceitMatchId: "match-1",
+  playerId: "player-1",
+  playerNickname: "boR0",
+  statKey: "kills",
+  threshold: 16,
+  description: "boR0 16+ kills",
+  yesPool: 10,
+  noPool: 15,
+  outcome: null,
+  status: "open",
+  opensAt: "2026-04-07T10:00:00.000Z",
+  closesAt: new Date(Date.now() + 60_000).toISOString(),
+  resolvedAt: null,
+  createdAt: "2026-04-07T10:00:00.000Z",
+} as const;
+
+describe("live prop bets", () => {
+  it("renders open prop bets on the live match card", () => {
     vi.mocked(useBettingPool).mockReturnValue({
       data: {
         pool: {
@@ -66,85 +91,12 @@ describe("LiveMatchCard", () => {
         players: [],
       },
     } as any);
-    vi.mocked(usePropPools).mockReturnValue({ data: [] } as any);
-    vi.mocked(useUserPropBetsForMatch).mockReturnValue({ data: [] } as any);
-
-    const html = renderToStaticMarkup(
-      <LiveMatchCard authResolved={false} match={match} />
-    );
-
-    expect(html).toContain("LIVE");
-    expect(html).toContain("inferno");
-    expect(html).not.toContain("BETTING_PANEL");
-  });
-
-  it("keeps betting ui hidden while signed-in balance is still loading", () => {
-    vi.mocked(useBettingPool).mockReturnValue({
-      data: {
-        pool: {
-          id: "pool-1",
-          status: "OPEN",
-          closesAt: new Date(Date.now() + 60_000).toISOString(),
-          team1Name: "Team One",
-          team2Name: "Team Two",
-          team1Pool: 100,
-          team2Pool: 100,
-        },
-        userBet: null,
-      },
+    vi.mocked(usePropPools).mockReturnValue({
+      data: [openProp],
     } as any);
-    vi.mocked(useMatchStats).mockReturnValue({
-      data: {
-        teams: {
-          faction1: { score: 0 },
-          faction2: { score: 0 },
-        },
-        players: [],
-      },
+    vi.mocked(useUserPropBetsForMatch).mockReturnValue({
+      data: [],
     } as any);
-    vi.mocked(usePropPools).mockReturnValue({ data: [] } as any);
-    vi.mocked(useUserPropBetsForMatch).mockReturnValue({ data: [] } as any);
-
-    const html = renderToStaticMarkup(
-      <LiveMatchCard
-        authResolved={true}
-        bettingContextReady={false}
-        match={match}
-        userCoins={0}
-        userId="user-1"
-      />
-    );
-
-    expect(html).toContain("LIVE");
-    expect(html).not.toContain("BETTING_PANEL");
-  });
-
-  it("renders the betting panel after auth resolves", () => {
-    vi.mocked(useBettingPool).mockReturnValue({
-      data: {
-        pool: {
-          id: "pool-1",
-          status: "OPEN",
-          closesAt: new Date(Date.now() + 60_000).toISOString(),
-          team1Name: "Team One",
-          team2Name: "Team Two",
-          team1Pool: 100,
-          team2Pool: 100,
-        },
-        userBet: null,
-      },
-    } as any);
-    vi.mocked(useMatchStats).mockReturnValue({
-      data: {
-        teams: {
-          faction1: { score: 0 },
-          faction2: { score: 0 },
-        },
-        players: [],
-      },
-    } as any);
-    vi.mocked(usePropPools).mockReturnValue({ data: [] } as any);
-    vi.mocked(useUserPropBetsForMatch).mockReturnValue({ data: [] } as any);
 
     const html = renderToStaticMarkup(
       <LiveMatchCard
@@ -152,12 +104,116 @@ describe("LiveMatchCard", () => {
         bettingContextReady={true}
         match={match}
         seasonId="season-1"
-        userCoins={1234}
+        userCoins={123}
         userId="user-1"
       />
     );
 
-    expect(html).toContain("LIVE");
-    expect(html).toContain("BETTING_PANEL");
+    expect(html).toContain("boR0 16+ kills");
+    expect(html).toContain("Yes");
+    expect(html).toContain("No");
+  });
+
+  it("hides closed prop bets when the user never placed one", () => {
+    vi.mocked(useBettingPool).mockReturnValue({
+      data: {
+        pool: {
+          id: "pool-1",
+          status: "OPEN",
+          closesAt: new Date(Date.now() + 60_000).toISOString(),
+          team1Name: "Team One",
+          team2Name: "Team Two",
+          team1Pool: 100,
+          team2Pool: 100,
+        },
+        userBet: null,
+      },
+    } as any);
+    vi.mocked(useMatchStats).mockReturnValue({
+      data: {
+        teams: {
+          faction1: { score: 0 },
+          faction2: { score: 0 },
+        },
+        players: [],
+      },
+    } as any);
+    vi.mocked(usePropPools).mockReturnValue({
+      data: [{ ...openProp, status: "closed", closesAt: new Date(Date.now() - 60_000).toISOString() }],
+    } as any);
+    vi.mocked(useUserPropBetsForMatch).mockReturnValue({
+      data: [],
+    } as any);
+
+    const html = renderToStaticMarkup(
+      <LiveMatchCard
+        authResolved={true}
+        bettingContextReady={true}
+        match={match}
+        seasonId="season-1"
+        userCoins={123}
+        userId="user-1"
+      />
+    );
+
+    expect(html).not.toContain("boR0 16+ kills");
+  });
+
+  it("keeps a closed prop visible when the user already placed a bet", () => {
+    vi.mocked(useBettingPool).mockReturnValue({
+      data: {
+        pool: {
+          id: "pool-1",
+          status: "OPEN",
+          closesAt: new Date(Date.now() + 60_000).toISOString(),
+          team1Name: "Team One",
+          team2Name: "Team Two",
+          team1Pool: 100,
+          team2Pool: 100,
+        },
+        userBet: null,
+      },
+    } as any);
+    vi.mocked(useMatchStats).mockReturnValue({
+      data: {
+        teams: {
+          faction1: { score: 0 },
+          faction2: { score: 0 },
+        },
+        players: [],
+      },
+    } as any);
+    vi.mocked(usePropPools).mockReturnValue({
+      data: [{ ...openProp, status: "closed", closesAt: new Date(Date.now() - 60_000).toISOString() }],
+    } as any);
+    vi.mocked(useUserPropBetsForMatch).mockReturnValue({
+      data: [
+        {
+          id: "bet-1",
+          propPoolId: "prop-1",
+          poolId: null,
+          userId: "user-1",
+          side: "yes",
+          amount: 25,
+          payout: null,
+          createdAt: "2026-04-07T10:01:00.000Z",
+        },
+      ],
+    } as any);
+
+    const html = renderToStaticMarkup(
+      <LiveMatchCard
+        authResolved={true}
+        bettingContextReady={true}
+        match={match}
+        seasonId="season-1"
+        userCoins={123}
+        userId="user-1"
+      />
+    );
+
+    expect(html).toContain("boR0 16+ kills");
+    expect(html).toContain("Your bet");
+    expect(html).not.toContain(">Closed<");
   });
 });

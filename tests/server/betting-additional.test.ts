@@ -69,6 +69,7 @@ import {
   getCoinBalance,
   getUserBetForMatch,
   getUserBetHistory,
+  getUserPropBetsForMatch,
   placeBet,
   resolvePool,
 } from "~/server/betting";
@@ -279,6 +280,7 @@ describe("getUserBetForMatch", () => {
     expect(result).toEqual({
       id: "bet-1",
       poolId: "pool-1",
+      propPoolId: null,
       userId: "user-1",
       side: "team1",
       amount: 100,
@@ -378,6 +380,91 @@ describe("getUserBetHistory", () => {
       getUserBetHistory({ data: "user-1" } as any)
     );
     expect(result).toEqual([]);
+  });
+
+  it("returns discriminated prop bet rows", async () => {
+    mocks.pushResponse([
+      {
+        id: "bet-2",
+        pool_id: null,
+        prop_pool_id: "prop-1",
+        user_id: "user-1",
+        side: "yes",
+        amount: 25,
+        payout: 60,
+        created_at: "2024-01-01T00:01:00Z",
+        betting_pools: null,
+        prop_pools: {
+          id: "prop-1",
+          season_id: "season-1",
+          faceit_match_id: "match-1",
+          player_id: "player-1",
+          player_nickname: "boR0",
+          stat_key: "kills",
+          threshold: 16,
+          description: "boR0 16+ kills",
+          yes_pool: 100,
+          no_pool: 40,
+          outcome: true,
+          status: "resolved",
+          opens_at: "2024-01-01T00:00:00Z",
+          closes_at: "2024-01-01T00:05:00Z",
+          resolved_at: "2024-01-01T00:30:00Z",
+          created_at: "2024-01-01T00:00:00Z",
+        },
+      },
+    ]);
+    mocks.pushResponse([]);
+
+    const result = await run(() =>
+      getUserBetHistory({ data: "user-1" } as any)
+    );
+
+    expect(result).toEqual([
+      expect.objectContaining({
+        kind: "prop",
+        propPoolId: "prop-1",
+        side: "yes",
+        prop: expect.objectContaining({
+          description: "boR0 16+ kills",
+          status: "resolved",
+          outcome: true,
+        }),
+      }),
+    ]);
+  });
+});
+
+describe("getUserPropBetsForMatch", () => {
+  it("returns prop bets scoped to the match for the current user", async () => {
+    mocks.pushResponse([{ id: "prop-1" }, { id: "prop-2" }]);
+    mocks.pushResponse([
+      {
+        id: "bet-1",
+        pool_id: null,
+        prop_pool_id: "prop-1",
+        user_id: "user-1",
+        side: "yes",
+        amount: 15,
+        payout: null,
+        created_at: "2024-01-01T00:00:00Z",
+      },
+    ]);
+
+    const result = await run(() =>
+      getUserPropBetsForMatch({
+        data: { faceitMatchId: "match-1", userId: "user-1" },
+      } as any)
+    );
+
+    expect(result).toEqual([
+      expect.objectContaining({
+        id: "bet-1",
+        propPoolId: "prop-1",
+        poolId: null,
+        side: "yes",
+      }),
+    ]);
   });
 });
 

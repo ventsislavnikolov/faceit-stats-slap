@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { BettingPanel } from "~/components/BettingPanel";
+import { PropBetCards } from "~/components/PropBetCards";
 import { useBettingPool } from "~/hooks/useBettingPool";
 import { useMatchStats } from "~/hooks/useMatchStats";
 import {
@@ -173,14 +174,24 @@ export function LiveMatchCard({
 
       {/* Betting panel */}
       {authResolved && bettingContextReady && betData?.pool && seasonId && (
-        <BettingPanel
-          matchId={match.matchId}
-          pool={betData.pool}
-          seasonId={seasonId}
-          userBet={betData.userBet}
-          userCoins={userCoins ?? 0}
-          userId={userId ?? null}
-        />
+        <>
+          <BettingPanel
+            matchId={match.matchId}
+            pool={betData.pool}
+            seasonId={seasonId}
+            userBet={betData.userBet}
+            userCoins={userCoins ?? 0}
+            userId={userId ?? null}
+          />
+          <div className="mt-3 flex flex-col gap-3">
+            <PropBetCards
+              matchId={match.matchId}
+              seasonId={seasonId}
+              userCoins={userCoins ?? 0}
+              userId={userId ?? null}
+            />
+          </div>
+        </>
       )}
 
       {isFinished && (

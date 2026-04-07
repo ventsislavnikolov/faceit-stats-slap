@@ -1,4 +1,5 @@
 import { useUserBets } from "~/hooks/useUserBets";
+import type { BetHistoryItem } from "~/lib/types";
 
 interface SeasonMyBetsTabProps {
   seasonId: string;
@@ -35,6 +36,25 @@ function formatNet(
   }
   const net = (payout ?? 0) - amount;
   return `${net > 0 ? "+" : ""}${net}`;
+}
+
+function getBetRowDisplay(bet: BetHistoryItem) {
+  if (bet.kind === "match") {
+    return {
+      title: `${bet.pool.team1Name} vs ${bet.pool.team2Name}`,
+      poolStatus: bet.pool.status,
+      sideName: bet.side === "team1" ? bet.pool.team1Name : bet.pool.team2Name,
+      winningSide: bet.pool.winningTeam,
+    };
+  }
+
+  return {
+    title: bet.prop.description,
+    poolStatus: bet.prop.status,
+    sideName: bet.side === "yes" ? "Yes" : "No",
+    winningSide:
+      bet.prop.outcome == null ? null : bet.prop.outcome ? "yes" : "no",
+  };
 }
 
 export function SeasonMyBetsTab({
@@ -106,18 +126,17 @@ export function SeasonMyBetsTab({
       </div>
 
       {bets.map((bet) => {
-        const poolStatus = bet.pool.status;
-        const sideName =
-          bet.side === "team1" ? bet.pool.team1Name : bet.pool.team2Name;
+        const row = getBetRowDisplay(bet);
+        const poolStatus = row.poolStatus;
         const { label: statusLabel, className: statusClass } = formatBetStatus(
           poolStatus,
           bet.side,
-          bet.pool.winningTeam
+          row.winningSide
         );
         const payout =
-          poolStatus === "REFUNDED"
+          poolStatus === "REFUNDED" || poolStatus === "refunded"
             ? String(bet.amount)
-            : poolStatus === "RESOLVED"
+            : poolStatus === "RESOLVED" || poolStatus === "resolved"
               ? String(bet.payout ?? 0)
               : "\u2014";
 
@@ -130,10 +149,10 @@ export function SeasonMyBetsTab({
             }}
           >
             <span className="truncate text-text">
-              {bet.pool.team1Name} vs {bet.pool.team2Name}
+              {row.title}
             </span>
             <span className="text-right text-text-muted text-xs">
-              {sideName}
+              {row.sideName}
             </span>
             <span className="text-right text-text-muted text-xs">
               {bet.amount}

@@ -1,7 +1,7 @@
 import { BetCard } from "~/components/BetCard";
+import { PropBetCards } from "~/components/PropBetCards";
 import { useBettingPool } from "~/hooks/useBettingPool";
-import { usePropPools } from "~/hooks/usePropPools";
-import type { LiveMatch, PropPool } from "~/lib/types";
+import type { LiveMatch } from "~/lib/types";
 
 interface LiveBetsTabProps {
   liveMatches: LiveMatch[];
@@ -15,45 +15,6 @@ interface MatchBetsProps {
   seasonId: string;
   userCoins: number;
   userId: string | null;
-}
-
-function PropBetCards({
-  matchId,
-  seasonId,
-  userCoins,
-  userId,
-}: {
-  matchId: string;
-  seasonId: string;
-  userCoins: number;
-  userId: string | null;
-}) {
-  const { data: propPools = [] } = usePropPools(matchId);
-
-  if (!propPools.length) {
-    return null;
-  }
-
-  return (
-    <>
-      {propPools.map((prop: PropPool) => (
-        <BetCard
-          closesAt={prop.closesAt}
-          id={prop.id}
-          key={prop.id}
-          label={prop.description}
-          seasonId={seasonId}
-          side1={{ label: "Yes", pool: prop.yesPool }}
-          side2={{ label: "No", pool: prop.noPool }}
-          status={prop.status}
-          sublabel={`${prop.playerNickname} - ${prop.statKey} ${prop.outcome === null ? "" : prop.outcome ? "HIT" : "MISS"}`}
-          type="prop"
-          userCoins={userCoins}
-          userId={userId}
-        />
-      ))}
-    </>
-  );
 }
 
 function MatchBets({ match, seasonId, userCoins, userId }: MatchBetsProps) {

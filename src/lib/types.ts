@@ -318,10 +318,19 @@ export interface Bet {
   userId: string;
 }
 
-export interface BetWithPool extends Bet {
+export interface MatchBetHistoryItem extends Bet {
   audit?: BetAuditEvent | null;
+  kind: "match";
   pool: BettingPool;
 }
+
+export interface PropBetHistoryItem extends Bet {
+  audit?: BetAuditEvent | null;
+  kind: "prop";
+  prop: PropPool;
+}
+
+export type BetHistoryItem = MatchBetHistoryItem | PropBetHistoryItem;
 
 export interface BettingLeaderboardEntry {
   betsPlaced: number;
