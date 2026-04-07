@@ -1,3 +1,10 @@
+## [1.10.1](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.10.0...v1.10.1) (2026-04-07)
+
+
+### Bug Fixes
+
+* new live bets ([c67ea96](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/c67ea964ce45deb9add8d0ed1527920cd6b26cf4))
+
 # [1.10.0](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.9.2...v1.10.0) (2026-04-04)
 
 ## [1.9.2](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.9.1...v1.9.2) (2026-04-02)
