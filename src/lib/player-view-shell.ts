@@ -1,3 +1,8 @@
+import {
+  isTrackedPlayerAlias,
+  type TrackedResolutionSearch,
+} from "~/lib/tracked-player-alias";
+
 export type PlayerView = "friends" | "history" | "leaderboard" | "last-party";
 
 export interface PlayerViewHref {
@@ -16,10 +21,19 @@ export interface PlayerViewTab {
 
 export function getPlayerViewHref(
   view: PlayerView,
-  nickname: string
+  nickname: string,
+  locked?: TrackedResolutionSearch
 ): PlayerViewHref {
+  const isTrackedFlow = isTrackedPlayerAlias(nickname);
+  const playerSearchValue = isTrackedFlow ? "tracked" : nickname;
+  const resolvedPlayerId = isTrackedFlow ? locked?.resolvedPlayerId : undefined;
+
   switch (view) {
     case "friends":
+      if (isTrackedFlow) {
+        return { to: "/tracked" };
+      }
+
       return {
         to: "/$nickname",
         params: { nickname },
@@ -28,7 +42,8 @@ export function getPlayerViewHref(
       return {
         to: "/history",
         search: {
-          player: nickname,
+          player: playerSearchValue,
+          ...(resolvedPlayerId ? { resolvedPlayerId } : {}),
           matches: 20,
           queue: "party",
         },
@@ -37,7 +52,8 @@ export function getPlayerViewHref(
       return {
         to: "/leaderboard",
         search: {
-          player: nickname,
+          player: playerSearchValue,
+          ...(resolvedPlayerId ? { resolvedPlayerId } : {}),
           matches: 20,
           queue: "party",
           last: 30,
@@ -47,7 +63,8 @@ export function getPlayerViewHref(
       return {
         to: "/last-party",
         search: {
-          player: nickname,
+          player: playerSearchValue,
+          ...(resolvedPlayerId ? { resolvedPlayerId } : {}),
         },
       };
   }
@@ -56,9 +73,11 @@ export function getPlayerViewHref(
 export function getPlayerViewTabs({
   activeView,
   nickname,
+  locked,
 }: {
   activeView: PlayerView;
   nickname: string | null;
+  locked?: TrackedResolutionSearch;
 }): PlayerViewTab[] {
   const views: Array<{ view: PlayerView; label: string }> = [
     { view: "friends", label: "Friends" },
@@ -72,6 +91,6 @@ export function getPlayerViewTabs({
     label,
     isActive: view === activeView,
     isDisabled: !nickname,
-    href: nickname ? getPlayerViewHref(view, nickname) : null,
+    href: nickname ? getPlayerViewHref(view, nickname, locked) : null,
   }));
 }
