@@ -262,6 +262,15 @@ export async function findLatestLeaderboardPlayedAt(input: {
   queue: "all" | "solo" | "party";
 }): Promise<string | null> {
   const supabase = createServerSupabase();
+  const { data: trackedFriendRows } = await supabase
+    .from("tracked_friends")
+    .select("faceit_id")
+    .eq("is_active", true)
+    .order("nickname");
+  const trackedFriendIds = new Set<string>([
+    input.targetPlayerId,
+    ...(trackedFriendRows ?? []).map((row: any) => row.faceit_id),
+  ]);
   const targetRows = await fetchTargetStatsLeaderboardRows({
     supabase,
     targetPlayerId: input.targetPlayerId,
@@ -284,7 +293,12 @@ export async function findLatestLeaderboardPlayedAt(input: {
     ],
   });
   const normalizedRows = dedupeStatsLeaderboardRows(
-    normalizeStatsLeaderboardRows([...targetRowsWithPlayedAt, ...supportRows])
+    normalizeStatsLeaderboardRows([
+      ...targetRowsWithPlayedAt,
+      ...supportRows.filter((row) =>
+        trackedFriendIds.has(row.faceit_player_id)
+      ),
+    ])
   );
   const queueBuckets = classifyLeaderboardQueueBuckets({
     rows: normalizedRows,

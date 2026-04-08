@@ -1211,6 +1211,72 @@ describe("tracked alias selectors", () => {
     ).resolves.toBe("2026-04-05T10:00:00.000Z");
   });
 
+  it("ignores non-tracked match participants when classifying solo leaderboard matches", async () => {
+    supabaseState.setTrackedFriendsRows([
+      {
+        faceit_id: "target",
+        nickname: "Target",
+        elo: 2000,
+        is_active: true,
+      },
+      {
+        faceit_id: "friend-1",
+        nickname: "Friend 1",
+        elo: 1900,
+        is_active: true,
+      },
+    ]);
+    supabaseState.setMatchPlayerStatsRows([
+      {
+        match_id: "target-solo-match",
+        faceit_player_id: "target",
+        nickname: "Target",
+        played_at: "2026-04-06T10:00:00.000Z",
+        kills: 24,
+        kd_ratio: 1.3,
+        adr: 88,
+        hs_percent: 42,
+        kr_ratio: 0.75,
+        win: true,
+        first_kills: 1,
+        clutch_kills: 0,
+        utility_damage: 8,
+        enemies_flashed: 2,
+        entry_count: 1,
+        entry_wins: 1,
+        sniper_kills: 0,
+      },
+      ...Array.from({ length: 9 }, (_, index) => ({
+        match_id: "target-solo-match",
+        faceit_player_id: `other-${index}`,
+        nickname: `Other ${index}`,
+        played_at: "2026-04-06T10:00:00.000Z",
+        kills: 10,
+        kd_ratio: 1,
+        adr: 70,
+        hs_percent: 30,
+        kr_ratio: 0.6,
+        win: index < 4,
+        first_kills: 0,
+        clutch_kills: 0,
+        utility_damage: 3,
+        enemies_flashed: 1,
+        entry_count: 0,
+        entry_wins: 0,
+        sniper_kills: 0,
+      })),
+    ]);
+
+    await expect(
+      findLatestLeaderboardPlayedAt({
+        targetPlayerId: "target",
+        n: 20,
+        days: 30,
+        queue: "solo",
+      })
+    ).resolves.toBe("2026-04-06T10:00:00.000Z");
+  });
+
   it("ignores null played_at rows when selecting the latest recent match", async () => {
     supabaseState.setMatchPlayerStatsRows([
       {
