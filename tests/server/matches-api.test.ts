@@ -41,6 +41,7 @@ const supabaseState = vi.hoisted(() => {
 
   let stalePools: Array<{ faceit_match_id: string }> = [];
   let matchRow: { id: string } | null = { id: "db-match-1" };
+  let trackedFriendsRows: Array<{ faceit_id: string }> = [];
 
   const matchesSelectEq = vi.fn(() => ({
     single: vi.fn(async () => ({ data: matchRow })),
@@ -68,6 +69,16 @@ const supabaseState = vi.hoisted(() => {
     in: matchPlayerStatsSelectIn,
   }));
 
+  const trackedFriendsIn = vi.fn(async (_column: string, values: string[]) => ({
+    data: trackedFriendsRows.filter((row) => values.includes(row.faceit_id)),
+  }));
+  const trackedFriendsEq = vi.fn(() => ({
+    in: trackedFriendsIn,
+  }));
+  const trackedFriendsSelect = vi.fn(() => ({
+    eq: trackedFriendsEq,
+  }));
+
   const from = vi.fn((table: string) => {
     if (table === "matches") {
       return {
@@ -80,6 +91,12 @@ const supabaseState = vi.hoisted(() => {
       return {
         upsert: matchPlayerStatsUpsert,
         select: matchPlayerStatsSelect,
+      };
+    }
+
+    if (table === "tracked_friends") {
+      return {
+        select: trackedFriendsSelect,
       };
     }
 
@@ -162,14 +179,21 @@ const supabaseState = vi.hoisted(() => {
     setMatchPlayerStatsRowsByMatchId(value: Map<string, any[]>) {
       matchPlayerStatsRowsByMatchId = value;
     },
+    setTrackedFriendsRows(value: Array<{ faceit_id: string }>) {
+      trackedFriendsRows = value;
+    },
     reset() {
       stalePools = [];
       matchRow = { id: "db-match-1" };
       matchPlayerStatsRowsByMatchId = new Map();
+      trackedFriendsRows = [];
       matchesUpsert.mockClear();
       matchPlayerStatsUpsert.mockClear();
       matchPlayerStatsSelect.mockClear();
       matchPlayerStatsSelectIn.mockClear();
+      trackedFriendsSelect.mockClear();
+      trackedFriendsEq.mockClear();
+      trackedFriendsIn.mockClear();
       bettingPoolInsert.mockClear();
       bettingPoolUpsert.mockClear();
       bettingPoolIgnore.mockClear();
@@ -349,6 +373,7 @@ describe("fetchPlayerRecentHistory", () => {
 
 describe("getMatchDetails", () => {
   it("returns finished match details and persists the parsed stats", async () => {
+    supabaseState.setTrackedFriendsRows([{ faceit_id: "p1" }]);
     faceitMocks.fetchMatch.mockResolvedValue({
       match_id: "match-1",
       status: "FINISHED",
@@ -412,6 +437,7 @@ describe("getMatchDetails", () => {
       region: "EU",
       competitionName: "Ranked",
       demoUrl: "https://demo.test/demo",
+      friendIds: ["p1"],
       teams: {
         faction1: { name: "Alpha", score: 13, playerIds: ["p1"] },
         faction2: { name: "Bravo", score: 9, playerIds: ["p2"] },

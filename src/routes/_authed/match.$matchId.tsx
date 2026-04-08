@@ -3,6 +3,7 @@ import { createIsomorphicFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { AnalystDashboard } from "~/components/AnalystDashboard";
 import { MatchAnalyticsScoreboard } from "~/components/MatchAnalyticsScoreboard";
+import { TrackedMatchBanter } from "~/components/TrackedMatchBanter";
 import { useMatchDetail } from "~/hooks/useMatchDetail";
 import type { DemoMatchAnalytics } from "~/lib/types";
 
@@ -215,6 +216,12 @@ function MatchDetailPage() {
             teams={data.teams}
           />
         )}
+
+        <TrackedMatchBanter
+          friendIds={data.friendIds ?? []}
+          matchId={data.matchId}
+          players={data.players}
+        />
       </div>
     </div>
   );

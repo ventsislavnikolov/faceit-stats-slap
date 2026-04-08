@@ -819,6 +819,7 @@ async function fetchDemoAnalyticsForMatch(
 export const getMatchDetails = createServerFn({ method: "GET" })
   .inputValidator((matchId: string) => matchId)
   .handler(async ({ data: matchId }) => {
+    const supabase = createServerSupabase();
     const [match, statsData] = await Promise.all([
       fetchMatch(matchId),
       fetchMatchStats(matchId).catch(() => null),
@@ -843,6 +844,27 @@ export const getMatchDetails = createServerFn({ method: "GET" })
 
     const roundStats = statsData?.rounds?.[0]?.round_stats || {};
     const teamStats = statsData?.rounds?.[0]?.teams || [];
+    const rosterPlayerIds = [
+      ...(match.teams?.faction1?.roster?.map((player: any) => player.player_id) ??
+        []),
+      ...(match.teams?.faction2?.roster?.map((player: any) => player.player_id) ??
+        []),
+      ...players.map((player) => player.playerId),
+    ];
+    const { data: trackedRows } =
+      rosterPlayerIds.length === 0
+        ? { data: [] }
+        : await supabase
+            .from("tracked_friends")
+            .select("faceit_id")
+            .eq("is_active", true)
+            .in("faceit_id", [...new Set(rosterPlayerIds)]);
+    const trackedPlayerIdSet = new Set(
+      (trackedRows ?? []).map((row: any) => row.faceit_id)
+    );
+    const friendIds = [...new Set(rosterPlayerIds)].filter((playerId) =>
+      trackedPlayerIdSet.has(playerId)
+    );
     const faction1Name =
       teamStats[0]?.team_stats?.Team || match.teams?.faction1?.name || "Team 1";
     const faction2Name =
@@ -857,6 +879,7 @@ export const getMatchDetails = createServerFn({ method: "GET" })
       status: match.status,
       startedAt: match.started_at || 0,
       finishedAt: match.finished_at || null,
+      friendIds,
       players,
       demoUrl: (match.demo_url as string[] | undefined)?.[0] ?? null,
       teams: {
@@ -875,8 +898,6 @@ export const getMatchDetails = createServerFn({ method: "GET" })
       region: roundStats.Region || match.region || "",
       competitionName: match.competition_name || "",
     };
-
-    const supabase = createServerSupabase();
 
     // Fetch demo analytics (works for any match status, returns null if none)
     const demoAnalytics = await fetchDemoAnalyticsForMatch(supabase, matchId);
