@@ -1,3 +1,15 @@
+# [1.13.0](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.12.0...v1.13.0) (2026-04-08)
+
+
+### Bug Fixes
+
+* populate sessionScore and scoreBreakdown in aggregateStats ([3d8f229](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/3d8f229b95afaeee8008f3cefc262771c204c821))
+
+
+### Features
+
+* rename tracked player alias keyword to "sborka" ([d8fb8e5](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/d8fb8e5d0ae53ccd4cbcfddcd966e64d6697980c))
+
 # [1.12.0](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.11.0...v1.12.0) (2026-04-08)
 
 # [1.11.0](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.10.1...v1.11.0) (2026-04-08)
