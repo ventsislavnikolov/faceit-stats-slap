@@ -29,6 +29,7 @@ const supabaseState = vi.hoisted(() => {
   }));
 
   let matchRow: { id: string } | null = { id: "db-match-1" };
+  let trackedFriendsRows: Array<{ faceit_id: string }> = [];
 
   // Demo analytics query results
   let demoMatchAnalyticsRow: Record<string, unknown> | null = null;
@@ -51,6 +52,20 @@ const supabaseState = vi.hoisted(() => {
     }
     if (table === "match_player_stats") {
       return { upsert: matchPlayerStatsUpsert };
+    }
+    if (table === "tracked_friends") {
+      return {
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            in: vi.fn(async (_column: string, values: string[]) => ({
+              data: trackedFriendsRows.filter((row) =>
+                values.includes(row.faceit_id)
+              ),
+              error: null,
+            })),
+          })),
+        })),
+      };
     }
     if (table === "demo_match_analytics") {
       return {
@@ -135,6 +150,9 @@ const supabaseState = vi.hoisted(() => {
     setMatchRow(v: { id: string } | null) {
       matchRow = v;
     },
+    setTrackedFriendsRows(v: Array<{ faceit_id: string }>) {
+      trackedFriendsRows = v;
+    },
     setDemoMatchAnalytics(v: Record<string, unknown> | null) {
       demoMatchAnalyticsRow = v;
     },
@@ -152,6 +170,7 @@ const supabaseState = vi.hoisted(() => {
     },
     reset() {
       matchRow = { id: "db-match-1" };
+      trackedFriendsRows = [];
       demoMatchAnalyticsRow = null;
       demoTeamAnalyticsRows = [];
       demoPlayerAnalyticsRows = [];

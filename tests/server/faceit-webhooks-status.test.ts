@@ -10,20 +10,42 @@ const supabaseMocks = vi.hoisted(() => {
     player_faceit_id: string;
     current_match_id: string | null;
   }> | null = [];
+  let trackedFriendRows: Array<{ faceit_id: string; nickname: string }> = [
+    {
+      faceit_id: "15844c99-d26e-419e-bd14-30908f502c03",
+      nickname: "soavarice",
+    },
+  ];
 
   return {
     supabase: {
-      from: vi.fn(() => ({
-        upsert,
-        update: vi.fn(() => ({
-          eq: vi.fn(async () => ({ data: null, error: null })),
-        })),
-        select: vi.fn(() => ({
-          in: vi.fn(() => ({
-            not: vi.fn(async () => ({ data: selectData })),
-          })),
-        })),
-      })),
+      from: vi.fn((table: string) => {
+        if (table === "faceit_webhook_live_state") {
+          return {
+            upsert,
+            update: vi.fn(() => ({
+              eq: vi.fn(async () => ({ data: null, error: null })),
+            })),
+            select: vi.fn(() => ({
+              in: vi.fn(() => ({
+                not: vi.fn(async () => ({ data: selectData })),
+              })),
+            })),
+          };
+        }
+
+        if (table === "tracked_friends") {
+          return {
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                order: vi.fn(async () => ({ data: trackedFriendRows })),
+              })),
+            })),
+          };
+        }
+
+        throw new Error(`Unexpected table: ${table}`);
+      }),
     },
     upsert,
     setSelectData(
@@ -33,6 +55,9 @@ const supabaseMocks = vi.hoisted(() => {
       }> | null
     ) {
       selectData = value;
+    },
+    setTrackedFriendRows(value: Array<{ faceit_id: string; nickname: string }>) {
+      trackedFriendRows = value;
     },
   };
 });
@@ -52,15 +77,26 @@ vi.mock("~/lib/supabase.server", () => ({
   createServerSupabase: () => supabaseMocks.supabase,
 }));
 
-import { TRACKED_WEBHOOK_PLAYERS } from "~/lib/faceit-webhooks";
 import {
   getWebhookLiveMatchMap,
   persistFaceitWebhook,
 } from "~/server/faceit-webhooks";
 
+const TRACKED_WEBHOOK_PLAYERS = {
+  soavarice: {
+    faceitId: "15844c99-d26e-419e-bd14-30908f502c03",
+  },
+} as const;
+
 afterEach(() => {
   vi.clearAllMocks();
   supabaseMocks.setSelectData([]);
+  supabaseMocks.setTrackedFriendRows([
+    {
+      faceit_id: "15844c99-d26e-419e-bd14-30908f502c03",
+      nickname: "soavarice",
+    },
+  ]);
 });
 
 describe("persistFaceitWebhook status mapping", () => {

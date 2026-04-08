@@ -1,10 +1,13 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 import { HomeLiveMatchesSection } from "~/components/HomeLiveMatchesSection";
-import { getTrackedWebhookPlayerIds } from "~/lib/faceit-webhooks";
 
 vi.mock("~/hooks/useLiveMatches", () => ({
   useLiveMatches: vi.fn(),
+}));
+
+vi.mock("~/hooks/useTrackedPlayers", () => ({
+  useTrackedPlayers: vi.fn(),
 }));
 
 vi.mock("~/components/LiveMatchCard", () => ({
@@ -17,9 +20,19 @@ vi.mock("~/components/LiveMatchCard", () => ({
 }));
 
 import { useLiveMatches } from "~/hooks/useLiveMatches";
+import { useTrackedPlayers } from "~/hooks/useTrackedPlayers";
+
+const trackedPlayers = [
+  { faceitId: "player-1", nickname: "Player1" },
+  { faceitId: "player-2", nickname: "Player2" },
+];
 
 describe("HomeLiveMatchesSection", () => {
   it("renders loading and empty states", () => {
+    vi.mocked(useTrackedPlayers).mockReturnValue({
+      data: trackedPlayers,
+      isLoading: false,
+    } as any);
     vi.mocked(useLiveMatches).mockReturnValue({
       data: undefined,
       isLoading: true,
@@ -51,11 +64,15 @@ describe("HomeLiveMatchesSection", () => {
     ).toContain("No tracked players are live right now");
 
     expect(vi.mocked(useLiveMatches)).toHaveBeenLastCalledWith(
-      getTrackedWebhookPlayerIds()
+      trackedPlayers.map((player) => player.faceitId)
     );
   });
 
   it("renders live cards before auth resolves", () => {
+    vi.mocked(useTrackedPlayers).mockReturnValue({
+      data: trackedPlayers,
+      isLoading: false,
+    } as any);
     vi.mocked(useLiveMatches).mockReturnValue({
       data: [
         {
@@ -92,6 +109,10 @@ describe("HomeLiveMatchesSection", () => {
   });
 
   it("renders live cards with betting context", () => {
+    vi.mocked(useTrackedPlayers).mockReturnValue({
+      data: trackedPlayers,
+      isLoading: false,
+    } as any);
     vi.mocked(useLiveMatches).mockReturnValue({
       data: [
         {
@@ -125,7 +146,7 @@ describe("HomeLiveMatchesSection", () => {
     expect(html).toContain("user-1");
     expect(html).toContain("1234");
     expect(vi.mocked(useLiveMatches)).toHaveBeenLastCalledWith(
-      getTrackedWebhookPlayerIds()
+      trackedPlayers.map((player) => player.faceitId)
     );
   });
 });

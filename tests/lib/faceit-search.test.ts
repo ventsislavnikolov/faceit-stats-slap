@@ -2,6 +2,20 @@ import { describe, expect, it } from "vitest";
 import { resolveFaceitSearchTarget } from "~/lib/faceit-search";
 
 describe("resolveFaceitSearchTarget", () => {
+  it("treats tracked as a reserved player alias", () => {
+    expect(resolveFaceitSearchTarget("tracked")).toEqual({
+      kind: "player",
+      value: "tracked",
+    });
+  });
+
+  it("canonicalizes tracked alias input before routing", () => {
+    expect(resolveFaceitSearchTarget("  TrAcKeD  ")).toEqual({
+      kind: "player",
+      value: "tracked",
+    });
+  });
+
   it("routes FACEIT match ids to the match dashboard", () => {
     expect(
       resolveFaceitSearchTarget("1-b9715630-add8-430d-a78a-1686e5b0e817")
