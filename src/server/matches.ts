@@ -51,6 +51,14 @@ function getHistoryTimestamp(item: any): number | null {
   return Number.isFinite(ts) ? ts : null;
 }
 
+function toIsoFromUnix(timestamp: number | null | undefined): string | null {
+  if (timestamp == null || !Number.isFinite(timestamp)) {
+    return null;
+  }
+
+  return new Date(timestamp * 1000).toISOString();
+}
+
 export async function fetchPlayerHistoryWindow(
   faceitId: string,
   days: 30 | 90 | 180 | 365 | 730,
@@ -143,6 +151,57 @@ async function fetchPlayerHistoryRange(params: {
   }
 
   return history;
+}
+
+export async function findLatestHistoryPlayedAt(input: {
+  playerId: string;
+  n: 20 | 50 | 100;
+  queue: "all" | "solo" | "party";
+}): Promise<string | null> {
+  const targetFriendIds = await fetchPlayer(input.playerId)
+    .then((player) => player.friendsIds)
+    .catch(() => null);
+  const pageSize = Math.max(input.n, 20);
+
+  for (let offset = 0; ; offset += pageSize) {
+    const history = await fetchPlayerHistory(input.playerId, pageSize, offset);
+    if (history.length === 0) {
+      break;
+    }
+
+    for (const item of history) {
+      const stats = await fetchMatchStats(item.match_id).catch(() => null);
+      const round = stats?.rounds?.[0];
+      if (!round) {
+        continue;
+      }
+
+      const queueInfo = classifyKnownFriendQueue({
+        targetPlayerId: input.playerId,
+        targetFriendIds,
+        teams: round.teams || [],
+      });
+
+      if (input.queue !== "all" && queueInfo.queueBucket !== input.queue) {
+        continue;
+      }
+
+      const targetFound = (round.teams || []).some((team: any) =>
+        (team.players || []).some((player: any) => player.player_id === input.playerId)
+      );
+      if (!targetFound) {
+        continue;
+      }
+
+      return toIsoFromUnix(item.finished_at ?? item.started_at);
+    }
+
+    if (history.length < pageSize) {
+      break;
+    }
+  }
+
+  return null;
 }
 
 async function syncHistoryItems(history: any[]): Promise<void> {
@@ -1131,6 +1190,37 @@ async function fetchEligibleStatsLeaderboardFriendIds(params: {
   return [...eligibleFriendIds];
 }
 
+async function fetchStatsLeaderboardRowsForMatches(params: {
+  supabase: ReturnType<typeof createServerSupabase>;
+  matchIds: string[];
+}): Promise<any[]> {
+  const { supabase, matchIds } = params;
+  if (matchIds.length === 0) {
+    return [];
+  }
+
+  const rows: any[] = [];
+
+  for (
+    let index = 0;
+    index < matchIds.length;
+    index += STATS_LEADERBOARD_MATCH_CHUNK_SIZE
+  ) {
+    const matchIdChunk = matchIds.slice(
+      index,
+      index + STATS_LEADERBOARD_MATCH_CHUNK_SIZE
+    );
+    const { data: sharedRows } = await supabase
+      .from("match_player_stats")
+      .select(STATS_LEADERBOARD_ROW_SELECT)
+      .in("match_id", matchIdChunk);
+
+    rows.push(...(sharedRows ?? []));
+  }
+
+  return rows;
+}
+
 async function fetchRecentStatsLeaderboardRows(params: {
   supabase: ReturnType<typeof createServerSupabase>;
   playerIds: string[];
@@ -1185,6 +1275,58 @@ async function fetchRecentStatsLeaderboardRows(params: {
   }
 
   return rows;
+}
+
+export async function findLatestLeaderboardPlayedAt(input: {
+  targetPlayerId: string;
+  n: 20 | 50 | 100;
+  days: 30 | 90 | 180 | 365 | 730;
+  queue: "all" | "solo" | "party";
+}): Promise<string | null> {
+  const supabase = createServerSupabase();
+  const targetRows = await fetchTargetStatsLeaderboardRows({
+    supabase,
+    targetPlayerId: input.targetPlayerId,
+    days: input.days,
+  });
+  const targetRowsWithPlayedAt = targetRows.filter(
+    (row) => typeof row.played_at === "string" && row.played_at.length > 0
+  );
+  if (targetRowsWithPlayedAt.length === 0) {
+    return null;
+  }
+  if (input.queue === "all") {
+    return targetRowsWithPlayedAt[0]?.played_at ?? null;
+  }
+
+  const supportRows = await fetchStatsLeaderboardRowsForMatches({
+    supabase,
+    matchIds: [
+      ...new Set(targetRowsWithPlayedAt.map((row: any) => row.match_id)),
+    ],
+  });
+
+  const normalizedRows = dedupeStatsLeaderboardRows(
+    normalizeStatsLeaderboardRows({
+      rows: [...targetRowsWithPlayedAt, ...supportRows],
+      friendMap: new Map(),
+    })
+  );
+  const queueBuckets = classifyLeaderboardQueueBuckets({
+    rows: normalizedRows,
+  });
+  const latestPlayedAt = normalizedRows
+    .filter((row) => row.faceitId === input.targetPlayerId)
+    .filter(
+      (row) =>
+        queueBuckets.get(buildLeaderboardQueueKey(row.matchId, row.faceitId)) ===
+        input.queue
+    )
+    .map((row) => row.playedAt)
+    .filter((playedAt): playedAt is string => Boolean(playedAt))
+    .sort((a, b) => b.localeCompare(a))[0];
+
+  return latestPlayedAt ?? null;
 }
 
 export const getStatsLeaderboard = createServerFn({ method: "GET" })
@@ -1649,3 +1791,104 @@ export const getPartySessionStats = createServerFn({ method: "GET" })
       lossCount,
     };
   });
+
+export async function findLatestPartySessionPlayedAt(input: {
+  playerId: string;
+  date: string;
+}): Promise<string | null> {
+  const { getCalendarDayRange } = await import("~/lib/time");
+  const targetFriendIds = await fetchPlayer(input.playerId)
+    .then((player) => player.friendsIds)
+    .catch(() => null);
+  const { startUnix, endUnix } = getCalendarDayRange(input.date);
+  const history = await fetchPlayerHistoryRange({
+    faceitId: input.playerId,
+    startUnix,
+    endUnix,
+  });
+
+  for (const item of history) {
+    const stats = await fetchMatchStats(item.match_id).catch(() => null);
+    const round = stats?.rounds?.[0];
+    if (!round) {
+      continue;
+    }
+
+    const queueInfo = classifyKnownFriendQueue({
+      targetPlayerId: input.playerId,
+      targetFriendIds,
+      teams: round.teams || [],
+    });
+
+    if (queueInfo.queueBucket === "party") {
+      return toIsoFromUnix(item.started_at ?? item.finished_at);
+    }
+  }
+
+  return null;
+}
+
+export async function findLatestRecentMatchPlayedAt(
+  playerId: string
+): Promise<string | null> {
+  const recentMatches = await findLatestRecentMatchesPlayedAt([playerId]);
+  return recentMatches.get(playerId) ?? null;
+}
+
+export async function findLatestRecentMatchesPlayedAt(
+  playerIds: string[]
+): Promise<Map<string, string>> {
+  const uniquePlayerIds = [...new Set(playerIds)];
+  if (uniquePlayerIds.length === 0) {
+    return new Map();
+  }
+
+  const supabase = createServerSupabase();
+  const latestByPlayer = new Map<string, string>();
+
+  for (
+    let from = 0;
+    latestByPlayer.size < uniquePlayerIds.length;
+    from += STATS_LEADERBOARD_PAGE_SIZE
+  ) {
+    const to = from + STATS_LEADERBOARD_PAGE_SIZE - 1;
+    const { data } = await supabase
+      .from("match_player_stats")
+      .select("faceit_player_id, played_at")
+      .in("faceit_player_id", uniquePlayerIds)
+      .not("played_at", "is", null)
+      .order("played_at", { ascending: false })
+      .range(from, to);
+
+    if (!data?.length) {
+      break;
+    }
+
+    for (const row of data) {
+      if (
+        typeof row.played_at === "string" &&
+        row.played_at.length > 0 &&
+        !latestByPlayer.has(row.faceit_player_id)
+      ) {
+        latestByPlayer.set(row.faceit_player_id, row.played_at);
+      }
+    }
+
+    if (data.length < STATS_LEADERBOARD_PAGE_SIZE) {
+      break;
+    }
+  }
+
+  return latestByPlayer;
+}
+
+export async function findCurrentlyLiveTrackedPlayers(
+  playerIds: string[]
+): Promise<string[]> {
+  if (playerIds.length === 0) {
+    return [];
+  }
+
+  const liveMatchMap = await getWebhookLiveMatchMap(playerIds);
+  return [...new Set([...liveMatchMap.values()].flat())];
+}
