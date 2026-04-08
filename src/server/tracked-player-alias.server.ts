@@ -4,7 +4,7 @@ import {
   findLatestLeaderboardPlayedAt,
   findLatestPartySessionPlayedAt,
   findLatestRecentMatchesPlayedAt,
-} from "~/server/matches";
+} from "~/server/tracked-player-selectors.server";
 import { loadTrackedPlayersSnapshot } from "~/server/tracked-players.server";
 
 type ResolvedTrackedPlayer = {

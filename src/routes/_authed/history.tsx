@@ -1,10 +1,11 @@
-import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { HistoryMatchesTable } from "~/components/HistoryMatchesTable";
 import { PlayerSearchHeader } from "~/components/PlayerSearchHeader";
 import { usePlayerStats } from "~/hooks/usePlayerStats";
+import { useTrackedPlayerTarget } from "~/hooks/useTrackedPlayerTarget";
 import { resolveFaceitSearchTarget } from "~/lib/faceit-search";
+import { buildTrackedPlayerSearch } from "~/lib/tracked-route";
 import {
   getHistoryMatchCountOptions,
   getHistoryQueueOptions,
@@ -12,7 +13,6 @@ import {
   normalizeHistoryMatchCount,
   normalizeHistoryQueueFilter,
 } from "~/lib/history-page";
-import { resolvePlayer } from "~/server/friends";
 
 export const Route = createFileRoute("/_authed/history")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -20,16 +20,22 @@ export const Route = createFileRoute("/_authed/history")({
       typeof search.player === "string" && search.player.length > 0
         ? search.player
         : undefined,
+    resolvedPlayerId:
+      typeof search.resolvedPlayerId === "string" &&
+      search.resolvedPlayerId.length > 0
+        ? search.resolvedPlayerId
+        : undefined,
     matches: normalizeHistoryMatchCount(search.matches),
     queue: normalizeHistoryQueueFilter(search.queue),
   }),
   component: HistoryPage,
 });
 
-function HistoryPage() {
+export function HistoryPage() {
   const navigate = useNavigate();
   const {
     player: urlPlayer,
+    resolvedPlayerId,
     matches: selectedMatchCount,
     queue: selectedQueue,
   } = Route.useSearch();
@@ -39,17 +45,51 @@ function HistoryPage() {
     data: player,
     isLoading: resolving,
     isError: resolveError,
-  } = useQuery({
-    queryKey: ["resolve-player", urlPlayer],
-    queryFn: () => resolvePlayer({ data: urlPlayer! }),
-    enabled: !!urlPlayer,
-    staleTime: 5 * 60 * 1000,
-    retry: false,
+    isTrackedFlow,
+  } = useTrackedPlayerTarget({
+    page: "history",
+    player: urlPlayer,
+    resolvedPlayerId,
+    matches: selectedMatchCount,
+    queue: selectedQueue,
   });
 
   useEffect(() => {
     setInput(urlPlayer ?? "");
   }, [urlPlayer]);
+
+  useEffect(() => {
+    if (
+      !isTrackedFlow ||
+      !player?.faceitId ||
+      !urlPlayer ||
+      resolvedPlayerId === player.faceitId
+    ) {
+      return;
+    }
+
+    navigate({
+      to: "/history",
+      replace: true,
+      search: {
+        ...buildTrackedPlayerSearch({
+          currentPlayer: urlPlayer,
+          currentResolvedPlayerId: resolvedPlayerId,
+          nextResolvedPlayerId: player.faceitId,
+        }),
+        matches: selectedMatchCount,
+        queue: selectedQueue,
+      },
+    });
+  }, [
+    isTrackedFlow,
+    navigate,
+    player?.faceitId,
+    resolvedPlayerId,
+    selectedMatchCount,
+    selectedQueue,
+    urlPlayer,
+  ]);
 
   const { data: stats = [], isLoading } = usePlayerStats(
     player?.faceitId ?? null,
@@ -62,10 +102,15 @@ function HistoryPage() {
     matches?: HistoryMatchCount;
     queue?: "all" | "solo" | "party";
   }) => {
+    const nextPlayer = next.player ?? urlPlayer;
     navigate({
       to: "/history",
       search: {
-        player: next.player ?? urlPlayer,
+        ...buildTrackedPlayerSearch({
+          currentPlayer: urlPlayer,
+          currentResolvedPlayerId: resolvedPlayerId,
+          nextPlayer,
+        }),
         matches: next.matches ?? selectedMatchCount,
         queue: next.queue ?? selectedQueue,
       },
@@ -102,6 +147,8 @@ function HistoryPage() {
     queueBucket: m.queueBucket,
     hasDemoAnalytics: m.hasDemoAnalytics,
   }));
+  const hasTrackedPlayerMiss =
+    isTrackedFlow && !resolving && !resolveError && !player;
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
@@ -190,6 +237,10 @@ function HistoryPage() {
             </div>
           ) : player ? (
             <HistoryMatchesTable matches={matches} />
+          ) : hasTrackedPlayerMiss ? (
+            <div className="py-12 text-center text-text-dim">
+              No tracked player has matching history for these filters.
+            </div>
           ) : (
             <div className="py-12 text-center text-text-dim">
               Enter a nickname or UUID to view match history

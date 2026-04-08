@@ -2,13 +2,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   fetchPlayerHistoryWindow,
   fetchPlayerRecentHistory,
-  findLatestLeaderboardPlayedAt,
-  findLatestRecentMatchPlayedAt,
   getLiveMatches,
   getMatchDetails,
   getPlayerStats,
   syncAllPlayerHistory,
 } from "~/server/matches";
+import {
+  findLatestLeaderboardPlayedAt,
+  findLatestRecentMatchPlayedAt,
+} from "~/server/tracked-player-selectors.server";
 import { runWithStartContext } from "../start-context";
 
 const faceitMocks = vi.hoisted(() => ({

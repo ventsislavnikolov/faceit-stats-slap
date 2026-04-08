@@ -3,6 +3,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { PageSectionTabs } from "~/components/PageSectionTabs";
 import { PlayerSearchHeader } from "~/components/PlayerSearchHeader";
+import { useTrackedPlayerTarget } from "~/hooks/useTrackedPlayerTarget";
 import { useStatsLeaderboard } from "~/hooks/useStatsLeaderboard";
 import { useSyncPlayerHistory } from "~/hooks/useSyncPlayerHistory";
 import { resolveFaceitSearchTarget } from "~/lib/faceit-search";
@@ -15,6 +16,7 @@ import {
   normalizeHistoryQueueFilter,
   normalizeLeaderboardDays,
 } from "~/lib/history-page";
+import { buildTrackedPlayerSearch } from "~/lib/tracked-route";
 import {
   getStatsLeaderboardEmptyStateCopy,
   getStatsLeaderboardSummaryCopy,
@@ -30,6 +32,11 @@ import { searchAndLoadFriends } from "~/server/friends";
 export const Route = createFileRoute("/_authed/leaderboard")({
   validateSearch: (search: Record<string, unknown>) => ({
     player: (search.player as string) || undefined,
+    resolvedPlayerId:
+      typeof search.resolvedPlayerId === "string" &&
+      search.resolvedPlayerId.length > 0
+        ? search.resolvedPlayerId
+        : undefined,
     matches: normalizeHistoryMatchCount(search.matches),
     queue: normalizeHistoryQueueFilter(search.queue),
     last: normalizeLeaderboardDays(search.last),
@@ -524,10 +531,11 @@ function StatsTab({
   );
 }
 
-function LeaderboardPage() {
+export function LeaderboardPage() {
   const navigate = useNavigate();
   const {
     player: urlPlayer,
+    resolvedPlayerId,
     matches: selectedMatchCount,
     queue: selectedQueue,
     last: selectedDays,
@@ -535,13 +543,30 @@ function LeaderboardPage() {
   const [input, setInput] = useState(urlPlayer ?? "");
 
   const {
-    data: searchResult,
+    data: targetPlayer,
     isLoading: searchLoading,
     isError: searchError,
+    isTrackedFlow,
+  } = useTrackedPlayerTarget({
+    page: "leaderboard",
+    player: urlPlayer,
+    resolvedPlayerId,
+    matches: selectedMatchCount,
+    queue: selectedQueue,
+    last: selectedDays,
+  });
+
+  const targetPlayerId = targetPlayer?.faceitId ?? "";
+  const targetNickname = targetPlayer?.nickname ?? "";
+
+  const {
+    data: searchResult,
+    isLoading: searchResultLoading,
+    isError: searchResultError,
   } = useQuery({
-    queryKey: ["friends-search", urlPlayer?.toLowerCase()],
-    queryFn: () => searchAndLoadFriends({ data: urlPlayer! }),
-    enabled: !!urlPlayer,
+    queryKey: ["friends-search", targetPlayerId],
+    queryFn: () => searchAndLoadFriends({ data: targetPlayerId! }),
+    enabled: !!targetPlayerId,
     staleTime: 5 * 60 * 1000,
     retry: false,
   });
@@ -550,12 +575,57 @@ function LeaderboardPage() {
     setInput(urlPlayer ?? "");
   }, [urlPlayer]);
 
+  useEffect(() => {
+    if (
+      !isTrackedFlow ||
+      !targetPlayer?.faceitId ||
+      !urlPlayer ||
+      resolvedPlayerId === targetPlayer.faceitId
+    ) {
+      return;
+    }
+
+    navigate({
+      to: "/leaderboard",
+      replace: true,
+      search: {
+        ...buildTrackedPlayerSearch({
+          currentPlayer: urlPlayer,
+          currentResolvedPlayerId: resolvedPlayerId,
+          nextResolvedPlayerId: targetPlayer.faceitId,
+        }),
+        matches: selectedMatchCount,
+        queue: selectedQueue,
+        last: selectedDays,
+      },
+    });
+  }, [
+    isTrackedFlow,
+    navigate,
+    resolvedPlayerId,
+    selectedDays,
+    selectedMatchCount,
+    selectedQueue,
+    targetPlayer?.faceitId,
+    urlPlayer,
+  ]);
+
   const friendIds = searchResult?.friends.map((f) => f.faceitId) ?? [];
-  const targetPlayerId = searchResult?.player.faceitId ?? "";
-  const targetNickname = searchResult?.player.nickname ?? "";
   const hasSearchTarget = Boolean(urlPlayer);
+  const hasTrackedPlayerMiss =
+    isTrackedFlow &&
+    hasSearchTarget &&
+    !searchLoading &&
+    !searchResultLoading &&
+    !searchError &&
+    !searchResultError &&
+    !targetPlayerId;
   const isResolvingTarget =
-    hasSearchTarget && searchLoading && !searchError && !targetPlayerId;
+    hasSearchTarget &&
+    (searchLoading || searchResultLoading) &&
+    !searchError &&
+    !searchResultError &&
+    !targetPlayerId;
 
   const updateSearch = (next: {
     player?: string;
@@ -563,10 +633,15 @@ function LeaderboardPage() {
     queue?: "all" | "solo" | "party";
     last?: LeaderboardDays;
   }) => {
+    const nextPlayer = next.player ?? urlPlayer;
     navigate({
       to: "/leaderboard",
       search: {
-        player: next.player ?? urlPlayer,
+        ...buildTrackedPlayerSearch({
+          currentPlayer: urlPlayer,
+          currentResolvedPlayerId: resolvedPlayerId,
+          nextPlayer,
+        }),
         matches: next.matches ?? selectedMatchCount,
         queue: next.queue ?? selectedQueue,
         last: next.last ?? selectedDays,
@@ -592,8 +667,8 @@ function LeaderboardPage() {
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
       <PlayerSearchHeader
-        error={searchError ? "Player not found." : null}
-        isSearching={searchLoading}
+        error={searchError || searchResultError ? "Player not found." : null}
+        isSearching={searchLoading || searchResultLoading}
         onSubmit={handleSearch}
         onValueChange={setInput}
         placeholder="FACEIT nickname, profile link, player UUID, or match ID..."
@@ -605,17 +680,23 @@ function LeaderboardPage() {
         style={{ scrollbarGutter: "stable" }}
       >
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6">
-          <StatsTab
-            days={selectedDays}
-            hasSearchTarget={hasSearchTarget}
-            isResolvingTarget={isResolvingTarget}
-            n={selectedMatchCount}
-            onUpdateSearch={updateSearch}
-            playerIds={friendIds}
-            queue={selectedQueue}
-            targetNickname={targetNickname}
-            targetPlayerId={targetPlayerId}
-          />
+          {hasTrackedPlayerMiss ? (
+            <div className="py-12 text-center text-text-dim">
+              No tracked player has leaderboard data for these filters.
+            </div>
+          ) : (
+            <StatsTab
+              days={selectedDays}
+              hasSearchTarget={hasSearchTarget}
+              isResolvingTarget={isResolvingTarget}
+              n={selectedMatchCount}
+              onUpdateSearch={updateSearch}
+              playerIds={friendIds}
+              queue={selectedQueue}
+              targetNickname={targetNickname}
+              targetPlayerId={targetPlayerId}
+            />
+          )}
         </div>
       </div>
     </div>

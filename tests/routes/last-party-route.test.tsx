@@ -4,10 +4,16 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   search: {
     player: undefined as string | undefined,
+    resolvedPlayerId: undefined as string | undefined,
     date: undefined as string | undefined,
   },
   navigate: vi.fn(),
-  query: { data: null as any, isLoading: false, isError: false },
+  trackedTarget: {
+    data: null as any,
+    isLoading: false,
+    isError: false,
+    isTrackedFlow: false,
+  },
   session: { data: null as any, isLoading: false },
 }));
 
@@ -28,16 +34,12 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
   };
 });
 
-vi.mock("@tanstack/react-query", () => ({
-  useQuery: () => mocks.query,
-}));
-
 vi.mock("~/hooks/usePartySession", () => ({
   usePartySession: () => mocks.session,
 }));
 
-vi.mock("~/server/friends", () => ({
-  resolvePlayer: vi.fn(),
+vi.mock("~/hooks/useTrackedPlayerTarget", () => ({
+  useTrackedPlayerTarget: () => mocks.trackedTarget,
 }));
 
 vi.mock("~/components/PlayerSearchHeader", () => ({
@@ -108,11 +110,16 @@ function renderRoute() {
 describe("/last-party route", () => {
   beforeEach(() => {
     mocks.navigate.mockReset();
-    mocks.search = { player: "soavarice", date: "2026-04-03" };
-    mocks.query = {
+    mocks.search = {
+      player: "soavarice",
+      resolvedPlayerId: undefined,
+      date: "2026-04-03",
+    };
+    mocks.trackedTarget = {
       data: { faceitId: "player-1", nickname: "soavarice" },
       isLoading: false,
       isError: false,
+      isTrackedFlow: false,
     };
     mocks.session = {
       data: buildSession(),
@@ -152,10 +159,11 @@ describe("/last-party route", () => {
   });
 
   it("includes rivalry placeholders in the loading skeleton", () => {
-    mocks.query = {
+    mocks.trackedTarget = {
       data: null,
       isLoading: true,
       isError: false,
+      isTrackedFlow: false,
     };
     mocks.session = {
       data: null,
@@ -181,5 +189,27 @@ describe("/last-party route", () => {
     );
     expect(html).not.toContain("Session podium");
     expect(html).not.toContain("Rivalry cards");
+  });
+
+  it("renders the tracked-specific empty state when no tracked player qualifies", () => {
+    mocks.search = {
+      player: "tracked",
+      resolvedPlayerId: undefined,
+      date: "2026-04-03",
+    };
+    mocks.trackedTarget = {
+      data: null,
+      isLoading: false,
+      isError: false,
+      isTrackedFlow: true,
+    };
+    mocks.session = {
+      data: null,
+      isLoading: false,
+    };
+
+    const html = renderRoute();
+
+    expect(html).toContain("No tracked player had a party session on this date.");
   });
 });

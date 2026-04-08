@@ -14,7 +14,7 @@ vi.mock("~/server/tracked-players.server", () => ({
   loadTrackedPlayersSnapshot: trackedAliasMocks.loadTrackedPlayersSnapshot,
 }));
 
-vi.mock("~/server/matches", () => ({
+vi.mock("~/server/tracked-player-selectors.server", () => ({
   findLatestHistoryPlayedAt: trackedAliasMocks.findLatestHistoryPlayedAt,
   findLatestLeaderboardPlayedAt:
     trackedAliasMocks.findLatestLeaderboardPlayedAt,
