@@ -1654,6 +1654,15 @@ export const getPartySessionStats = createServerFn({ method: "GET" })
       matches: partyMatches,
     });
 
+    for (const [faceitId, breakdown] of Object.entries(
+      rivalries.playerBreakdowns
+    )) {
+      if (aggregateStats[faceitId]) {
+        aggregateStats[faceitId].sessionScore = breakdown.sessionScore;
+        aggregateStats[faceitId].scoreBreakdown = breakdown;
+      }
+    }
+
     // 8. Compute totals
     const winCount = partyMatches.filter((m) => m.result).length;
     const lossCount = partyMatches.length - winCount;
