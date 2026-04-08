@@ -3,9 +3,9 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { PageSectionTabs } from "~/components/PageSectionTabs";
 import { PlayerSearchHeader } from "~/components/PlayerSearchHeader";
-import { useTrackedPlayerTarget } from "~/hooks/useTrackedPlayerTarget";
 import { useStatsLeaderboard } from "~/hooks/useStatsLeaderboard";
 import { useSyncPlayerHistory } from "~/hooks/useSyncPlayerHistory";
+import { useTrackedPlayerTarget } from "~/hooks/useTrackedPlayerTarget";
 import { resolveFaceitSearchTarget } from "~/lib/faceit-search";
 import {
   getHistoryMatchCountOptions,
@@ -16,7 +16,6 @@ import {
   normalizeHistoryQueueFilter,
   normalizeLeaderboardDays,
 } from "~/lib/history-page";
-import { buildTrackedPlayerSearch } from "~/lib/tracked-route";
 import {
   getStatsLeaderboardEmptyStateCopy,
   getStatsLeaderboardSummaryCopy,
@@ -26,6 +25,7 @@ import {
   buildStatsLeaderboardSyncPlayerIds,
   shouldAutoSyncStatsLeaderboard,
 } from "~/lib/stats-leaderboard-sync";
+import { buildTrackedPlayerSearch } from "~/lib/tracked-route";
 import type { StatsLeaderboardEntry } from "~/lib/types";
 import { searchAndLoadFriends } from "~/server/friends";
 
@@ -577,9 +577,7 @@ export function LeaderboardPage() {
 
   useEffect(() => {
     if (
-      !isTrackedFlow ||
-      !targetPlayer?.faceitId ||
-      !urlPlayer ||
+      !(isTrackedFlow && targetPlayer?.faceitId && urlPlayer) ||
       resolvedPlayerId === targetPlayer.faceitId
     ) {
       return;

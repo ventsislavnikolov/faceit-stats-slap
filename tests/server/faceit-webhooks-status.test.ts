@@ -56,7 +56,9 @@ const supabaseMocks = vi.hoisted(() => {
     ) {
       selectData = value;
     },
-    setTrackedFriendRows(value: Array<{ faceit_id: string; nickname: string }>) {
+    setTrackedFriendRows(
+      value: Array<{ faceit_id: string; nickname: string }>
+    ) {
       trackedFriendRows = value;
     },
   };

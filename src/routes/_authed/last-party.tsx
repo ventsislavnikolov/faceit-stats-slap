@@ -12,8 +12,8 @@ import { PlayerSearchHeader } from "~/components/PlayerSearchHeader";
 import { usePartySession } from "~/hooks/usePartySession";
 import { useTrackedPlayerTarget } from "~/hooks/useTrackedPlayerTarget";
 import { resolveFaceitSearchTarget } from "~/lib/faceit-search";
-import { buildTrackedPlayerSearch } from "~/lib/tracked-route";
 import { getYesterdayDateString } from "~/lib/time";
+import { buildTrackedPlayerSearch } from "~/lib/tracked-route";
 
 export const Route = createFileRoute("/_authed/last-party")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -36,8 +36,11 @@ export const Route = createFileRoute("/_authed/last-party")({
 
 export function LastPartyPage() {
   const navigate = useNavigate();
-  const { player: urlPlayer, resolvedPlayerId, date: urlDate } =
-    Route.useSearch();
+  const {
+    player: urlPlayer,
+    resolvedPlayerId,
+    date: urlDate,
+  } = Route.useSearch();
   const [input, setInput] = useState(urlPlayer ?? "");
   const [dateInput, setDateInput] = useState(
     urlDate ?? getYesterdayDateString()
@@ -74,9 +77,7 @@ export function LastPartyPage() {
 
   useEffect(() => {
     if (
-      !isTrackedFlow ||
-      !player?.faceitId ||
-      !urlPlayer ||
+      !(isTrackedFlow && player?.faceitId && urlPlayer) ||
       resolvedPlayerId === player.faceitId
     ) {
       return;

@@ -33,9 +33,7 @@ export function getPlayerViewHref(
       if (isTrackedFlow) {
         return {
           to: "/tracked",
-          ...(resolvedPlayerId
-            ? { search: { resolvedPlayerId } }
-            : {}),
+          ...(resolvedPlayerId ? { search: { resolvedPlayerId } } : {}),
         };
       }
 

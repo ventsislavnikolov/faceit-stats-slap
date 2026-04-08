@@ -210,6 +210,8 @@ describe("/last-party route", () => {
 
     const html = renderRoute();
 
-    expect(html).toContain("No tracked player had a party session on this date.");
+    expect(html).toContain(
+      "No tracked player had a party session on this date."
+    );
   });
 });

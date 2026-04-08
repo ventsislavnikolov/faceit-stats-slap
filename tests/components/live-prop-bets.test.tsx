@@ -139,7 +139,13 @@ describe("live prop bets", () => {
       },
     } as any);
     vi.mocked(usePropPools).mockReturnValue({
-      data: [{ ...openProp, status: "closed", closesAt: new Date(Date.now() - 60_000).toISOString() }],
+      data: [
+        {
+          ...openProp,
+          status: "closed",
+          closesAt: new Date(Date.now() - 60_000).toISOString(),
+        },
+      ],
     } as any);
     vi.mocked(useUserPropBetsForMatch).mockReturnValue({
       data: [],
@@ -184,7 +190,13 @@ describe("live prop bets", () => {
       },
     } as any);
     vi.mocked(usePropPools).mockReturnValue({
-      data: [{ ...openProp, status: "closed", closesAt: new Date(Date.now() - 60_000).toISOString() }],
+      data: [
+        {
+          ...openProp,
+          status: "closed",
+          closesAt: new Date(Date.now() - 60_000).toISOString(),
+        },
+      ],
     } as any);
     vi.mocked(useUserPropBetsForMatch).mockReturnValue({
       data: [

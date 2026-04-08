@@ -3,7 +3,8 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("~/lib/banter", () => ({
   getBanterLine: vi.fn(
-    (type: string, name: string, matchId: string) => `${type}:${name}:${matchId}`
+    (type: string, name: string, matchId: string) =>
+      `${type}:${name}:${matchId}`
   ),
 }));
 

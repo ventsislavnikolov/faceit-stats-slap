@@ -1,7 +1,10 @@
 import { createServerSupabase } from "~/lib/supabase.server";
 import type { TrackedPlayer } from "~/lib/types";
 
-export type TrackedPlayerSnapshot = Pick<TrackedPlayer, "faceitId" | "nickname">;
+export type TrackedPlayerSnapshot = Pick<
+  TrackedPlayer,
+  "faceitId" | "nickname"
+>;
 
 type TrackedFriendRow = {
   faceit_id: string;

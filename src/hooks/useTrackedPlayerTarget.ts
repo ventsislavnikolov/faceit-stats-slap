@@ -50,17 +50,12 @@ function buildTrackedTargetQuery(params: UseTrackedPlayerTargetInput) {
       };
     case "history":
       return {
-        queryKey: [
-          "history",
-          params.player,
-          params.matches,
-          params.queue,
-        ],
+        queryKey: ["history", params.player, params.matches, params.queue],
         queryFn: () =>
           getTrackedPlayerForHistory({
             data: {
-            matches: params.matches,
-            queue: params.queue,
+              matches: params.matches,
+              queue: params.queue,
             },
           }),
       };
@@ -76,9 +71,9 @@ function buildTrackedTargetQuery(params: UseTrackedPlayerTargetInput) {
         queryFn: () =>
           getTrackedPlayerForLeaderboard({
             data: {
-            matches: params.matches,
-            queue: params.queue,
-            last: params.last,
+              matches: params.matches,
+              queue: params.queue,
+              last: params.last,
             },
           }),
       };
@@ -109,7 +104,7 @@ export function useTrackedPlayerTarget(params: UseTrackedPlayerTargetInput) {
   const directTargetLookup =
     isTrackedFlow && !params.resolvedPlayerId
       ? trackedResolution.data?.faceitId
-      : params.resolvedPlayerId ?? params.player ?? null;
+      : (params.resolvedPlayerId ?? params.player ?? null);
   const directResolution = useQuery({
     queryKey: ["resolve-player", directTargetLookup],
     queryFn: () => resolvePlayer({ data: directTargetLookup! }),
@@ -120,11 +115,11 @@ export function useTrackedPlayerTarget(params: UseTrackedPlayerTargetInput) {
 
   const directData = directResolution.data ?? null;
   const trackedData = trackedResolution.data ?? null;
-  const data: ResolvedTrackedPlayer | null =
-    directData ?? trackedData ?? null;
+  const data: ResolvedTrackedPlayer | null = directData ?? trackedData ?? null;
   const isLoading =
     isTrackedFlow && !params.resolvedPlayerId
-      ? trackedResolution.isLoading || (Boolean(trackedData) && directResolution.isLoading)
+      ? trackedResolution.isLoading ||
+        (Boolean(trackedData) && directResolution.isLoading)
       : directResolution.isLoading;
   const isError =
     isTrackedFlow && !params.resolvedPlayerId

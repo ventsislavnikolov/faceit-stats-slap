@@ -1,8 +1,4 @@
-import {
-  fetchMatchStats,
-  fetchPlayer,
-  fetchPlayerHistory,
-} from "~/lib/faceit";
+import { fetchMatchStats, fetchPlayer, fetchPlayerHistory } from "~/lib/faceit";
 import { classifyKnownFriendQueue } from "~/lib/match-queue";
 import type { SharedStatsLeaderboardRow } from "~/lib/stats-leaderboard";
 import { createServerSupabase } from "~/lib/supabase.server";
@@ -98,7 +94,9 @@ function classifyLeaderboardQueueBuckets(params: {
   return buckets;
 }
 
-function normalizeStatsLeaderboardRows(rows: any[]): SharedStatsLeaderboardRow[] {
+function normalizeStatsLeaderboardRows(
+  rows: any[]
+): SharedStatsLeaderboardRow[] {
   return rows.map((row: any) => ({
     matchId: row.match_id,
     playedAt: row.played_at,
@@ -308,8 +306,9 @@ export async function findLatestLeaderboardPlayedAt(input: {
     .filter((row) => row.faceitId === input.targetPlayerId)
     .filter(
       (row) =>
-        queueBuckets.get(buildLeaderboardQueueKey(row.matchId, row.faceitId)) ===
-        input.queue
+        queueBuckets.get(
+          buildLeaderboardQueueKey(row.matchId, row.faceitId)
+        ) === input.queue
     )
     .map((row) => row.playedAt)
     .filter((playedAt): playedAt is string => Boolean(playedAt))

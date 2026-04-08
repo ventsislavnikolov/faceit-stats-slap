@@ -11,13 +11,13 @@ import { useActiveSeason } from "~/hooks/useActiveSeason";
 import { useCoinBalance } from "~/hooks/useCoinBalance";
 import { useLiveMatches } from "~/hooks/useLiveMatches";
 import { usePlayerStats } from "~/hooks/usePlayerStats";
+import { useTrackedPlayerTarget } from "~/hooks/useTrackedPlayerTarget";
 import { useTwitchLive } from "~/hooks/useTwitchLive";
 import { resolveFaceitSearchTarget } from "~/lib/faceit-search";
 import { getPlayingFriendIds } from "~/lib/friends";
 import { isTrackedPlayerAlias } from "~/lib/tracked-player-alias";
 import { buildTrackedPlayerSearch } from "~/lib/tracked-route";
 import { searchAndLoadFriends } from "~/server/friends";
-import { useTrackedPlayerTarget } from "~/hooks/useTrackedPlayerTarget";
 
 const getClientSession = createIsomorphicFn()
   .server(() => null)
@@ -27,7 +27,7 @@ const getClientSession = createIsomorphicFn()
       data: { session },
     } = await getSupabaseClient().auth.getSession();
     return session;
-});
+  });
 
 export const Route = createFileRoute("/_authed/$nickname")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -110,8 +110,7 @@ export function PlayerDashboard() {
 
   useEffect(() => {
     if (
-      !isTrackedFlow ||
-      !targetPlayer?.faceitId ||
+      !(isTrackedFlow && targetPlayer?.faceitId) ||
       resolvedPlayerId === targetPlayer.faceitId
     ) {
       return;
@@ -127,7 +126,13 @@ export function PlayerDashboard() {
         nextResolvedPlayerId: targetPlayer.faceitId,
       }),
     });
-  }, [isTrackedFlow, navigate, nickname, resolvedPlayerId, targetPlayer?.faceitId]);
+  }, [
+    isTrackedFlow,
+    navigate,
+    nickname,
+    resolvedPlayerId,
+    targetPlayer?.faceitId,
+  ]);
 
   const recentMatches = playerStats.slice(0, 10).map((m: any) => ({
     nickname: m.nickname,

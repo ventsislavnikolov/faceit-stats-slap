@@ -148,9 +148,7 @@ export function SeasonMyBetsTab({
               gridTemplateColumns: "1.5fr 1fr 0.7fr 0.7fr 0.7fr 0.8fr",
             }}
           >
-            <span className="truncate text-text">
-              {row.title}
-            </span>
+            <span className="truncate text-text">{row.title}</span>
             <span className="text-right text-text-muted text-xs">
               {row.sideName}
             </span>

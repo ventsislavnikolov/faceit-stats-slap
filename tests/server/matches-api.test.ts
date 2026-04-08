@@ -151,7 +151,10 @@ const supabaseState = vi.hoisted(() => {
       (row) => row.faceit_player_id === value
     );
 
-    const buildRows = (opts?: { cutoffIso?: string; excludeNullPlayedAt?: boolean }) =>
+    const buildRows = (opts?: {
+      cutoffIso?: string;
+      excludeNullPlayedAt?: boolean;
+    }) =>
       baseRows
         .filter((row) =>
           opts?.cutoffIso ? row.played_at >= opts.cutoffIso : true
@@ -174,7 +177,11 @@ const supabaseState = vi.hoisted(() => {
         }),
       }),
       not: (notColumn: string, operator: string, comparedValue: null) => {
-        if (notColumn !== "played_at" || operator !== "is" || comparedValue !== null) {
+        if (
+          notColumn !== "played_at" ||
+          operator !== "is" ||
+          comparedValue !== null
+        ) {
           throw new Error(
             `Unexpected match_player_stats not call: ${notColumn} ${operator}`
           );
@@ -1102,7 +1109,7 @@ describe("tracked alias selectors", () => {
       match_id: `friend-1-newer-${index}`,
       faceit_player_id: "friend-1",
       nickname: "Friend 1",
-      played_at: `2026-04-${String(((index % 9) + 10)).padStart(2, "0")}T${String(
+      played_at: `2026-04-${String((index % 9) + 10).padStart(2, "0")}T${String(
         index % 24
       ).padStart(2, "0")}:00:00.000Z`,
       kills: 20,

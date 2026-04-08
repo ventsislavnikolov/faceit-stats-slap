@@ -5,7 +5,6 @@ import { PlayerSearchHeader } from "~/components/PlayerSearchHeader";
 import { usePlayerStats } from "~/hooks/usePlayerStats";
 import { useTrackedPlayerTarget } from "~/hooks/useTrackedPlayerTarget";
 import { resolveFaceitSearchTarget } from "~/lib/faceit-search";
-import { buildTrackedPlayerSearch } from "~/lib/tracked-route";
 import {
   getHistoryMatchCountOptions,
   getHistoryQueueOptions,
@@ -13,6 +12,7 @@ import {
   normalizeHistoryMatchCount,
   normalizeHistoryQueueFilter,
 } from "~/lib/history-page";
+import { buildTrackedPlayerSearch } from "~/lib/tracked-route";
 
 export const Route = createFileRoute("/_authed/history")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -60,9 +60,7 @@ export function HistoryPage() {
 
   useEffect(() => {
     if (
-      !isTrackedFlow ||
-      !player?.faceitId ||
-      !urlPlayer ||
+      !(isTrackedFlow && player?.faceitId && urlPlayer) ||
       resolvedPlayerId === player.faceitId
     ) {
       return;

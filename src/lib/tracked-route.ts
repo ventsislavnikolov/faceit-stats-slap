@@ -1,6 +1,6 @@
 import {
-  TRACKED_PLAYER_ALIAS,
   isTrackedPlayerAlias,
+  TRACKED_PLAYER_ALIAS,
   type TrackedResolutionSearch,
 } from "~/lib/tracked-player-alias";
 
@@ -25,7 +25,7 @@ export function getTrackedLockSearch(params: {
   resolvedPlayerId?: string;
 }): TrackedResolutionSearch | undefined {
   const { player, resolvedPlayerId } = params;
-  if (!isTrackedPlayerAlias(player) || !resolvedPlayerId) {
+  if (!(isTrackedPlayerAlias(player) && resolvedPlayerId)) {
     return undefined;
   }
 

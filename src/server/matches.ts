@@ -845,10 +845,12 @@ export const getMatchDetails = createServerFn({ method: "GET" })
     const roundStats = statsData?.rounds?.[0]?.round_stats || {};
     const teamStats = statsData?.rounds?.[0]?.teams || [];
     const rosterPlayerIds = [
-      ...(match.teams?.faction1?.roster?.map((player: any) => player.player_id) ??
-        []),
-      ...(match.teams?.faction2?.roster?.map((player: any) => player.player_id) ??
-        []),
+      ...(match.teams?.faction1?.roster?.map(
+        (player: any) => player.player_id
+      ) ?? []),
+      ...(match.teams?.faction2?.roster?.map(
+        (player: any) => player.player_id
+      ) ?? []),
       ...players.map((player) => player.playerId),
     ];
     const { data: trackedRows } =

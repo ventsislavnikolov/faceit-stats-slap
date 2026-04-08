@@ -1,14 +1,11 @@
 import { Link } from "@tanstack/react-router";
-import {
-  getPlayerViewTabs,
-  type PlayerView,
-} from "~/lib/player-view-shell";
+import { getPlayerViewTabs, type PlayerView } from "~/lib/player-view-shell";
 import type { TrackedResolutionSearch } from "~/lib/tracked-player-alias";
 
 interface PlayerViewTabsProps {
   activeView: PlayerView;
-  nickname: string | null;
   locked?: TrackedResolutionSearch;
+  nickname: string | null;
 }
 
 export function PlayerViewTabs({

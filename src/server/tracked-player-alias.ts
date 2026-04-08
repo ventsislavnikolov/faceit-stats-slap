@@ -18,10 +18,8 @@ export const getTrackedPlayerForHistory = createServerFn({
   method: "GET",
 })
   .inputValidator(
-    (input: {
-      matches: 20 | 50 | 100;
-      queue: "all" | "solo" | "party";
-    }) => input
+    (input: { matches: 20 | 50 | 100; queue: "all" | "solo" | "party" }) =>
+      input
   )
   .handler(async ({ data }): Promise<ResolvedTrackedPlayer | null> => {
     const { resolveTrackedPlayerForHistory } = await import(
