@@ -2,17 +2,17 @@ import { describe, expect, it } from "vitest";
 import { resolveFaceitSearchTarget } from "~/lib/faceit-search";
 
 describe("resolveFaceitSearchTarget", () => {
-  it("treats tracked as a reserved player alias", () => {
-    expect(resolveFaceitSearchTarget("tracked")).toEqual({
+  it("treats sborka as a reserved player alias", () => {
+    expect(resolveFaceitSearchTarget("sborka")).toEqual({
       kind: "player",
-      value: "tracked",
+      value: "sborka",
     });
   });
 
-  it("canonicalizes tracked alias input before routing", () => {
-    expect(resolveFaceitSearchTarget("  TrAcKeD  ")).toEqual({
+  it("canonicalizes sborka alias input before routing", () => {
+    expect(resolveFaceitSearchTarget("  SbOrKa  ")).toEqual({
       kind: "player",
-      value: "tracked",
+      value: "sborka",
     });
   });
 

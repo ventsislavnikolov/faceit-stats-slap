@@ -193,7 +193,7 @@ describe("/last-party route", () => {
 
   it("renders the tracked-specific empty state when no tracked player qualifies", () => {
     mocks.search = {
-      player: "tracked",
+      player: "sborka",
       resolvedPlayerId: undefined,
       date: "2026-04-03",
     };

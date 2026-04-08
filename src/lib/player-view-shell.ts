@@ -1,5 +1,6 @@
 import {
   isTrackedPlayerAlias,
+  TRACKED_PLAYER_ALIAS,
   type TrackedResolutionSearch,
 } from "~/lib/tracked-player-alias";
 
@@ -25,14 +26,14 @@ export function getPlayerViewHref(
   locked?: TrackedResolutionSearch
 ): PlayerViewHref {
   const isTrackedFlow = isTrackedPlayerAlias(nickname);
-  const playerSearchValue = isTrackedFlow ? "tracked" : nickname;
+  const playerSearchValue = isTrackedFlow ? TRACKED_PLAYER_ALIAS : nickname;
   const resolvedPlayerId = isTrackedFlow ? locked?.resolvedPlayerId : undefined;
 
   switch (view) {
     case "friends":
       if (isTrackedFlow) {
         return {
-          to: "/tracked",
+          to: `/${TRACKED_PLAYER_ALIAS}`,
           ...(resolvedPlayerId ? { search: { resolvedPlayerId } } : {}),
         };
       }

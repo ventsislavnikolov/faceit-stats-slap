@@ -75,7 +75,7 @@ describe("/leaderboard route", () => {
   beforeEach(() => {
     mocks.navigate.mockReset();
     mocks.search = {
-      player: "tracked",
+      player: "sborka",
       resolvedPlayerId: undefined,
       matches: 20,
       queue: "party",

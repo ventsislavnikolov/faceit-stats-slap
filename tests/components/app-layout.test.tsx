@@ -67,7 +67,7 @@ describe("AppLayout", () => {
   it("keeps tracked navigation links locked to the resolved player id", () => {
     routerState.pathname = "/leaderboard";
     routerState.search = {
-      player: "tracked",
+      player: "sborka",
       resolvedPlayerId: "player-123",
     };
 

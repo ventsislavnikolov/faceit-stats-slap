@@ -1,4 +1,7 @@
-import { isTrackedPlayerAlias } from "~/lib/tracked-player-alias";
+import {
+  isTrackedPlayerAlias,
+  TRACKED_PLAYER_ALIAS,
+} from "~/lib/tracked-player-alias";
 
 const FACEIT_MATCH_ID_PATTERN =
   /^1-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -44,7 +47,7 @@ export function resolveFaceitSearchTarget(input: string): FaceitSearchTarget {
   const nickname = extractFaceitNickname(value);
 
   if (isTrackedPlayerAlias(value)) {
-    return { kind: "player", value: "tracked" };
+    return { kind: "player", value: TRACKED_PLAYER_ALIAS };
   }
 
   if (FACEIT_MATCH_ID_PATTERN.test(value)) {

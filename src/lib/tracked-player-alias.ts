@@ -1,4 +1,4 @@
-export const TRACKED_PLAYER_ALIAS = "tracked";
+export const TRACKED_PLAYER_ALIAS = "sborka";
 
 export function isTrackedPlayerAlias(
   input: string | null | undefined

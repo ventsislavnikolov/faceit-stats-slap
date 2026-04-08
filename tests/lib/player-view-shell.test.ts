@@ -8,13 +8,13 @@ import {
 describe("player view shell", () => {
   it("carries a locked resolved player id when the source player is tracked", () => {
     expect(
-      getPlayerViewHref("history", "tracked", {
+      getPlayerViewHref("history", "sborka", {
         resolvedPlayerId: "player-123",
       })
     ).toEqual({
       to: "/history",
       search: {
-        player: "tracked",
+        player: "sborka",
         resolvedPlayerId: "player-123",
         matches: 20,
         queue: "party",
@@ -23,8 +23,8 @@ describe("player view shell", () => {
   });
 
   it("builds /tracked for the tracked friends view", () => {
-    expect(getPlayerViewHref("friends", "tracked")).toEqual({
-      to: "/tracked",
+    expect(getPlayerViewHref("friends", "sborka")).toEqual({
+      to: "/sborka",
     });
   });
 
@@ -92,14 +92,14 @@ describe("player view shell", () => {
     expect(
       getPlayerViewTabs({
         activeView: "history",
-        nickname: "tracked",
+        nickname: "sborka",
         locked: {
           resolvedPlayerId: "player-123",
         },
       }).map((tab) => tab.href)
     ).toEqual([
       {
-        to: "/tracked",
+        to: "/sborka",
         search: {
           resolvedPlayerId: "player-123",
         },
@@ -107,14 +107,14 @@ describe("player view shell", () => {
       {
         to: "/last-party",
         search: {
-          player: "tracked",
+          player: "sborka",
           resolvedPlayerId: "player-123",
         },
       },
       {
         to: "/history",
         search: {
-          player: "tracked",
+          player: "sborka",
           resolvedPlayerId: "player-123",
           matches: 20,
           queue: "party",
@@ -123,7 +123,7 @@ describe("player view shell", () => {
       {
         to: "/leaderboard",
         search: {
-          player: "tracked",
+          player: "sborka",
           resolvedPlayerId: "player-123",
           matches: 20,
           queue: "party",
@@ -175,13 +175,13 @@ describe("player view shell", () => {
 
   it("canonicalizes tracked search player values in shell-generated non-friends tabs", () => {
     expect(
-      getPlayerViewHref("history", "  TrAcKeD  ", {
+      getPlayerViewHref("history", "  SbOrKa  ", {
         resolvedPlayerId: "player-123",
       })
     ).toEqual({
       to: "/history",
       search: {
-        player: "tracked",
+        player: "sborka",
         resolvedPlayerId: "player-123",
         matches: 20,
         queue: "party",
