@@ -2,6 +2,11 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 import { AppLayout } from "~/components/AppLayout";
 
+const routerState = vi.hoisted(() => ({
+  pathname: "/leaderboard",
+  search: { player: "soavarice" } as Record<string, unknown>,
+}));
+
 vi.mock("~/components/CoinBalance", () => ({
   CoinBalance: () => <div>Coins</div>,
 }));
@@ -13,7 +18,6 @@ vi.mock("~/hooks/useActiveSeason", () => ({
 vi.mock("@tanstack/react-router", async (importOriginal) => {
   const actual =
     await importOriginal<typeof import("@tanstack/react-router")>();
-  const currentPathname = "/leaderboard";
 
   return {
     ...actual,
@@ -21,12 +25,13 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
     Link: ({
       children,
       to,
+      search,
       className,
       activeProps,
       inactiveProps,
       ...props
     }: any) => {
-      const isActive = to === currentPathname;
+      const isActive = to === routerState.pathname;
       const resolvedClassName = [
         className,
         isActive ? activeProps?.className : inactiveProps?.className,
@@ -35,7 +40,11 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
         .join(" ");
 
       return (
-        <a {...props} className={resolvedClassName}>
+        <a
+          {...props}
+          className={resolvedClassName}
+          data-search={search ? JSON.stringify(search) : undefined}
+        >
           {children}
         </a>
       );
@@ -47,15 +56,31 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
     useRouterState: ({ select }: any) =>
       select({
         location: {
-          pathname: currentPathname,
-          search: { player: "soavarice" },
+          pathname: routerState.pathname,
+          search: routerState.search,
         },
       }),
   };
 });
 
 describe("AppLayout", () => {
+  it("keeps tracked navigation links locked to the resolved player id", () => {
+    routerState.pathname = "/leaderboard";
+    routerState.search = {
+      player: "tracked",
+      resolvedPlayerId: "player-123",
+    };
+
+    const html = renderToStaticMarkup(<AppLayout />);
+
+    expect(html).toContain(
+      "&quot;resolvedPlayerId&quot;:&quot;player-123&quot;"
+    );
+  });
+
   it("renders leaderboard before history in the top navigation", () => {
+    routerState.pathname = "/leaderboard";
+    routerState.search = { player: "soavarice" };
     const html = renderToStaticMarkup(<AppLayout />);
 
     const livePartyIndex = html.indexOf(">Live Party<");
@@ -68,6 +93,8 @@ describe("AppLayout", () => {
   });
 
   it("renders inactive nav items with muted styling", () => {
+    routerState.pathname = "/leaderboard";
+    routerState.search = { player: "soavarice" };
     const html = renderToStaticMarkup(<AppLayout />);
 
     expect(html).toContain("text-text-muted hover:text-accent");

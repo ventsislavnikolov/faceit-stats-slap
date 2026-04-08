@@ -845,10 +845,12 @@ export const getMatchDetails = createServerFn({ method: "GET" })
     const roundStats = statsData?.rounds?.[0]?.round_stats || {};
     const teamStats = statsData?.rounds?.[0]?.teams || [];
     const rosterPlayerIds = [
-      ...(match.teams?.faction1?.roster?.map((player: any) => player.player_id) ??
-        []),
-      ...(match.teams?.faction2?.roster?.map((player: any) => player.player_id) ??
-        []),
+      ...(match.teams?.faction1?.roster?.map(
+        (player: any) => player.player_id
+      ) ?? []),
+      ...(match.teams?.faction2?.roster?.map(
+        (player: any) => player.player_id
+      ) ?? []),
       ...players.map((player) => player.playerId),
     ];
     const { data: trackedRows } =
@@ -1129,6 +1131,37 @@ async function fetchEligibleStatsLeaderboardFriendIds(params: {
   }
 
   return [...eligibleFriendIds];
+}
+
+async function fetchStatsLeaderboardRowsForMatches(params: {
+  supabase: ReturnType<typeof createServerSupabase>;
+  matchIds: string[];
+}): Promise<any[]> {
+  const { supabase, matchIds } = params;
+  if (matchIds.length === 0) {
+    return [];
+  }
+
+  const rows: any[] = [];
+
+  for (
+    let index = 0;
+    index < matchIds.length;
+    index += STATS_LEADERBOARD_MATCH_CHUNK_SIZE
+  ) {
+    const matchIdChunk = matchIds.slice(
+      index,
+      index + STATS_LEADERBOARD_MATCH_CHUNK_SIZE
+    );
+    const { data: sharedRows } = await supabase
+      .from("match_player_stats")
+      .select(STATS_LEADERBOARD_ROW_SELECT)
+      .in("match_id", matchIdChunk);
+
+    rows.push(...(sharedRows ?? []));
+  }
+
+  return rows;
 }
 
 async function fetchRecentStatsLeaderboardRows(params: {

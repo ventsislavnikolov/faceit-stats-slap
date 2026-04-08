@@ -1,4 +1,3 @@
-import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { LastPartyHeader } from "~/components/last-party/LastPartyHeader";
@@ -11,15 +10,21 @@ import { SessionRivalryCards } from "~/components/last-party/SessionRivalryCards
 import { SessionStatsTable } from "~/components/last-party/SessionStatsTable";
 import { PlayerSearchHeader } from "~/components/PlayerSearchHeader";
 import { usePartySession } from "~/hooks/usePartySession";
+import { useTrackedPlayerTarget } from "~/hooks/useTrackedPlayerTarget";
 import { resolveFaceitSearchTarget } from "~/lib/faceit-search";
 import { getYesterdayDateString } from "~/lib/time";
-import { resolvePlayer } from "~/server/friends";
+import { buildTrackedPlayerSearch } from "~/lib/tracked-route";
 
 export const Route = createFileRoute("/_authed/last-party")({
   validateSearch: (search: Record<string, unknown>) => ({
     player:
       typeof search.player === "string" && search.player.length > 0
         ? search.player
+        : undefined,
+    resolvedPlayerId:
+      typeof search.resolvedPlayerId === "string" &&
+      search.resolvedPlayerId.length > 0
+        ? search.resolvedPlayerId
         : undefined,
     date:
       typeof search.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(search.date)
@@ -31,7 +36,11 @@ export const Route = createFileRoute("/_authed/last-party")({
 
 export function LastPartyPage() {
   const navigate = useNavigate();
-  const { player: urlPlayer, date: urlDate } = Route.useSearch();
+  const {
+    player: urlPlayer,
+    resolvedPlayerId,
+    date: urlDate,
+  } = Route.useSearch();
   const [input, setInput] = useState(urlPlayer ?? "");
   const [dateInput, setDateInput] = useState(
     urlDate ?? getYesterdayDateString()
@@ -41,12 +50,12 @@ export function LastPartyPage() {
     data: player,
     isLoading: resolving,
     isError: resolveError,
-  } = useQuery({
-    queryKey: ["resolve-player", urlPlayer],
-    queryFn: () => resolvePlayer({ data: urlPlayer! }),
-    enabled: !!urlPlayer,
-    staleTime: 5 * 60 * 1000,
-    retry: false,
+    isTrackedFlow,
+  } = useTrackedPlayerTarget({
+    page: "last-party",
+    player: urlPlayer,
+    resolvedPlayerId,
+    date: urlDate ?? getYesterdayDateString(),
   });
 
   const effectiveDate = urlDate ?? getYesterdayDateString();
@@ -63,6 +72,37 @@ export function LastPartyPage() {
   useEffect(() => {
     setDateInput(urlDate ?? getYesterdayDateString());
   }, [urlDate]);
+  const hasTrackedPlayerMiss =
+    isTrackedFlow && !resolving && !resolveError && !player;
+
+  useEffect(() => {
+    if (
+      !(isTrackedFlow && player?.faceitId && urlPlayer) ||
+      resolvedPlayerId === player.faceitId
+    ) {
+      return;
+    }
+
+    navigate({
+      to: "/last-party",
+      replace: true,
+      search: {
+        ...buildTrackedPlayerSearch({
+          currentPlayer: urlPlayer,
+          currentResolvedPlayerId: resolvedPlayerId,
+          nextResolvedPlayerId: player.faceitId,
+        }),
+        date: effectiveDate,
+      },
+    });
+  }, [
+    effectiveDate,
+    isTrackedFlow,
+    navigate,
+    player?.faceitId,
+    resolvedPlayerId,
+    urlPlayer,
+  ]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,7 +116,14 @@ export function LastPartyPage() {
     }
     navigate({
       to: "/last-party",
-      search: { player: target.value, date: dateInput },
+      search: {
+        ...buildTrackedPlayerSearch({
+          currentPlayer: urlPlayer,
+          currentResolvedPlayerId: resolvedPlayerId,
+          nextPlayer: target.value,
+        }),
+        date: dateInput,
+      },
     });
   };
 
@@ -86,7 +133,13 @@ export function LastPartyPage() {
     if (urlPlayer) {
       navigate({
         to: "/last-party",
-        search: { player: urlPlayer, date: newDate },
+        search: {
+          ...buildTrackedPlayerSearch({
+            currentPlayer: urlPlayer,
+            currentResolvedPlayerId: resolvedPlayerId,
+          }),
+          date: newDate,
+        },
       });
     }
   };
@@ -297,14 +350,20 @@ export function LastPartyPage() {
             </div>
           )}
 
-          {session && session.matches.length === 0 && (
+          {hasTrackedPlayerMiss && (
+            <div className="py-12 text-center text-text-dim">
+              No tracked player had a party session on this date.
+            </div>
+          )}
+
+          {!hasTrackedPlayerMiss && session && session.matches.length === 0 && (
             <div className="py-12 text-center text-text-dim">
               No party matches found on this date. Try selecting a different
               day.
             </div>
           )}
 
-          {!(urlPlayer || resolving) && (
+          {!(urlPlayer || resolving || hasTrackedPlayerMiss) && (
             <div className="py-12 text-center text-text-dim">
               Enter a nickname or UUID to view party session recap.
             </div>

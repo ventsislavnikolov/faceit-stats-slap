@@ -11,9 +11,12 @@ import { useActiveSeason } from "~/hooks/useActiveSeason";
 import { useCoinBalance } from "~/hooks/useCoinBalance";
 import { useLiveMatches } from "~/hooks/useLiveMatches";
 import { usePlayerStats } from "~/hooks/usePlayerStats";
+import { useTrackedPlayerTarget } from "~/hooks/useTrackedPlayerTarget";
 import { useTwitchLive } from "~/hooks/useTwitchLive";
 import { resolveFaceitSearchTarget } from "~/lib/faceit-search";
 import { getPlayingFriendIds } from "~/lib/friends";
+import { isTrackedPlayerAlias } from "~/lib/tracked-player-alias";
+import { buildTrackedPlayerSearch } from "~/lib/tracked-route";
 import { searchAndLoadFriends } from "~/server/friends";
 
 const getClientSession = createIsomorphicFn()
@@ -27,11 +30,19 @@ const getClientSession = createIsomorphicFn()
   });
 
 export const Route = createFileRoute("/_authed/$nickname")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    resolvedPlayerId:
+      typeof search.resolvedPlayerId === "string" &&
+      search.resolvedPlayerId.length > 0
+        ? search.resolvedPlayerId
+        : undefined,
+  }),
   component: PlayerDashboard,
 });
 
-function PlayerDashboard() {
+export function PlayerDashboard() {
   const { nickname } = Route.useParams();
+  const { resolvedPlayerId } = Route.useSearch();
   const navigate = useNavigate();
   const [input, setInput] = useState(nickname);
   const [selectedFriendId, setSelectedFriendId] = useState<string | null>(null);
@@ -47,12 +58,26 @@ function PlayerDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const {
+    data: targetPlayer,
+    isLoading: resolvingTarget,
+    isError: searchError,
+    isTrackedFlow,
+  } = useTrackedPlayerTarget({
+    page: "friends",
+    player: nickname,
+    resolvedPlayerId,
+  });
+
+  const targetPlayerId = targetPlayer?.faceitId ?? null;
+
+  const {
     data: searchResult,
     isLoading: searchLoading,
-    isError: searchError,
+    isError: searchResultError,
   } = useQuery({
-    queryKey: ["friends-search", nickname.toLowerCase()],
-    queryFn: () => searchAndLoadFriends({ data: nickname }),
+    queryKey: ["friends-search", targetPlayerId],
+    queryFn: () => searchAndLoadFriends({ data: targetPlayerId! }),
+    enabled: !!targetPlayerId,
     staleTime: 5 * 60 * 1000,
     retry: false,
   });
@@ -76,6 +101,38 @@ function PlayerDashboard() {
   }));
 
   const liveStream = twitchStreams.find((s) => s.isLive);
+  const hasTrackedPlayerMiss =
+    isTrackedFlow &&
+    !resolvingTarget &&
+    !searchError &&
+    !searchResultError &&
+    !targetPlayerId;
+
+  useEffect(() => {
+    if (
+      !(isTrackedFlow && targetPlayer?.faceitId) ||
+      resolvedPlayerId === targetPlayer.faceitId
+    ) {
+      return;
+    }
+
+    navigate({
+      to: "/$nickname",
+      params: { nickname },
+      replace: true,
+      search: buildTrackedPlayerSearch({
+        currentPlayer: nickname,
+        currentResolvedPlayerId: resolvedPlayerId,
+        nextResolvedPlayerId: targetPlayer.faceitId,
+      }),
+    });
+  }, [
+    isTrackedFlow,
+    navigate,
+    nickname,
+    resolvedPlayerId,
+    targetPlayer?.faceitId,
+  ]);
 
   const recentMatches = playerStats.slice(0, 10).map((m: any) => ({
     nickname: m.nickname,
@@ -102,22 +159,36 @@ function PlayerDashboard() {
       return;
     }
 
-    if (target.value.toLowerCase() === nickname.toLowerCase()) {
+    if (
+      target.value.toLowerCase() === nickname.toLowerCase() &&
+      !isTrackedPlayerAlias(target.value)
+    ) {
       return;
     }
     setSelectedFriendId(null);
-    navigate({ to: "/$nickname", params: { nickname: target.value } });
+    navigate({
+      to: "/$nickname",
+      params: { nickname: target.value },
+      search:
+        target.value.toLowerCase() === "tracked"
+          ? buildTrackedPlayerSearch({
+              currentPlayer: nickname,
+              currentResolvedPlayerId: resolvedPlayerId,
+              nextPlayer: target.value,
+            })
+          : undefined,
+    });
   }
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
       <PlayerSearchHeader
         error={
-          searchError
+          searchError || searchResultError
             ? "Player not found. Check the nickname/UUID and try again."
             : null
         }
-        isSearching={searchLoading}
+        isSearching={resolvingTarget || searchLoading}
         layout="full"
         onSubmit={handleSearch}
         onValueChange={setInput}
@@ -285,6 +356,10 @@ function PlayerDashboard() {
       ) : searchError ? (
         <div className="flex flex-1 items-center justify-center text-error text-sm">
           Player &quot;{nickname}&quot; not found on FACEIT.
+        </div>
+      ) : hasTrackedPlayerMiss ? (
+        <div className="flex flex-1 items-center justify-center text-sm text-text-dim">
+          No tracked player has recent activity yet.
         </div>
       ) : enrichedFriends.length === 0 ? (
         <div className="flex flex-1 items-center justify-center text-sm text-text-dim">

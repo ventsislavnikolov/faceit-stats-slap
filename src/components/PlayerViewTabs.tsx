@@ -1,13 +1,19 @@
 import { Link } from "@tanstack/react-router";
 import { getPlayerViewTabs, type PlayerView } from "~/lib/player-view-shell";
+import type { TrackedResolutionSearch } from "~/lib/tracked-player-alias";
 
 interface PlayerViewTabsProps {
   activeView: PlayerView;
+  locked?: TrackedResolutionSearch;
   nickname: string | null;
 }
 
-export function PlayerViewTabs({ activeView, nickname }: PlayerViewTabsProps) {
-  const tabs = getPlayerViewTabs({ activeView, nickname });
+export function PlayerViewTabs({
+  activeView,
+  nickname,
+  locked,
+}: PlayerViewTabsProps) {
+  const tabs = getPlayerViewTabs({ activeView, nickname, locked });
 
   return (
     <div className="mt-3 flex flex-wrap gap-1">

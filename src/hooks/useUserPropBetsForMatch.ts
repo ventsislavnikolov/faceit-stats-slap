@@ -8,7 +8,8 @@ export function useUserPropBetsForMatch(
 ) {
   return useQuery<Bet[]>({
     queryKey: ["user-prop-bets", faceitMatchId, userId],
-    queryFn: () => getUserPropBetsForMatch({ data: { faceitMatchId, userId: userId! } }),
+    queryFn: () =>
+      getUserPropBetsForMatch({ data: { faceitMatchId, userId: userId! } }),
     enabled: !!faceitMatchId && !!userId,
     staleTime: 30_000,
   });

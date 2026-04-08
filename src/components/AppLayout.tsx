@@ -10,6 +10,7 @@ import { CoinBalance } from "~/components/CoinBalance";
 import { useActiveSeason } from "~/hooks/useActiveSeason";
 import { initializeAuthSession } from "~/lib/auth";
 import { getPlayerViewHref } from "~/lib/player-view-shell";
+import { isTrackedPlayerAlias } from "~/lib/tracked-player-alias";
 
 const subscribeToAuthSession = createIsomorphicFn()
   .server(() => ({ unsubscribe: () => {} }))
@@ -71,23 +72,33 @@ export function AppLayout() {
   const pathname = location.pathname;
   const currentSearch = location.search as Record<string, unknown>;
   const currentNickname = getCurrentNickname(pathname, currentSearch);
+  const currentLockedPlayerId =
+    currentNickname && isTrackedPlayerAlias(currentNickname)
+      ? typeof currentSearch.resolvedPlayerId === "string" &&
+        currentSearch.resolvedPlayerId.length > 0
+        ? currentSearch.resolvedPlayerId
+        : undefined
+      : undefined;
+  const currentTrackedLock = currentLockedPlayerId
+    ? { resolvedPlayerId: currentLockedPlayerId }
+    : undefined;
   const friendsHref = currentNickname
-    ? getPlayerViewHref("friends", currentNickname)
+    ? getPlayerViewHref("friends", currentNickname, currentTrackedLock)
     : { to: "/" };
   const historyHref = currentNickname
-    ? getPlayerViewHref("history", currentNickname)
+    ? getPlayerViewHref("history", currentNickname, currentTrackedLock)
     : {
         to: "/history",
         search: { player: undefined, matches: 20, queue: "party" },
       };
   const leaderboardHref = currentNickname
-    ? getPlayerViewHref("leaderboard", currentNickname)
+    ? getPlayerViewHref("leaderboard", currentNickname, currentTrackedLock)
     : {
         to: "/leaderboard",
         search: { player: undefined, matches: 20, queue: "party", last: 30 },
       };
   const lastPartyHref = currentNickname
-    ? getPlayerViewHref("last-party", currentNickname)
+    ? getPlayerViewHref("last-party", currentNickname, currentTrackedLock)
     : { to: "/last-party", search: { player: undefined } };
   const betsHref = { to: "/bets", search: { tab: "leaderboard" } };
   const pathSegments = pathname.split("/").filter(Boolean);

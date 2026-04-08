@@ -98,7 +98,12 @@ describe("player view shell", () => {
         },
       }).map((tab) => tab.href)
     ).toEqual([
-      { to: "/tracked" },
+      {
+        to: "/tracked",
+        search: {
+          resolvedPlayerId: "player-123",
+        },
+      },
       {
         to: "/last-party",
         search: {

@@ -31,7 +31,10 @@ export function getPlayerViewHref(
   switch (view) {
     case "friends":
       if (isTrackedFlow) {
-        return { to: "/tracked" };
+        return {
+          to: "/tracked",
+          ...(resolvedPlayerId ? { search: { resolvedPlayerId } } : {}),
+        };
       }
 
       return {

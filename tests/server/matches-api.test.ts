@@ -7,6 +7,10 @@ import {
   getPlayerStats,
   syncAllPlayerHistory,
 } from "~/server/matches";
+import {
+  findLatestLeaderboardPlayedAt,
+  findLatestRecentMatchPlayedAt,
+} from "~/server/tracked-player-selectors.server";
 import { runWithStartContext } from "../start-context";
 
 const faceitMocks = vi.hoisted(() => ({
@@ -41,7 +45,13 @@ const supabaseState = vi.hoisted(() => {
 
   let stalePools: Array<{ faceit_match_id: string }> = [];
   let matchRow: { id: string } | null = { id: "db-match-1" };
-  let trackedFriendsRows: Array<{ faceit_id: string }> = [];
+  let trackedFriendsRows: Array<{
+    faceit_id: string;
+    nickname?: string;
+    elo?: number;
+    is_active?: boolean;
+  }> = [];
+  let matchPlayerStatsRows: any[] = [];
 
   const matchesSelectEq = vi.fn(() => ({
     single: vi.fn(async () => ({ data: matchRow })),
@@ -58,25 +68,163 @@ const supabaseState = vi.hoisted(() => {
     in: bettingPoolsSelectIn,
   }));
   let matchPlayerStatsRowsByMatchId = new Map<string, any[]>();
-  const matchPlayerStatsSelectIn = vi.fn(
-    async (_column: string, value: string[]) => ({
-      data: value.flatMap(
+  const matchPlayerStatsSelectIn = vi.fn((column: string, value: string[]) => {
+    if (column === "match_id") {
+      const rowsFromMap = value.flatMap(
         (matchId) => matchPlayerStatsRowsByMatchId.get(matchId) ?? []
-      ),
-    })
-  );
+      );
+      const rowsFromState = matchPlayerStatsRows.filter((row) =>
+        value.includes(row.match_id)
+      );
+      const rows =
+        rowsFromMap.length > 0 || rowsFromState.length === 0
+          ? rowsFromMap
+          : rowsFromState;
+
+      return Promise.resolve({
+        data: rows,
+      });
+    }
+
+    if (column === "faceit_player_id") {
+      const baseRows = matchPlayerStatsRows.filter((row) =>
+        value.includes(row.faceit_player_id)
+      );
+      const withOptionalCutoff = (cutoffIso?: string) =>
+        baseRows
+          .filter((row) => (cutoffIso ? row.played_at >= cutoffIso : true))
+          .sort((a, b) => {
+            const aValue = a.played_at ?? "";
+            const bValue = b.played_at ?? "";
+            return bValue.localeCompare(aValue);
+          });
+
+      const buildOrderedRange = (rows: any[]) => ({
+        not: (notColumn: string, operator: string, comparedValue: null) => {
+          if (
+            notColumn !== "played_at" ||
+            operator !== "is" ||
+            comparedValue !== null
+          ) {
+            throw new Error(
+              `Unexpected match_player_stats not call: ${notColumn} ${operator}`
+            );
+          }
+
+          const filteredRows = rows.filter((row) => row.played_at != null);
+          return {
+            order: () => ({
+              range: async (from: number, to: number) => ({
+                data: filteredRows.slice(from, to + 1),
+              }),
+            }),
+          };
+        },
+        order: () => ({
+          range: async (from: number, to: number) => ({
+            data: rows.slice(from, to + 1),
+          }),
+        }),
+      });
+
+      return {
+        gte: (_gteColumn: string, cutoffIso: string) =>
+          buildOrderedRange(withOptionalCutoff(cutoffIso)),
+        not: (notColumn: string, operator: string, comparedValue: null) =>
+          buildOrderedRange(withOptionalCutoff()).not(
+            notColumn,
+            operator,
+            comparedValue
+          ),
+        order: () => buildOrderedRange(withOptionalCutoff()).order(),
+      };
+    }
+
+    throw new Error(`Unexpected match_player_stats in column: ${column}`);
+  });
+  const matchPlayerStatsSelectEq = vi.fn((column: string, value: string) => {
+    if (column !== "faceit_player_id") {
+      throw new Error(`Unexpected match_player_stats eq column: ${column}`);
+    }
+
+    const baseRows = matchPlayerStatsRows.filter(
+      (row) => row.faceit_player_id === value
+    );
+
+    const buildRows = (opts?: {
+      cutoffIso?: string;
+      excludeNullPlayedAt?: boolean;
+    }) =>
+      baseRows
+        .filter((row) =>
+          opts?.cutoffIso ? row.played_at >= opts.cutoffIso : true
+        )
+        .filter((row) =>
+          opts?.excludeNullPlayedAt ? row.played_at != null : true
+        )
+        .sort((a, b) => {
+          const aValue = a.played_at ?? "";
+          const bValue = b.played_at ?? "";
+          return bValue.localeCompare(aValue);
+        });
+
+    return {
+      gte: (_gteColumn: string, cutoffIso: string) => ({
+        order: () => ({
+          range: async (from: number, to: number) => ({
+            data: buildRows({ cutoffIso }).slice(from, to + 1),
+          }),
+        }),
+      }),
+      not: (notColumn: string, operator: string, comparedValue: null) => {
+        if (
+          notColumn !== "played_at" ||
+          operator !== "is" ||
+          comparedValue !== null
+        ) {
+          throw new Error(
+            `Unexpected match_player_stats not call: ${notColumn} ${operator}`
+          );
+        }
+
+        return {
+          order: () => ({
+            limit: async (count: number) => ({
+              data: buildRows({ excludeNullPlayedAt: true }).slice(0, count),
+            }),
+          }),
+        };
+      },
+      order: () => ({
+        limit: async (count: number) => ({
+          data: buildRows().slice(0, count),
+        }),
+      }),
+    };
+  });
   const matchPlayerStatsSelect = vi.fn(() => ({
     in: matchPlayerStatsSelectIn,
+    eq: matchPlayerStatsSelectEq,
   }));
 
   const trackedFriendsIn = vi.fn(async (_column: string, values: string[]) => ({
     data: trackedFriendsRows.filter((row) => values.includes(row.faceit_id)),
   }));
-  const trackedFriendsEq = vi.fn(() => ({
-    in: trackedFriendsIn,
-  }));
+  const trackedFriendsEq = vi.fn((column: string, value: boolean) => {
+    if (column !== "is_active" || value !== true) {
+      throw new Error(`Unexpected tracked_friends eq call: ${column}`);
+    }
+
+    return {
+      in: trackedFriendsIn,
+      order: vi.fn(async () => ({
+        data: trackedFriendsRows.filter((row) => row.is_active !== false),
+      })),
+    };
+  });
   const trackedFriendsSelect = vi.fn(() => ({
     eq: trackedFriendsEq,
+    in: trackedFriendsIn,
   }));
 
   const from = vi.fn((table: string) => {
@@ -182,14 +330,19 @@ const supabaseState = vi.hoisted(() => {
     setTrackedFriendsRows(value: Array<{ faceit_id: string }>) {
       trackedFriendsRows = value;
     },
+    setMatchPlayerStatsRows(value: any[]) {
+      matchPlayerStatsRows = value;
+    },
     reset() {
       stalePools = [];
       matchRow = { id: "db-match-1" };
       matchPlayerStatsRowsByMatchId = new Map();
       trackedFriendsRows = [];
+      matchPlayerStatsRows = [];
       matchesUpsert.mockClear();
       matchPlayerStatsUpsert.mockClear();
       matchPlayerStatsSelect.mockClear();
+      matchPlayerStatsSelectEq.mockClear();
       matchPlayerStatsSelectIn.mockClear();
       trackedFriendsSelect.mockClear();
       trackedFriendsEq.mockClear();
@@ -837,6 +990,315 @@ describe("getPlayerStats", () => {
         partySize: 2,
       }),
     ]);
+  });
+});
+
+describe("tracked alias selectors", () => {
+  it("keeps leaderboard freshness tied to the target player's qualifying row", async () => {
+    supabaseState.setTrackedFriendsRows([
+      {
+        faceit_id: "target",
+        nickname: "Target",
+        elo: 2000,
+        is_active: true,
+      },
+      {
+        faceit_id: "friend-1",
+        nickname: "Friend 1",
+        elo: 1900,
+        is_active: true,
+      },
+      {
+        faceit_id: "friend-2",
+        nickname: "Friend 2",
+        elo: 1800,
+        is_active: true,
+      },
+    ]);
+    supabaseState.setMatchPlayerStatsRows([
+      {
+        match_id: "target-party-match",
+        faceit_player_id: "target",
+        nickname: "Target",
+        played_at: "2026-04-05T10:00:00.000Z",
+        kills: 20,
+        kd_ratio: 1.1,
+        adr: 80,
+        hs_percent: 40,
+        kr_ratio: 0.7,
+        win: true,
+        first_kills: 1,
+        clutch_kills: 0,
+        utility_damage: 10,
+        enemies_flashed: 2,
+        entry_count: 1,
+        entry_wins: 1,
+        sniper_kills: 0,
+      },
+      {
+        match_id: "target-party-match",
+        faceit_player_id: "friend-1",
+        nickname: "Friend 1",
+        played_at: "2026-04-05T10:00:00.000Z",
+        kills: 18,
+        kd_ratio: 1.0,
+        adr: 70,
+        hs_percent: 30,
+        kr_ratio: 0.6,
+        win: true,
+        first_kills: 0,
+        clutch_kills: 0,
+        utility_damage: 4,
+        enemies_flashed: 1,
+        entry_count: 0,
+        entry_wins: 0,
+        sniper_kills: 0,
+      },
+      {
+        match_id: "target-party-match",
+        faceit_player_id: "friend-2",
+        nickname: "Friend 2",
+        played_at: "2026-04-05T10:00:00.000Z",
+        kills: 16,
+        kd_ratio: 0.9,
+        adr: 65,
+        hs_percent: 25,
+        kr_ratio: 0.5,
+        win: true,
+        first_kills: 0,
+        clutch_kills: 0,
+        utility_damage: 3,
+        enemies_flashed: 1,
+        entry_count: 0,
+        entry_wins: 0,
+        sniper_kills: 0,
+      },
+      {
+        match_id: "friend-newer-solo",
+        faceit_player_id: "friend-1",
+        nickname: "Friend 1",
+        played_at: "2026-04-08T11:00:00.000Z",
+        kills: 30,
+        kd_ratio: 2,
+        adr: 110,
+        hs_percent: 50,
+        kr_ratio: 1,
+        win: true,
+        first_kills: 2,
+        clutch_kills: 1,
+        utility_damage: 12,
+        enemies_flashed: 3,
+        entry_count: 2,
+        entry_wins: 2,
+        sniper_kills: 1,
+      },
+    ]);
+
+    await expect(
+      findLatestLeaderboardPlayedAt({
+        targetPlayerId: "target",
+        n: 20,
+        days: 30,
+        queue: "party",
+      })
+    ).resolves.toBe("2026-04-05T10:00:00.000Z");
+  });
+
+  it("keeps party classification when a shared teammate row falls outside recent-n support sampling", async () => {
+    const newerFriendRows = Array.from({ length: 1000 }, (_, index) => ({
+      match_id: `friend-1-newer-${index}`,
+      faceit_player_id: "friend-1",
+      nickname: "Friend 1",
+      played_at: `2026-04-${String((index % 9) + 10).padStart(2, "0")}T${String(
+        index % 24
+      ).padStart(2, "0")}:00:00.000Z`,
+      kills: 20,
+      kd_ratio: 1,
+      adr: 80,
+      hs_percent: 40,
+      kr_ratio: 0.7,
+      win: true,
+      first_kills: 1,
+      clutch_kills: 0,
+      utility_damage: 5,
+      enemies_flashed: 1,
+      entry_count: 1,
+      entry_wins: 1,
+      sniper_kills: 0,
+    }));
+
+    supabaseState.setTrackedFriendsRows([
+      {
+        faceit_id: "target",
+        nickname: "Target",
+        elo: 2000,
+        is_active: true,
+      },
+      {
+        faceit_id: "friend-1",
+        nickname: "Friend 1",
+        elo: 1900,
+        is_active: true,
+      },
+      {
+        faceit_id: "friend-2",
+        nickname: "Friend 2",
+        elo: 1800,
+        is_active: true,
+      },
+    ]);
+    supabaseState.setMatchPlayerStatsRows([
+      {
+        match_id: "target-party-match",
+        faceit_player_id: "target",
+        nickname: "Target",
+        played_at: "2026-04-05T10:00:00.000Z",
+        kills: 20,
+        kd_ratio: 1.1,
+        adr: 80,
+        hs_percent: 40,
+        kr_ratio: 0.7,
+        win: true,
+        first_kills: 1,
+        clutch_kills: 0,
+        utility_damage: 10,
+        enemies_flashed: 2,
+        entry_count: 1,
+        entry_wins: 1,
+        sniper_kills: 0,
+      },
+      ...newerFriendRows,
+      {
+        match_id: "target-party-match",
+        faceit_player_id: "friend-2",
+        nickname: "Friend 2",
+        played_at: "2026-04-05T10:00:00.000Z",
+        kills: 17,
+        kd_ratio: 0.95,
+        adr: 68,
+        hs_percent: 32,
+        kr_ratio: 0.58,
+        win: true,
+        first_kills: 0,
+        clutch_kills: 0,
+        utility_damage: 4,
+        enemies_flashed: 1,
+        entry_count: 0,
+        entry_wins: 0,
+        sniper_kills: 0,
+      },
+      {
+        match_id: "target-party-match",
+        faceit_player_id: "friend-1",
+        nickname: "Friend 1",
+        played_at: "2026-04-05T10:00:00.000Z",
+        kills: 18,
+        kd_ratio: 1.0,
+        adr: 70,
+        hs_percent: 30,
+        kr_ratio: 0.6,
+        win: true,
+        first_kills: 0,
+        clutch_kills: 0,
+        utility_damage: 4,
+        enemies_flashed: 1,
+        entry_count: 0,
+        entry_wins: 0,
+        sniper_kills: 0,
+      },
+    ]);
+
+    await expect(
+      findLatestLeaderboardPlayedAt({
+        targetPlayerId: "target",
+        n: 20,
+        days: 30,
+        queue: "party",
+      })
+    ).resolves.toBe("2026-04-05T10:00:00.000Z");
+  });
+
+  it("ignores non-tracked match participants when classifying solo leaderboard matches", async () => {
+    supabaseState.setTrackedFriendsRows([
+      {
+        faceit_id: "target",
+        nickname: "Target",
+        elo: 2000,
+        is_active: true,
+      },
+      {
+        faceit_id: "friend-1",
+        nickname: "Friend 1",
+        elo: 1900,
+        is_active: true,
+      },
+    ]);
+    supabaseState.setMatchPlayerStatsRows([
+      {
+        match_id: "target-solo-match",
+        faceit_player_id: "target",
+        nickname: "Target",
+        played_at: "2026-04-06T10:00:00.000Z",
+        kills: 24,
+        kd_ratio: 1.3,
+        adr: 88,
+        hs_percent: 42,
+        kr_ratio: 0.75,
+        win: true,
+        first_kills: 1,
+        clutch_kills: 0,
+        utility_damage: 8,
+        enemies_flashed: 2,
+        entry_count: 1,
+        entry_wins: 1,
+        sniper_kills: 0,
+      },
+      ...Array.from({ length: 9 }, (_, index) => ({
+        match_id: "target-solo-match",
+        faceit_player_id: `other-${index}`,
+        nickname: `Other ${index}`,
+        played_at: "2026-04-06T10:00:00.000Z",
+        kills: 10,
+        kd_ratio: 1,
+        adr: 70,
+        hs_percent: 30,
+        kr_ratio: 0.6,
+        win: index < 4,
+        first_kills: 0,
+        clutch_kills: 0,
+        utility_damage: 3,
+        enemies_flashed: 1,
+        entry_count: 0,
+        entry_wins: 0,
+        sniper_kills: 0,
+      })),
+    ]);
+
+    await expect(
+      findLatestLeaderboardPlayedAt({
+        targetPlayerId: "target",
+        n: 20,
+        days: 30,
+        queue: "solo",
+      })
+    ).resolves.toBe("2026-04-06T10:00:00.000Z");
+  });
+
+  it("ignores null played_at rows when selecting the latest recent match", async () => {
+    supabaseState.setMatchPlayerStatsRows([
+      {
+        faceit_player_id: "target",
+        played_at: null,
+      },
+      {
+        faceit_player_id: "target",
+        played_at: "2026-04-07T12:00:00.000Z",
+      },
+    ]);
+
+    await expect(findLatestRecentMatchPlayedAt("target")).resolves.toBe(
+      "2026-04-07T12:00:00.000Z"
+    );
   });
 });
 

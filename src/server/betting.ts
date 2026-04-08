@@ -286,7 +286,9 @@ export const getUserPropBetsForMatch = createServerFn({ method: "GET" })
       .select("id")
       .eq("faceit_match_id", data.faceitMatchId);
 
-    const propPoolIds = (propRows ?? []).map((row: any) => row.id).filter(Boolean);
+    const propPoolIds = (propRows ?? [])
+      .map((row: any) => row.id)
+      .filter(Boolean);
 
     if (!propPoolIds.length) {
       return [];
