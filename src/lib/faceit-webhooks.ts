@@ -19,33 +19,6 @@ type ExtractedWebhookMatchUpdate = {
   shouldClear: boolean;
 };
 
-export const TRACKED_WEBHOOK_PLAYERS = {
-  soavarice: {
-    faceitId: "15844c99-d26e-419e-bd14-30908f502c03",
-    nickname: "soavarice",
-  },
-  f1aw1esss: {
-    faceitId: "65c93ab1-d2b2-416c-a5d1-d45452c9517d",
-    nickname: "F1aw1esss",
-  },
-  tibabg: {
-    faceitId: "8e42d5f3-b4e9-4a67-b402-be0ac3c0260b",
-    nickname: "TibaBG",
-  },
-  vandaloo: {
-    faceitId: "156e72ec-e758-42e4-9fd7-3acaefa332f5",
-    nickname: "VanDaLoo",
-  },
-} as const;
-
-export function getTrackedWebhookPlayerIds(): string[] {
-  return Object.values(TRACKED_WEBHOOK_PLAYERS).map(
-    (player) => player.faceitId
-  );
-}
-
-const TRACKED_PLAYER_IDS = new Set(getTrackedWebhookPlayerIds());
-
 const ACTIVE_EVENTS = new Set<FaceitWebhookEvent>([
   "match_object_created",
   "match_status_configuring",
@@ -67,6 +40,7 @@ function getObjectValues(input: unknown): unknown[] {
 
 function collectTrackedPlayerIds(
   input: unknown,
+  trackedPlayerIds: ReadonlySet<string>,
   found = new Set<string>()
 ): Set<string> {
   if (!input || typeof input !== "object") {
@@ -75,7 +49,7 @@ function collectTrackedPlayerIds(
 
   if (Array.isArray(input)) {
     for (const item of input) {
-      collectTrackedPlayerIds(item, found);
+      collectTrackedPlayerIds(item, trackedPlayerIds, found);
     }
     return found;
   }
@@ -89,13 +63,13 @@ function collectTrackedPlayerIds(
   ];
 
   for (const candidate of candidateIds) {
-    if (typeof candidate === "string" && TRACKED_PLAYER_IDS.has(candidate)) {
+    if (typeof candidate === "string" && trackedPlayerIds.has(candidate)) {
       found.add(candidate);
     }
   }
 
   for (const value of getObjectValues(record)) {
-    collectTrackedPlayerIds(value, found);
+    collectTrackedPlayerIds(value, trackedPlayerIds, found);
   }
 
   return found;
@@ -195,11 +169,13 @@ function extractMatchId(input: unknown): string | null {
 }
 
 export function extractFaceitWebhookMatchUpdate(
-  body: Record<string, unknown>
+  body: Record<string, unknown>,
+  trackedPlayerIds: Iterable<string>
 ): ExtractedWebhookMatchUpdate {
   const event = extractEventName(body);
   const matchId = extractMatchId(body);
-  const playerIds = [...collectTrackedPlayerIds(body)];
+  const trackedPlayerIdSet = new Set(trackedPlayerIds);
+  const playerIds = [...collectTrackedPlayerIds(body, trackedPlayerIdSet)];
 
   return {
     event,

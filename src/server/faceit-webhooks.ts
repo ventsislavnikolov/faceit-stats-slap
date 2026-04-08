@@ -1,18 +1,11 @@
 import {
   extractFaceitWebhookMatchUpdate,
   groupWebhookStateByMatch,
-  TRACKED_WEBHOOK_PLAYERS,
 } from "~/lib/faceit-webhooks";
 import { createServerSupabase } from "~/lib/supabase.server";
+import { loadTrackedPlayersSnapshot } from "~/server/tracked-players.server";
 
 type FaceitWebhookBody = Record<string, unknown>;
-
-function getTrackedNickname(faceitId: string): string {
-  const player = Object.values(TRACKED_WEBHOOK_PLAYERS).find(
-    (entry) => entry.faceitId === faceitId
-  );
-  return player?.nickname ?? faceitId;
-}
 
 function getPersistedStatus(event: string): string {
   if (
@@ -39,13 +32,20 @@ function getPersistedStatus(event: string): string {
 export async function persistFaceitWebhook(
   body: FaceitWebhookBody
 ): Promise<void> {
-  const update = extractFaceitWebhookMatchUpdate(body);
+  const trackedPlayers = await loadTrackedPlayersSnapshot();
+  const trackedNicknameById = new Map(
+    trackedPlayers.map((player) => [player.faceitId, player.nickname])
+  );
+  const update = extractFaceitWebhookMatchUpdate(
+    body,
+    trackedNicknameById.keys()
+  );
   const supabase = createServerSupabase();
 
   if (update.shouldActivate && update.matchId && update.playerIds.length > 0) {
     const rows = update.playerIds.map((playerId) => ({
       player_faceit_id: playerId,
-      player_nickname: getTrackedNickname(playerId),
+      player_nickname: trackedNicknameById.get(playerId) ?? playerId,
       current_match_id: update.matchId,
       match_status: getPersistedStatus(update.event),
       source_event: update.event,
@@ -79,7 +79,7 @@ export async function persistFaceitWebhook(
       await supabase.from("faceit_webhook_live_state").upsert(
         update.playerIds.map((playerId) => ({
           player_faceit_id: playerId,
-          player_nickname: getTrackedNickname(playerId),
+          player_nickname: trackedNicknameById.get(playerId) ?? playerId,
           ...clearPayload,
         })),
         { onConflict: "player_faceit_id" }

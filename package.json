@@ -13,12 +13,12 @@
     "test:watch": "vitest",
     "check": "ultracite check",
     "test:e2e": "playwright test",
-    "test:e2e:coverage": "playwright test --project=chromium && node scripts/e2e-coverage-report.mjs",
-    "test:e2e:coverage:report": "node scripts/e2e-coverage-report.mjs",
-    "test:e2e:coverage:clean": "rm -rf coverage/e2e coverage/e2e-report",
     "start": "node .output/server/index.mjs",
     "test:coverage": "vitest run --coverage",
-    "test:coverage:all": "vitest run --coverage && pnpm test:e2e:coverage"
+    "test:e2e:coverage:report": "node scripts/e2e-coverage-report.mjs",
+    "test:e2e:coverage:clean": "rm -rf coverage/e2e coverage/e2e-report",
+    "test:coverage:all": "vitest run --coverage && pnpm test:e2e:coverage",
+    "test:e2e:coverage": "playwright test --project=chromium && node scripts/e2e-coverage-report.mjs"
   },
   "dependencies": {
     "@laihoe/demoparser2": "^0.41.1",

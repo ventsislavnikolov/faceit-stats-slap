@@ -11,8 +11,8 @@ import { SeasonMyBetsTab } from "~/components/SeasonMyBetsTab";
 import { useActiveSeason } from "~/hooks/useActiveSeason";
 import { useLiveMatches } from "~/hooks/useLiveMatches";
 import { useSeasonCoinBalance } from "~/hooks/useSeasonCoinBalance";
+import { useTrackedPlayers } from "~/hooks/useTrackedPlayers";
 import { MY_NICKNAME } from "~/lib/constants";
-import { getTrackedWebhookPlayerIds } from "~/lib/faceit-webhooks";
 import type { Season } from "~/lib/types";
 
 type BetsTab = "leaderboard" | "live" | "my-bets" | "history";
@@ -175,7 +175,8 @@ function BetsPage() {
   );
   const userCoins = coinBalance ?? 0;
 
-  const trackedPlayerIds = getTrackedWebhookPlayerIds();
+  const { data: trackedPlayers = [] } = useTrackedPlayers();
+  const trackedPlayerIds = trackedPlayers.map((player) => player.faceitId);
   const { data: liveMatches = [] } = useLiveMatches(trackedPlayerIds);
 
   if (!authResolved || seasonLoading) {

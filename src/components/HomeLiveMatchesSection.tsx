@@ -1,5 +1,5 @@
 import { useLiveMatches } from "~/hooks/useLiveMatches";
-import { getTrackedWebhookPlayerIds } from "~/lib/faceit-webhooks";
+import { useTrackedPlayers } from "~/hooks/useTrackedPlayers";
 import type { LiveMatch } from "~/lib/types";
 import { LiveMatchCard } from "./LiveMatchCard";
 
@@ -18,14 +18,16 @@ export function HomeLiveMatchesSection({
   userId,
   userCoins,
 }: HomeLiveMatchesSectionProps) {
-  const trackedPlayerIds = getTrackedWebhookPlayerIds();
+  const { data: trackedPlayers = [], isLoading: trackedPlayersLoading } =
+    useTrackedPlayers();
+  const trackedPlayerIds = trackedPlayers.map((player) => player.faceitId);
   const {
     data: matches = [],
     isLoading,
     isError,
   } = useLiveMatches(trackedPlayerIds);
 
-  if (isLoading) {
+  if (trackedPlayersLoading || isLoading) {
     return (
       <div className="flex flex-col gap-4">
         {Array.from({ length: 2 }).map((_, i) => (
