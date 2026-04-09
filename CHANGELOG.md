@@ -1,3 +1,10 @@
+## [1.13.1](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.13.0...v1.13.1) (2026-04-09)
+
+
+### Bug Fixes
+
+* display player names instead of UUIDs in live bets ([#24](https://github.com/ventsislavnikolov/faceit-stats-slap/issues/24)) ([32b26c9](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/32b26c951e7fa3a327b1cea538b5c5b29a9a171e))
+
 # [1.13.0](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.12.0...v1.13.0) (2026-04-08)
 
 
