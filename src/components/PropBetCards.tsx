@@ -1,9 +1,10 @@
 import { usePropPools } from "~/hooks/usePropPools";
 import { useUserPropBetsForMatch } from "~/hooks/useUserPropBetsForMatch";
-import type { PropPool } from "~/lib/types";
+import type { BetWithNickname, PropPool } from "~/lib/types";
 import { BetCard } from "./BetCard";
 
 interface PropBetCardsProps {
+  allBets?: BetWithNickname[];
   matchId: string;
   seasonId: string;
   userCoins: number;
@@ -12,12 +13,14 @@ interface PropBetCardsProps {
 
 function shouldRenderLiveProp(
   prop: PropPool,
-  hasExistingBet: boolean
+  hasExistingBet: boolean,
+  hasAnyBets: boolean
 ): boolean {
-  return prop.status === "open" || hasExistingBet;
+  return prop.status === "open" || hasExistingBet || hasAnyBets;
 }
 
 export function PropBetCards({
+  allBets = [],
   matchId,
   seasonId,
   userCoins,
@@ -37,7 +40,11 @@ export function PropBetCards({
   );
 
   const visibleProps = propPools.filter((prop) =>
-    shouldRenderLiveProp(prop, userPropBetsById.has(prop.id))
+    shouldRenderLiveProp(
+      prop,
+      userPropBetsById.has(prop.id),
+      allBets.some((b) => b.propPoolId === prop.id)
+    )
   );
 
   if (!visibleProps.length) {
@@ -53,6 +60,7 @@ export function PropBetCards({
 
         return (
           <BetCard
+            allBets={allBets}
             closesAt={prop.closesAt}
             existingBet={
               existingBet

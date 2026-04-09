@@ -1,11 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import {
-  calculatePayout,
-  calculateReturnPct,
-  isBettingOpen,
-} from "~/lib/betting";
-import type { BettingPoolStatus } from "~/lib/types";
+import { calculatePayout, isBettingOpen } from "~/lib/betting";
+import type { BetWithNickname, BettingPoolStatus } from "~/lib/types";
 import { placeBet } from "~/server/betting";
 
 interface BetCardSide {
@@ -14,6 +10,7 @@ interface BetCardSide {
 }
 
 interface BetCardProps {
+  allBets?: BetWithNickname[];
   closesAt: string;
   existingBet?: { side: string; amount: number; payout: number | null } | null;
   id: string;
@@ -30,6 +27,7 @@ interface BetCardProps {
 }
 
 export function BetCard({
+  allBets = [],
   closesAt,
   existingBet,
   id,
@@ -47,6 +45,10 @@ export function BetCard({
   const queryClient = useQueryClient();
   const side1Key = type === "match" ? "team1" : "yes";
   const side2Key = type === "match" ? "team2" : "no";
+
+  const cardBets = allBets.filter((b) =>
+    type === "match" ? b.poolId === id : b.propPoolId === id
+  );
 
   const [selectedSide, setSelectedSide] = useState<string | null>(null);
   const [amount, setAmount] = useState(1);
@@ -76,18 +78,7 @@ export function BetCard({
     return () => clearInterval(intervalId);
   }, [closesAt, isOpen]);
 
-  const sidePool = (side: string) =>
-    side === side1Key ? side1.pool : side2.pool;
-  const oppPool = (side: string) =>
-    side === side1Key ? side2.pool : side1.pool;
-
-  const potentialPayout = selectedSide
-    ? calculatePayout(
-        amount,
-        sidePool(selectedSide) + amount,
-        oppPool(selectedSide)
-      )
-    : 0;
+  const potentialPayout = selectedSide ? calculatePayout(amount) : 0;
 
   async function handlePlaceBet() {
     if (!(userId && selectedSide && amount > 0)) {
@@ -111,6 +102,7 @@ export function BetCard({
     }
     queryClient.invalidateQueries({ queryKey: ["betting-pool"] });
     queryClient.invalidateQueries({ queryKey: ["prop-pools"] });
+    queryClient.invalidateQueries({ queryKey: ["all-bets-for-match"] });
     queryClient.invalidateQueries({ queryKey: ["season-coin-balance"] });
     queryClient.invalidateQueries({ queryKey: ["season-leaderboard"] });
   }
@@ -156,6 +148,27 @@ export function BetCard({
             Bet refunded ({existingBet.amount} coins returned).
           </div>
         )}
+        {cardBets.length > 0 && (
+          <div className="mt-3 border-t border-border pt-2">
+            <div className="mb-1 text-[10px] text-text-dim uppercase tracking-wider">
+              All bets
+            </div>
+            {cardBets.map((bet) => (
+              <div
+                className={`flex justify-between text-xs ${bet.userId === userId ? "text-accent" : "text-text-muted"}`}
+                key={bet.id}
+              >
+                <span>
+                  {bet.nickname}{" "}
+                  <span className="text-text-dim">
+                    on {bet.side === side1Key ? side1.label : side2.label}
+                  </span>
+                </span>
+                <span className="font-bold">{bet.amount}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     );
   }
@@ -178,11 +191,6 @@ export function BetCard({
           { key: side1Key, side: side1 },
           { key: side2Key, side: side2 },
         ].map(({ key, side }) => {
-          const retPct = calculateReturnPct(
-            amount,
-            side.pool + (selectedSide === key ? amount : 0),
-            oppPool(key)
-          );
           const isSelected = selectedSide === key;
           return (
             <button
@@ -199,9 +207,7 @@ export function BetCard({
               <div className="truncate font-bold">{side.label}</div>
               <div className="mt-0.5 text-text-muted">
                 {side.pool} coins
-                {retPct > 0 && (
-                  <span className="ml-1 text-accent">+{retPct}%</span>
-                )}
+                <span className="ml-1 text-accent">2x</span>
               </div>
             </button>
           );
@@ -254,6 +260,28 @@ export function BetCard({
         >
           {loading ? "..." : "BET"}
         </button>
+      )}
+
+      {cardBets.length > 0 && (
+        <div className="mt-3 border-t border-border pt-2">
+          <div className="mb-1 text-[10px] text-text-dim uppercase tracking-wider">
+            All bets
+          </div>
+          {cardBets.map((bet) => (
+            <div
+              className={`flex justify-between text-xs ${bet.userId === userId ? "text-accent" : "text-text-muted"}`}
+              key={bet.id}
+            >
+              <span>
+                {bet.nickname}{" "}
+                <span className="text-text-dim">
+                  on {bet.side === side1Key ? side1.label : side2.label}
+                </span>
+              </span>
+              <span className="font-bold">{bet.amount}</span>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );

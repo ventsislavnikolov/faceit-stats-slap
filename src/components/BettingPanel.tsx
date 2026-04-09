@@ -1,10 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import {
-  calculatePayout,
-  calculateReturnPct,
-  isBettingOpen,
-} from "~/lib/betting";
+import { calculatePayout, isBettingOpen } from "~/lib/betting";
 import type { Bet, BetSide, BettingPool } from "~/lib/types";
 import { placeBet } from "~/server/betting";
 
@@ -72,19 +68,11 @@ export function BettingPanel({
     queryClient.invalidateQueries({ queryKey: ["coin-balance", userId] });
   }
 
-  const potentialPayout = selectedSide
-    ? calculatePayout(
-        amount,
-        selectedSide === "team1" ? pool.team1Pool + amount : pool.team1Pool,
-        selectedSide === "team2" ? pool.team2Pool + amount : pool.team2Pool
-      )
-    : 0;
+  const potentialPayout = selectedSide ? calculatePayout(amount) : 0;
 
   // Post-bet view
   if (userBet) {
-    const betPool = userBet.side === "team1" ? pool.team1Pool : pool.team2Pool;
-    const oppPool = userBet.side === "team1" ? pool.team2Pool : pool.team1Pool;
-    const currentPayout = calculatePayout(userBet.amount, betPool, oppPool);
+    const currentPayout = calculatePayout(userBet.amount);
     return (
       <div className="mt-3 border-border border-t pt-3 text-text-muted text-xs">
         <div className="flex items-center justify-between">
@@ -162,12 +150,6 @@ export function BettingPanel({
         {(["team1", "team2"] as BetSide[]).map((side) => {
           const name = side === "team1" ? pool.team1Name : pool.team2Name;
           const sidePool = side === "team1" ? pool.team1Pool : pool.team2Pool;
-          const oppPool = side === "team1" ? pool.team2Pool : pool.team1Pool;
-          const retPct = calculateReturnPct(
-            amount,
-            sidePool + (selectedSide === side ? amount : 0),
-            oppPool
-          );
           const isSelected = selectedSide === side;
           return (
             <button
@@ -179,13 +161,12 @@ export function BettingPanel({
               disabled={!isOpen}
               key={side}
               onClick={() => setSelectedSide(side)}
+              type="button"
             >
               <div className="truncate font-bold">{name}</div>
               <div className="mt-0.5 text-text-muted">
                 {sidePool} coins
-                {retPct > 0 && (
-                  <span className="ml-1 text-accent">+{retPct}%</span>
-                )}
+                <span className="ml-1 text-accent">2x</span>
               </div>
             </button>
           );

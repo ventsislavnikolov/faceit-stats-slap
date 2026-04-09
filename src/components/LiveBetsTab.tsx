@@ -1,5 +1,6 @@
 import { BetCard } from "~/components/BetCard";
 import { PropBetCards } from "~/components/PropBetCards";
+import { useAllBetsForMatch } from "~/hooks/useAllBetsForMatch";
 import { useBettingPool } from "~/hooks/useBettingPool";
 import type { LiveMatch } from "~/lib/types";
 
@@ -19,6 +20,7 @@ interface MatchBetsProps {
 
 function MatchBets({ match, seasonId, userCoins, userId }: MatchBetsProps) {
   const { data } = useBettingPool(match.matchId, userId);
+  const { data: allBets = [] } = useAllBetsForMatch(match.matchId);
   const pool = data?.pool ?? null;
   const userBet = data?.userBet ?? null;
 
@@ -33,6 +35,7 @@ function MatchBets({ match, seasonId, userCoins, userId }: MatchBetsProps) {
 
       {pool ? (
         <BetCard
+          allBets={allBets}
           closesAt={pool.closesAt}
           existingBet={
             userBet
@@ -62,6 +65,7 @@ function MatchBets({ match, seasonId, userCoins, userId }: MatchBetsProps) {
       )}
 
       <PropBetCards
+        allBets={allBets}
         matchId={match.matchId}
         seasonId={seasonId}
         userCoins={userCoins}
