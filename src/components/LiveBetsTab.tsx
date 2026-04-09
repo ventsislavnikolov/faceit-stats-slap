@@ -31,7 +31,7 @@ function MatchBets({ match, seasonId, userCoins, userId }: MatchBetsProps) {
         {team1Name} vs {team2Name} &middot; {match.map}
       </div>
 
-      {pool && (
+      {pool ? (
         <BetCard
           closesAt={pool.closesAt}
           existingBet={
@@ -44,16 +44,21 @@ function MatchBets({ match, seasonId, userCoins, userId }: MatchBetsProps) {
               : null
           }
           id={pool.id}
-          label={`${pool.team1Name} vs ${pool.team2Name}`}
+          label={`Match Winner: ${pool.team1Name} vs ${pool.team2Name}`}
           seasonId={seasonId}
           side1={{ label: pool.team1Name, pool: pool.team1Pool }}
           side2={{ label: pool.team2Name, pool: pool.team2Pool }}
           status={pool.status}
+          sublabel={match.map}
           type="match"
           userCoins={userCoins}
           userId={userId}
           winningTeam={pool.winningTeam}
         />
+      ) : (
+        <div className="rounded-lg border border-border bg-bg-elevated p-4 text-text-dim text-xs">
+          Betting not available yet for this match.
+        </div>
       )}
 
       <PropBetCards

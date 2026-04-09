@@ -365,7 +365,13 @@ export const getLiveMatches = createServerFn({ method: "GET" })
         teams: {
           faction1: {
             teamId: match.teams.faction1.faction_id,
-            name: match.teams.faction1.leader || "Team 1",
+            name:
+              (match.teams.faction1.roster || []).find(
+                (p: any) =>
+                  p.player_id === match.teams.faction1.leader
+              )?.nickname ||
+              match.teams.faction1.name ||
+              "Team 1",
             roster: (match.teams.faction1.roster || []).map((p: any) => ({
               playerId: p.player_id,
               nickname: p.nickname,
@@ -375,7 +381,13 @@ export const getLiveMatches = createServerFn({ method: "GET" })
           },
           faction2: {
             teamId: match.teams.faction2.faction_id,
-            name: match.teams.faction2.leader || "Team 2",
+            name:
+              (match.teams.faction2.roster || []).find(
+                (p: any) =>
+                  p.player_id === match.teams.faction2.leader
+              )?.nickname ||
+              match.teams.faction2.name ||
+              "Team 2",
             roster: (match.teams.faction2.roster || []).map((p: any) => ({
               playerId: p.player_id,
               nickname: p.nickname,
