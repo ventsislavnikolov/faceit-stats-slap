@@ -1,10 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import {
-  calculatePayout,
-  calculateReturnPct,
-  isBettingOpen,
-} from "~/lib/betting";
+import { calculatePayout, isBettingOpen } from "~/lib/betting";
 import type { BetWithNickname, BettingPoolStatus } from "~/lib/types";
 import { placeBet } from "~/server/betting";
 
@@ -82,18 +78,7 @@ export function BetCard({
     return () => clearInterval(intervalId);
   }, [closesAt, isOpen]);
 
-  const sidePool = (side: string) =>
-    side === side1Key ? side1.pool : side2.pool;
-  const oppPool = (side: string) =>
-    side === side1Key ? side2.pool : side1.pool;
-
-  const potentialPayout = selectedSide
-    ? calculatePayout(
-        amount,
-        sidePool(selectedSide) + amount,
-        oppPool(selectedSide)
-      )
-    : 0;
+  const potentialPayout = selectedSide ? calculatePayout(amount) : 0;
 
   async function handlePlaceBet() {
     if (!(userId && selectedSide && amount > 0)) {
@@ -206,11 +191,6 @@ export function BetCard({
           { key: side1Key, side: side1 },
           { key: side2Key, side: side2 },
         ].map(({ key, side }) => {
-          const retPct = calculateReturnPct(
-            amount,
-            side.pool + (selectedSide === key ? amount : 0),
-            oppPool(key)
-          );
           const isSelected = selectedSide === key;
           return (
             <button
@@ -227,9 +207,7 @@ export function BetCard({
               <div className="truncate font-bold">{side.label}</div>
               <div className="mt-0.5 text-text-muted">
                 {side.pool} coins
-                {retPct > 0 && (
-                  <span className="ml-1 text-accent">+{retPct}%</span>
-                )}
+                <span className="ml-1 text-accent">2x</span>
               </div>
             </button>
           );
