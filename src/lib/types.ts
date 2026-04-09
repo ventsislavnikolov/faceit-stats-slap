@@ -318,6 +318,10 @@ export interface Bet {
   userId: string;
 }
 
+export interface BetWithNickname extends Bet {
+  nickname: string;
+}
+
 export interface MatchBetHistoryItem extends Bet {
   audit?: BetAuditEvent | null;
   kind: "match";

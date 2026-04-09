@@ -4,6 +4,7 @@ import type {
   Bet,
   BetAuditEvent,
   BetHistoryItem,
+  BetWithNickname,
   BettingPool,
   PropPool,
 } from "~/lib/types";
@@ -390,4 +391,71 @@ export const getBetAuditLog = createServerFn({ method: "GET" })
       ascending: false,
     });
     return (rows ?? []).slice(0, limit).map(rowToBetAuditEvent);
+  });
+
+// ── getAllBetsForMatch ────────────────────────────────────────
+
+export const getAllBetsForMatch = createServerFn({ method: "GET" })
+  .inputValidator((faceitMatchId: string) => faceitMatchId)
+  .handler(async ({ data: faceitMatchId }): Promise<BetWithNickname[]> => {
+    const supabase = createServerSupabase();
+
+    // Get the match pool
+    const { data: poolRow } = await supabase
+      .from("betting_pools")
+      .select("id")
+      .eq("faceit_match_id", faceitMatchId)
+      .single();
+
+    // Get prop pool IDs
+    const { data: propRows } = await supabase
+      .from("prop_pools")
+      .select("id")
+      .eq("faceit_match_id", faceitMatchId);
+
+    const poolIds = [poolRow?.id, ...(propRows ?? []).map((r: any) => r.id)].filter(Boolean);
+    if (!poolIds.length) {
+      return [];
+    }
+
+    // Get all bets across match + prop pools
+    const { data: betRows } = await supabase
+      .from("bets")
+      .select("*")
+      .or(
+        poolIds
+          .map((id) =>
+            poolRow && id === poolRow.id
+              ? `pool_id.eq.${id}`
+              : `prop_pool_id.eq.${id}`
+          )
+          .join(",")
+      );
+
+    if (!betRows?.length) {
+      return [];
+    }
+
+    // Resolve user nicknames
+    const userIds = [...new Set((betRows as any[]).map((b) => b.user_id))];
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("id, nickname")
+      .in("id", userIds);
+
+    const nicknameMap = new Map(
+      (profiles ?? []).map((p: any) => [p.id, p.nickname])
+    );
+
+    return (betRows as any[]).map((row) => ({
+      id: row.id,
+      poolId: row.pool_id,
+      propPoolId: row.prop_pool_id,
+      userId: row.user_id,
+      side: row.side,
+      amount: row.amount,
+      payout: row.payout,
+      createdAt: row.created_at,
+      nickname: nicknameMap.get(row.user_id) ?? "Unknown",
+    }));
   });
