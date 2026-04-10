@@ -189,10 +189,10 @@ BEGIN
     WHERE id = p_prop_pool_id AND status = 'open' AND now() >= closes_at;
     INSERT INTO bet_failed_events (
       user_id, side, amount, error_reason,
-      pool_closes_at, match_started_at
+      faceit_match_id, pool_status, pool_closes_at, match_started_at
     ) VALUES (
       p_user_id, p_side, p_amount, 'Prop betting is closed',
-      v_prop.closes_at, NULL
+      v_prop.faceit_match_id, v_prop.status, v_prop.closes_at, NULL
     );
     RETURN json_build_object('error', 'Prop betting is closed');
   END IF;
