@@ -367,8 +367,7 @@ export const getLiveMatches = createServerFn({ method: "GET" })
             teamId: match.teams.faction1.faction_id,
             name:
               (match.teams.faction1.roster || []).find(
-                (p: any) =>
-                  p.player_id === match.teams.faction1.leader
+                (p: any) => p.player_id === match.teams.faction1.leader
               )?.nickname ||
               match.teams.faction1.name ||
               "Team 1",
@@ -383,8 +382,7 @@ export const getLiveMatches = createServerFn({ method: "GET" })
             teamId: match.teams.faction2.faction_id,
             name:
               (match.teams.faction2.roster || []).find(
-                (p: any) =>
-                  p.player_id === match.teams.faction2.leader
+                (p: any) => p.player_id === match.teams.faction2.leader
               )?.nickname ||
               match.teams.faction2.name ||
               "Team 2",

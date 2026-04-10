@@ -4,8 +4,8 @@ import type {
   Bet,
   BetAuditEvent,
   BetHistoryItem,
-  BetWithNickname,
   BettingPool,
+  BetWithNickname,
   PropPool,
 } from "~/lib/types";
 
@@ -413,7 +413,10 @@ export const getAllBetsForMatch = createServerFn({ method: "GET" })
       .select("id")
       .eq("faceit_match_id", faceitMatchId);
 
-    const poolIds = [poolRow?.id, ...(propRows ?? []).map((r: any) => r.id)].filter(Boolean);
+    const poolIds = [
+      poolRow?.id,
+      ...(propRows ?? []).map((r: any) => r.id),
+    ].filter(Boolean);
     if (!poolIds.length) {
       return [];
     }

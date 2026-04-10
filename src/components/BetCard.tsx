@@ -1,7 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { calculatePayout, isBettingOpen } from "~/lib/betting";
-import type { BetWithNickname, BettingPoolStatus } from "~/lib/types";
+import type { BettingPoolStatus, BetWithNickname } from "~/lib/types";
 import { placeBet } from "~/server/betting";
 
 interface BetCardSide {
@@ -149,7 +149,7 @@ export function BetCard({
           </div>
         )}
         {cardBets.length > 0 && (
-          <div className="mt-3 border-t border-border pt-2">
+          <div className="mt-3 border-border border-t pt-2">
             <div className="mb-1 text-[10px] text-text-dim uppercase tracking-wider">
               All bets
             </div>
@@ -263,7 +263,7 @@ export function BetCard({
       )}
 
       {cardBets.length > 0 && (
-        <div className="mt-3 border-t border-border pt-2">
+        <div className="mt-3 border-border border-t pt-2">
           <div className="mb-1 text-[10px] text-text-dim uppercase tracking-wider">
             All bets
           </div>
