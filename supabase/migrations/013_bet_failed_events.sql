@@ -24,6 +24,8 @@ CREATE INDEX IF NOT EXISTS idx_bet_failed_events_user_id
 CREATE INDEX IF NOT EXISTS idx_bet_failed_events_match_id
   ON bet_failed_events(faceit_match_id, created_at DESC);
 
+ALTER TABLE bet_failed_events ENABLE ROW LEVEL SECURITY;
+
 -- ── place_bet (updated: logs failures to bet_failed_events) ──
 CREATE OR REPLACE FUNCTION place_bet(
   p_user_id      UUID,
@@ -92,6 +94,10 @@ BEGIN
     END IF;
 
     SELECT * INTO v_pool FROM betting_pools WHERE id = p_pool_id FOR UPDATE;
+    v_seconds_since_match_start := CASE
+      WHEN v_pool.match_started_at IS NULL THEN NULL
+      ELSE GREATEST(floor(extract(epoch from (now() - v_pool.match_started_at)))::integer, 0)
+    END;
     IF NOT FOUND THEN
       INSERT INTO bet_failed_events (user_id, side, amount, error_reason)
       VALUES (p_user_id, p_side, p_amount, 'Pool not found');
@@ -107,10 +113,9 @@ BEGIN
       ) VALUES (
         p_user_id, v_pool.id, v_pool.faceit_match_id, p_side, p_amount,
         'Betting is closed',
-        v_pool.status, v_pool.closes_at, v_pool.match_started_at,
-        CASE WHEN v_pool.match_started_at IS NULL THEN NULL
-             ELSE GREATEST(floor(extract(epoch from (now() - v_pool.match_started_at)))::integer, 0)
-        END
+        CASE WHEN v_pool.status != 'OPEN' THEN v_pool.status ELSE 'CLOSED' END,
+        v_pool.closes_at, v_pool.match_started_at,
+        v_seconds_since_match_start
       );
       RETURN json_build_object('error', 'Betting is closed');
     END IF;
@@ -123,9 +128,7 @@ BEGIN
         p_user_id, v_pool.id, v_pool.faceit_match_id, p_side, p_amount,
         'Already placed a bet on this match',
         v_pool.status, v_pool.closes_at, v_pool.match_started_at,
-        CASE WHEN v_pool.match_started_at IS NULL THEN NULL
-             ELSE GREATEST(floor(extract(epoch from (now() - v_pool.match_started_at)))::integer, 0)
-        END
+        v_seconds_since_match_start
       );
       RETURN json_build_object('error', 'Already placed a bet on this match');
     END IF;
