@@ -1,3 +1,10 @@
+## [1.14.1](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.14.0...v1.14.1) (2026-04-10)
+
+
+### Bug Fixes
+
+* handle case-insensitive status check for prop pool betting availability ([#26](https://github.com/ventsislavnikolov/faceit-stats-slap/issues/26)) ([6b7ade6](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/6b7ade65af2b5139606727e4b3738a36f81c9d07))
+
 # [1.14.0](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.13.1...v1.14.0) (2026-04-10)
 
 
