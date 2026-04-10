@@ -1,4 +1,4 @@
-import type { BettingPoolStatus } from "~/lib/types";
+import type { BettingPoolStatus, PropPoolStatus } from "~/lib/types";
 
 /**
  * Fixed 2x payout for winning bets.
@@ -13,10 +13,10 @@ export function calculateReturnPct(): number {
 }
 
 export function isBettingOpen(
-  status: BettingPoolStatus,
+  status: BettingPoolStatus | PropPoolStatus,
   closesAt: string
 ): boolean {
-  return status === "OPEN" && new Date(closesAt) > new Date();
+  return status.toUpperCase() === "OPEN" && new Date(closesAt) > new Date();
 }
 
 export function formatBetTiming(

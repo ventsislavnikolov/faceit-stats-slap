@@ -1,7 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { calculatePayout, isBettingOpen } from "~/lib/betting";
-import type { BettingPoolStatus, BetWithNickname } from "~/lib/types";
+import type { BetWithNickname } from "~/lib/types";
 import { placeBet } from "~/server/betting";
 
 interface BetCardSide {
@@ -56,7 +56,7 @@ export function BetCard({
   const [error, setError] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState("");
 
-  const isOpen = isBettingOpen(status as BettingPoolStatus, closesAt);
+  const isOpen = isBettingOpen(status as "OPEN" | "open", closesAt);
   const canBet = isOpen && userId && userCoins > 0 && !existingBet;
 
   useEffect(() => {

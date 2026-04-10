@@ -38,4 +38,14 @@ describe("isBettingOpen", () => {
     const future = new Date(Date.now() + 60_000).toISOString();
     expect(isBettingOpen("CLOSED", future)).toBe(false);
   });
+
+  it("returns true for lowercase open (prop pools)", () => {
+    const future = new Date(Date.now() + 60_000).toISOString();
+    expect(isBettingOpen("open", future)).toBe(true);
+  });
+
+  it("returns false for lowercase closed (prop pools)", () => {
+    const future = new Date(Date.now() + 60_000).toISOString();
+    expect(isBettingOpen("closed", future)).toBe(false);
+  });
 });
