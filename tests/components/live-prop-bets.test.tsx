@@ -67,7 +67,7 @@ const openProp = {
 } as const;
 
 describe("live prop bets", () => {
-  it("renders open prop bets on the live match card", () => {
+  it("does not render prop bets (temporarily hidden)", () => {
     vi.mocked(useBettingPool).mockReturnValue({
       data: {
         pool: {
@@ -109,9 +109,9 @@ describe("live prop bets", () => {
       />
     );
 
-    expect(html).toContain("boR0 16+ kills");
-    expect(html).toContain("Yes");
-    expect(html).toContain("No");
+    expect(html).not.toContain("boR0 16+ kills");
+    expect(html).not.toContain("Yes");
+    expect(html).not.toContain("No");
   });
 
   it("hides closed prop bets when the user never placed one", () => {
@@ -165,7 +165,7 @@ describe("live prop bets", () => {
     expect(html).not.toContain("boR0 16+ kills");
   });
 
-  it("keeps a closed prop visible when the user already placed a bet", () => {
+  it("does not render prop bets even when user placed a bet (temporarily hidden)", () => {
     vi.mocked(useBettingPool).mockReturnValue({
       data: {
         pool: {
@@ -224,8 +224,7 @@ describe("live prop bets", () => {
       />
     );
 
-    expect(html).toContain("boR0 16+ kills");
-    expect(html).toContain("Your bet");
-    expect(html).not.toContain(">Closed<");
+    expect(html).not.toContain("boR0 16+ kills");
+    expect(html).not.toContain("Your bet");
   });
 });

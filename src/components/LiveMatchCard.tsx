@@ -184,12 +184,12 @@ export function LiveMatchCard({
             userId={userId ?? null}
           />
           <div className="mt-3 flex flex-col gap-3">
-            <PropBetCards
+            {/* <PropBetCards
               matchId={match.matchId}
               seasonId={seasonId}
               userCoins={userCoins ?? 0}
               userId={userId ?? null}
-            />
+            /> */}
           </div>
         </>
       )}

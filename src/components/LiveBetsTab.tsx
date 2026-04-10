@@ -64,13 +64,13 @@ function MatchBets({ match, seasonId, userCoins, userId }: MatchBetsProps) {
         </div>
       )}
 
-      <PropBetCards
+      {/* <PropBetCards
         allBets={allBets}
         matchId={match.matchId}
         seasonId={seasonId}
         userCoins={userCoins}
         userId={userId}
-      />
+      /> */}
     </div>
   );
 }
