@@ -1,3 +1,16 @@
+# [1.14.0](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.13.1...v1.14.0) (2026-04-10)
+
+
+### Bug Fixes
+
+* include faceit_match_id and pool_status in prop betting closed failure log ([208f160](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/208f16004da85591b84e247f38d8fcc587106f5f))
+* rls, stale pool_status, and deduplicate seconds_since_match_start in bet_failed_events ([84350bf](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/84350bfe0a833925e5f5d24c36b43cdb169145aa))
+
+
+### Features
+
+* log failed place_bet attempts to bet_failed_events ([2eba8b2](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/2eba8b2b700a9032f6f9aafcd419317dbd7c99e7))
+
 ## [1.13.1](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.13.0...v1.13.1) (2026-04-09)
 
 
