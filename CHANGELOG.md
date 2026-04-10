@@ -1,3 +1,10 @@
+# [1.15.0](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.14.1...v1.15.0) (2026-04-10)
+
+
+### Features
+
+* temporarily hide prop bet cards from UI ([06bdc35](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/06bdc35634292112874fedd9aa8edd97939e6437))
+
 ## [1.14.1](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.14.0...v1.14.1) (2026-04-10)
 
 
