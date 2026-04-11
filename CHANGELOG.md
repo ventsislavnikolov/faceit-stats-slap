@@ -1,3 +1,10 @@
+## [1.17.2](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.17.1...v1.17.2) (2026-04-11)
+
+
+### Bug Fixes
+
+* remove 500-coin cap from bet_audit_events amount constraint ([52620cd](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/52620cde0a7b5643e7b44f706690fad16557d403))
+
 ## [1.17.1](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.17.0...v1.17.1) (2026-04-11)
 
 
