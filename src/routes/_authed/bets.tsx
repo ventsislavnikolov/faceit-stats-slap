@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { createIsomorphicFn } from "@tanstack/react-start";
+import { Skeleton } from "boneyard-js/react";
 import { useEffect, useState } from "react";
 import { CreateSeasonForm } from "~/components/CreateSeasonForm";
 import { LiveBetsTab } from "~/components/LiveBetsTab";
@@ -187,39 +188,33 @@ function BetsPage() {
           style={{ scrollbarGutter: "stable" }}
         >
           <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6">
-            {/* Season header skeleton */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="h-5 w-32 animate-pulse rounded bg-border" />
-                <div className="h-4 w-24 animate-pulse rounded bg-border" />
-              </div>
-              <div className="h-4 w-20 animate-pulse rounded bg-border" />
-            </div>
-            {/* Tab bar skeleton */}
-            <div className="flex gap-2">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div
-                  className="h-8 w-24 animate-pulse rounded bg-bg-elevated"
-                  key={i}
-                />
-              ))}
-            </div>
-            {/* Leaderboard rows skeleton */}
-            <div className="flex flex-col gap-1">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <div
-                  className="grid gap-2 rounded bg-bg-elevated px-3 py-2"
-                  key={i}
-                  style={{ gridTemplateColumns: "3rem 1fr 5rem 5rem 5rem" }}
-                >
-                  <div className="h-3 w-6 animate-pulse rounded bg-border" />
-                  <div className="h-3 w-24 animate-pulse rounded bg-border" />
-                  <div className="ml-auto h-3 w-10 animate-pulse rounded bg-border" />
-                  <div className="ml-auto h-3 w-8 animate-pulse rounded bg-border" />
-                  <div className="ml-auto h-3 w-8 animate-pulse rounded bg-border" />
+            <Skeleton
+              fallback={
+                <div className="flex flex-col gap-4">
+                  <div className="h-10 w-full animate-pulse rounded-lg bg-border" />
+                  <div className="flex gap-2">
+                    {Array.from({ length: 4 }).map((_, i) => (
+                      <div
+                        className="h-8 w-24 animate-pulse rounded bg-bg-elevated"
+                        key={i}
+                      />
+                    ))}
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <div
+                        className="h-9 w-full animate-pulse rounded bg-bg-elevated"
+                        key={i}
+                      />
+                    ))}
+                  </div>
                 </div>
-              ))}
-            </div>
+              }
+              loading={true}
+              name="bets-page"
+            >
+              {null}
+            </Skeleton>
           </div>
         </div>
       </div>

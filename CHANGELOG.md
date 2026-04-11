@@ -1,3 +1,17 @@
+## [1.16.1](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.16.0...v1.16.1) (2026-04-11)
+
+
+### Bug Fixes
+
+* add fallback props to all Skeleton wrappers ([#29](https://github.com/ventsislavnikolov/faceit-stats-slap/issues/29)) ([71a3ee6](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/71a3ee603955b7acb8f895015e7b8cfb8673302c))
+
+# [1.16.0](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.15.0...v1.16.0) (2026-04-11)
+
+
+### Features
+
+* replace hand-crafted skeletons with boneyard-js ([#28](https://github.com/ventsislavnikolov/faceit-stats-slap/issues/28)) ([b18d653](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/b18d65329d75a88f834a29708eb7c4de25bb34b0))
+
 # [1.15.0](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.14.1...v1.15.0) (2026-04-10)
 
 
