@@ -194,7 +194,7 @@ export function PlayerDashboard() {
         onValueChange={setInput}
         placeholder="FACEIT nickname, profile link, player UUID, or match ID..."
         status={
-          searchLoading ? (
+          resolvingTarget || searchLoading ? (
             <div className="mt-0.5 h-2.5 w-52 animate-pulse rounded bg-border" />
           ) : searchResult ? (
             <span>
@@ -217,7 +217,7 @@ export function PlayerDashboard() {
       />
 
       {/* Main layout */}
-      {searchLoading ? (
+      {resolvingTarget || searchLoading ? (
         <div className="flex h-full">
           {/* Sidebar skeleton */}
           <div className="hidden h-full w-[260px] flex-shrink-0 border-border border-r bg-bg-card p-3 lg:block">
