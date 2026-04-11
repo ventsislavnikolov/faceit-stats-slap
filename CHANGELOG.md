@@ -1,3 +1,10 @@
+# [1.17.0](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.16.2...v1.17.0) (2026-04-11)
+
+
+### Features
+
+* add loading skeletons for Twitch embed, Live Party button, and friends status ([8ea4269](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/8ea426957d4a3470784aaf66e13a708e9932d02c))
+
 ## [1.16.2](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.16.1...v1.16.2) (2026-04-11)
 
 
