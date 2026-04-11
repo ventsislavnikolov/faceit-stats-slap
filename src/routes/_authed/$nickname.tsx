@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { createIsomorphicFn } from "@tanstack/react-start";
+import { Skeleton } from "boneyard-js/react";
 import { useEffect, useState } from "react";
 import { FriendsSidebar } from "~/components/FriendsSidebar";
 import { LiveMatchCard } from "~/components/LiveMatchCard";
@@ -215,145 +216,7 @@ export function PlayerDashboard() {
       />
 
       {/* Main layout */}
-      {searchLoading ? (
-        <div className="flex h-full">
-          {/* Sidebar skeleton */}
-          <div className="hidden h-full w-[260px] flex-shrink-0 border-border border-r bg-bg-card p-3 lg:block">
-            {/* "PLAYING" header */}
-            <div className="mb-3 flex items-center gap-1.5">
-              <div className="h-2 w-2 animate-pulse rounded-full bg-border" />
-              <div className="h-2.5 w-20 animate-pulse rounded bg-border" />
-            </div>
-            <div className="flex flex-col gap-2">
-              {Array.from({ length: 2 }).map((_, i) => (
-                <div
-                  className="rounded-lg border border-transparent bg-bg-elevated p-2.5"
-                  key={`playing-${i}`}
-                >
-                  <div className="mb-2 flex items-center gap-2">
-                    <div className="h-8 w-8 animate-pulse rounded-full bg-border" />
-                    <div className="flex flex-1 flex-col gap-1">
-                      <div className="h-3 w-20 animate-pulse rounded bg-border" />
-                      <div className="h-2 w-24 animate-pulse rounded bg-border" />
-                    </div>
-                  </div>
-                  <div className="mb-1.5 grid grid-cols-2 gap-1">
-                    {Array.from({ length: 4 }).map((_, j) => (
-                      <div className="rounded bg-bg-card px-1.5 py-1" key={j}>
-                        <div className="mb-1 h-2 w-6 animate-pulse rounded bg-border" />
-                        <div className="h-4 w-10 animate-pulse rounded bg-border" />
-                      </div>
-                    ))}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    {Array.from({ length: 5 }).map((_, j) => (
-                      <span
-                        className="h-1.5 w-3.5 animate-pulse rounded-sm bg-border"
-                        key={j}
-                      />
-                    ))}
-                    <span className="ml-1 h-2 w-8 animate-pulse rounded bg-border" />
-                  </div>
-                </div>
-              ))}
-            </div>
-            {/* "NOT PLAYING" header */}
-            <div className="mt-4 mb-2">
-              <div className="h-2.5 w-28 animate-pulse rounded bg-border" />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div
-                  className="rounded-lg border border-transparent bg-bg-elevated p-2.5"
-                  key={`offline-${i}`}
-                >
-                  <div className="mb-2 flex items-center gap-2">
-                    <div className="h-8 w-8 animate-pulse rounded-full bg-border" />
-                    <div className="flex flex-1 flex-col gap-1">
-                      <div className="h-3 w-20 animate-pulse rounded bg-border" />
-                      <div className="h-2 w-24 animate-pulse rounded bg-border" />
-                    </div>
-                  </div>
-                  <div className="mb-1.5 grid grid-cols-2 gap-1">
-                    {Array.from({ length: 4 }).map((_, j) => (
-                      <div className="rounded bg-bg-card px-1.5 py-1" key={j}>
-                        <div className="mb-1 h-2 w-6 animate-pulse rounded bg-border" />
-                        <div className="h-4 w-10 animate-pulse rounded bg-border" />
-                      </div>
-                    ))}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    {Array.from({ length: 5 }).map((_, j) => (
-                      <span
-                        className="h-1.5 w-3.5 animate-pulse rounded-sm bg-border"
-                        key={j}
-                      />
-                    ))}
-                    <span className="ml-1 h-2 w-8 animate-pulse rounded bg-border" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          {/* Main content skeleton — LiveMatchCard shape */}
-          <div className="flex-1 p-4">
-            <div className="rounded-lg border border-border bg-gradient-to-br from-bg-elevated/50 to-bg-card p-4">
-              {/* Card header */}
-              <div className="mb-3 flex items-center gap-2">
-                <div className="h-2 w-2 animate-pulse rounded-full bg-border" />
-                <div className="h-3 w-16 animate-pulse rounded bg-border" />
-                <div className="h-4 w-20 animate-pulse rounded bg-border" />
-              </div>
-              {/* Score section */}
-              <div className="mb-3 flex items-center justify-center gap-6">
-                <div className="text-center">
-                  <div className="mx-auto mb-1 h-3 w-16 animate-pulse rounded bg-border" />
-                  <div className="mx-auto h-8 w-8 animate-pulse rounded bg-border" />
-                </div>
-                <div className="h-4 w-6 animate-pulse rounded bg-border" />
-                <div className="text-center">
-                  <div className="mx-auto mb-1 h-3 w-16 animate-pulse rounded bg-border" />
-                  <div className="mx-auto h-8 w-8 animate-pulse rounded bg-border" />
-                </div>
-              </div>
-              {/* Player name pills */}
-              <div className="mb-4 flex justify-center gap-1.5">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <div
-                    className="h-5 w-16 animate-pulse rounded bg-border"
-                    key={i}
-                  />
-                ))}
-              </div>
-              {/* Scoreboard table */}
-              <div className="rounded border border-border bg-bg-card p-2">
-                <div className="mb-2 h-3 w-24 animate-pulse rounded bg-border" />
-                <div className="mb-1 grid grid-cols-[1fr_32px_32px_32px_40px_36px] gap-1">
-                  <div className="h-2.5 w-12 animate-pulse rounded bg-border" />
-                  <div className="h-2.5 animate-pulse rounded bg-border" />
-                  <div className="h-2.5 animate-pulse rounded bg-border" />
-                  <div className="h-2.5 animate-pulse rounded bg-border" />
-                  <div className="h-2.5 animate-pulse rounded bg-border" />
-                  <div className="h-2.5 animate-pulse rounded bg-border" />
-                </div>
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <div
-                    className="grid grid-cols-[1fr_32px_32px_32px_40px_36px] gap-1 py-1"
-                    key={i}
-                  >
-                    <div className="h-3 w-20 animate-pulse rounded bg-border" />
-                    <div className="h-3 animate-pulse rounded bg-border" />
-                    <div className="h-3 animate-pulse rounded bg-border" />
-                    <div className="h-3 animate-pulse rounded bg-border" />
-                    <div className="h-3 animate-pulse rounded bg-border" />
-                    <div className="h-3 animate-pulse rounded bg-border" />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : searchError ? (
+      {searchError ? (
         <div className="flex flex-1 items-center justify-center text-error text-sm">
           Player &quot;{nickname}&quot; not found on FACEIT.
         </div>
@@ -361,14 +224,14 @@ export function PlayerDashboard() {
         <div className="flex flex-1 items-center justify-center text-sm text-text-dim">
           No tracked player has recent activity yet.
         </div>
-      ) : enrichedFriends.length === 0 ? (
+      ) : !searchLoading && enrichedFriends.length === 0 ? (
         <div className="flex flex-1 items-center justify-center text-sm text-text-dim">
           This player has no friends on FACEIT.
         </div>
       ) : (
         <div className="relative flex flex-1 overflow-hidden">
-          {/* Mobile sidebar overlay */}
-          {sidebarOpen && (
+          {/* Mobile sidebar overlay — only when loaded */}
+          {!searchLoading && sidebarOpen && (
             <button
               aria-label="Close sidebar"
               className="fixed inset-0 z-40 bg-black/50 lg:hidden"
@@ -381,77 +244,65 @@ export function PlayerDashboard() {
               type="button"
             />
           )}
-          {/* Mobile sidebar drawer */}
-          <aside
-            className={`fixed inset-y-0 left-0 z-50 w-[260px] transform transition-transform lg:hidden ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
-          >
-            <FriendsSidebar
-              friends={enrichedFriends}
-              onSelectFriend={(id) => {
-                setSelectedFriendId(id);
-                setSidebarOpen(false);
-              }}
-              selectedFriendId={selectedFriendId}
-              twitchStreams={twitchStreams}
-            />
-          </aside>
-          {/* Desktop sidebar */}
+          {/* Mobile sidebar drawer — only when loaded */}
+          {!searchLoading && (
+            <aside
+              className={`fixed inset-y-0 left-0 z-50 w-[260px] transform transition-transform lg:hidden ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
+            >
+              <FriendsSidebar
+                friends={enrichedFriends}
+                onSelectFriend={(id) => {
+                  setSelectedFriendId(id);
+                  setSidebarOpen(false);
+                }}
+                selectedFriendId={selectedFriendId}
+                twitchStreams={twitchStreams}
+              />
+            </aside>
+          )}
+          {/* Desktop sidebar with boneyard skeleton */}
           <div className="hidden lg:block">
             <FriendsSidebar
               friends={enrichedFriends}
+              loading={searchLoading}
               onSelectFriend={setSelectedFriendId}
               selectedFriendId={selectedFriendId}
               twitchStreams={twitchStreams}
             />
           </div>
-          <main className="flex-1 overflow-y-auto p-4">
-            {/* Mobile toggle button */}
-            <button
-              className="mb-3 flex items-center gap-1.5 rounded border border-border bg-bg-elevated px-3 py-1.5 text-text-muted text-xs lg:hidden"
-              onClick={() => setSidebarOpen(true)}
-              type="button"
-            >
-              <span className="text-sm">☰</span> Live Party (
-              {enrichedFriends.length})
-            </button>
-            {liveStream && <TwitchEmbed stream={liveStream} />}
-            {liveMatches.map((match) => (
-              <LiveMatchCard
-                key={match.matchId}
-                match={match}
-                seasonId={seasonId}
-                userCoins={userCoins}
-                userId={userId}
-              />
-            ))}
-            {selectedFriendId ? (
-              statsLoading ? (
-                <div className="flex flex-col gap-2">
-                  <div className="mb-1 h-3 w-28 animate-pulse rounded bg-border" />
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <div
-                      className={`flex items-center rounded border-l-[3px] bg-bg-card px-2.5 py-2 ${i % 2 === 0 ? "border-accent/40" : "border-error/40"}`}
-                      key={i}
-                    >
-                      <div
-                        className={`h-3 w-4 animate-pulse rounded ${i % 2 === 0 ? "bg-accent/30" : "bg-error/30"}`}
-                      />
-                      <div className="ml-2 h-3 w-20 animate-pulse rounded bg-border" />
-                      <div className="ml-2 h-4 w-16 animate-pulse rounded bg-border" />
-                      <div className="ml-2 h-3 w-14 animate-pulse rounded bg-border" />
-                      <div className="ml-2 h-3 w-40 animate-pulse rounded bg-border" />
-                    </div>
-                  ))}
-                </div>
+          {/* Main content with boneyard skeleton */}
+          <Skeleton loading={searchLoading} name="friends-main">
+            <main className="flex-1 overflow-y-auto p-4">
+              {/* Mobile toggle button */}
+              <button
+                className="mb-3 flex items-center gap-1.5 rounded border border-border bg-bg-elevated px-3 py-1.5 text-text-muted text-xs lg:hidden"
+                onClick={() => setSidebarOpen(true)}
+                type="button"
+              >
+                <span className="text-sm">☰</span> Live Party (
+                {enrichedFriends.length})
+              </button>
+              {liveStream && <TwitchEmbed stream={liveStream} />}
+              {liveMatches.map((match) => (
+                <LiveMatchCard
+                  key={match.matchId}
+                  match={match}
+                  seasonId={seasonId}
+                  userCoins={userCoins}
+                  userId={userId}
+                />
+              ))}
+              {selectedFriendId ? (
+                <Skeleton loading={statsLoading} name="friends-stats">
+                  <RecentMatches matches={recentMatches} />
+                </Skeleton>
               ) : (
-                <RecentMatches matches={recentMatches} />
-              )
-            ) : (
-              <div className="py-12 text-center text-sm text-text-dim">
-                Select a friend to view their match history
-              </div>
-            )}
-          </main>
+                <div className="py-12 text-center text-sm text-text-dim">
+                  Select a friend to view their match history
+                </div>
+              )}
+            </main>
+          </Skeleton>
         </div>
       )}
     </div>
