@@ -194,7 +194,9 @@ export function PlayerDashboard() {
         onValueChange={setInput}
         placeholder="FACEIT nickname, profile link, player UUID, or match ID..."
         status={
-          searchResult ? (
+          searchLoading ? (
+            <div className="mt-0.5 h-2.5 w-52 animate-pulse rounded bg-border" />
+          ) : searchResult ? (
             <span>
               Showing friends of{" "}
               <span className="text-accent">
@@ -297,6 +299,11 @@ export function PlayerDashboard() {
           </div>
           {/* Main content skeleton — LiveMatchCard shape */}
           <div className="flex-1 p-4">
+            {/* Mobile Live Party button skeleton */}
+            <div className="mb-3 flex items-center gap-1.5 rounded border border-border bg-bg-elevated px-3 py-1.5 lg:hidden">
+              <div className="h-3 w-3 animate-pulse rounded bg-border" />
+              <div className="h-3 w-28 animate-pulse rounded bg-border" />
+            </div>
             <div className="rounded-lg border border-border bg-gradient-to-br from-bg-elevated/50 to-bg-card p-4">
               {/* Card header */}
               <div className="mb-3 flex items-center gap-2">
