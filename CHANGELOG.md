@@ -1,3 +1,15 @@
+## [1.16.2](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.16.1...v1.16.2) (2026-04-11)
+
+
+### Bug Fixes
+
+* remove empty PropBetCards wrapper div ([212bb16](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/212bb161820b9774ecbdae2de1ecdc99f63dcfb0))
+
+
+### Reverts
+
+* remove boneyard-js and restore hand-crafted skeletons ([0096d49](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/0096d4906cea7a8039b3c371e040a097a29c723b))
+
 ## [1.16.1](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.16.0...v1.16.1) (2026-04-11)
 
 
