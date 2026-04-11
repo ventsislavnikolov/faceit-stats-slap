@@ -183,14 +183,6 @@ export function LiveMatchCard({
             userCoins={userCoins ?? 0}
             userId={userId ?? null}
           />
-          <div className="mt-3 flex flex-col gap-3">
-            {/* <PropBetCards
-              matchId={match.matchId}
-              seasonId={seasonId}
-              userCoins={userCoins ?? 0}
-              userId={userId ?? null}
-            /> */}
-          </div>
         </>
       )}
 
