@@ -158,7 +158,7 @@ describe("/last-party route", () => {
     expect(html).not.toContain("Rivalry cards");
   });
 
-  it("shows a loading skeleton for the page body while resolving", () => {
+  it("includes rivalry placeholders in the loading skeleton", () => {
     mocks.trackedTarget = {
       data: null,
       isLoading: true,
@@ -172,7 +172,8 @@ describe("/last-party route", () => {
 
     const html = renderRoute();
 
-    expect(html).toContain('data-testid="last-party-loading-skeleton"');
+    expect(html).toContain('data-testid="last-party-podium-skeleton"');
+    expect(html).toContain('data-testid="last-party-rivalry-skeleton"');
   });
 
   it("still renders the empty state when no matches exist", () => {

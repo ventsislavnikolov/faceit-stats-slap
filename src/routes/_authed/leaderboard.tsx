@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Skeleton } from "boneyard-js/react";
 import { useEffect, useRef, useState } from "react";
 import { PageSectionTabs } from "~/components/PageSectionTabs";
 import { PlayerSearchHeader } from "~/components/PlayerSearchHeader";
@@ -466,69 +465,53 @@ function StatsTab({
         }))}
       />
       {isResolvingTarget ? (
-        <Skeleton
-          fallback={
-            <div className="flex flex-col gap-1">
-              {Array.from({ length: 5 }).map((_, i) => (
+        <div className="flex flex-col gap-1">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div
+              className="grid items-center gap-2 rounded bg-bg-elevated px-3 py-2"
+              key={i}
+              style={{ gridTemplateColumns: "3rem 1fr 4rem repeat(7, 5rem)" }}
+            >
+              <div className="h-3 w-6 animate-pulse rounded bg-border" />
+              <div className="flex items-baseline gap-1.5">
+                <div className="h-3 w-24 animate-pulse rounded bg-border" />
+                <div className="h-2 w-8 animate-pulse rounded bg-border" />
+              </div>
+              <div className="ml-auto h-3 w-6 animate-pulse rounded bg-border" />
+              {Array.from({ length: 7 }).map((_, j) => (
                 <div
-                  className="grid items-center gap-2 rounded bg-bg-elevated px-3 py-2"
-                  key={i}
-                  style={{
-                    gridTemplateColumns: "3rem 1fr 4rem repeat(7, 5rem)",
-                  }}
-                >
-                  <div className="h-3 w-6 animate-pulse rounded bg-border" />
-                  <div className="flex items-baseline gap-1.5">
-                    <div className="h-3 w-24 animate-pulse rounded bg-border" />
-                    <div className="h-2 w-8 animate-pulse rounded bg-border" />
-                  </div>
-                  <div className="ml-auto h-3 w-6 animate-pulse rounded bg-border" />
-                  {Array.from({ length: 7 }).map((_, j) => (
-                    <div
-                      className="ml-auto h-3 w-10 animate-pulse rounded bg-border"
-                      key={j}
-                    />
-                  ))}
-                </div>
+                  className="ml-auto h-3 w-10 animate-pulse rounded bg-border"
+                  key={j}
+                />
               ))}
             </div>
-          }
-          loading={true}
-          name="leaderboard-rows"
-        >
-          {null}
-        </Skeleton>
+          ))}
+        </div>
       ) : targetPlayerId || hasSearchTarget ? (
-        <Skeleton
-          fallback={
-            <div className="flex flex-col gap-1">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <div
-                  className="grid items-center gap-2 rounded bg-bg-elevated px-3 py-2"
-                  key={i}
-                  style={{
-                    gridTemplateColumns: "3rem 1fr 4rem repeat(7, 5rem)",
-                  }}
-                >
-                  <div className="h-3 w-6 animate-pulse rounded bg-border" />
-                  <div className="flex items-baseline gap-1.5">
-                    <div className="h-3 w-24 animate-pulse rounded bg-border" />
-                    <div className="h-2 w-8 animate-pulse rounded bg-border" />
-                  </div>
-                  <div className="ml-auto h-3 w-6 animate-pulse rounded bg-border" />
-                  {Array.from({ length: 7 }).map((_, j) => (
-                    <div
-                      className="ml-auto h-3 w-10 animate-pulse rounded bg-border"
-                      key={j}
-                    />
-                  ))}
+        isLoading ? (
+          <div className="flex flex-col gap-1">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div
+                className="grid items-center gap-2 rounded bg-bg-elevated px-3 py-2"
+                key={i}
+                style={{ gridTemplateColumns: "3rem 1fr 4rem repeat(7, 5rem)" }}
+              >
+                <div className="h-3 w-6 animate-pulse rounded bg-border" />
+                <div className="flex items-baseline gap-1.5">
+                  <div className="h-3 w-24 animate-pulse rounded bg-border" />
+                  <div className="h-2 w-8 animate-pulse rounded bg-border" />
                 </div>
-              ))}
-            </div>
-          }
-          loading={isLoading}
-          name="leaderboard-rows"
-        >
+                <div className="ml-auto h-3 w-6 animate-pulse rounded bg-border" />
+                {Array.from({ length: 7 }).map((_, j) => (
+                  <div
+                    className="ml-auto h-3 w-10 animate-pulse rounded bg-border"
+                    key={j}
+                  />
+                ))}
+              </div>
+            ))}
+          </div>
+        ) : (
           <div className="flex w-full flex-col gap-1">
             {emptyStateCopy && (
               <div className="py-12 text-center text-sm text-text-dim">
@@ -537,7 +520,7 @@ function StatsTab({
             )}
             {!emptyStateCopy && leaderboardTable}
           </div>
-        </Skeleton>
+        )
       ) : (
         <div className="py-12 text-center text-text-dim">
           Search a player above to see how their friends are performing across

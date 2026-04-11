@@ -1,5 +1,4 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Skeleton } from "boneyard-js/react";
 import { useEffect, useState } from "react";
 import { LastPartyHeader } from "~/components/last-party/LastPartyHeader";
 import { MapDistribution } from "~/components/last-party/MapDistribution";
@@ -175,21 +174,180 @@ export function LastPartyPage() {
           </div>
 
           {(resolving || sessionLoading) && urlPlayer && (
-            <Skeleton
-              data-testid="last-party-loading-skeleton"
-              fallback={
-                <div className="flex flex-col gap-4">
-                  <div className="h-20 w-full animate-pulse rounded-lg bg-border" />
-                  <div className="h-40 w-full animate-pulse rounded-lg bg-border" />
-                  <div className="h-32 w-full animate-pulse rounded-lg bg-border" />
-                  <div className="h-24 w-full animate-pulse rounded-lg bg-border" />
+            <div className="flex flex-col gap-6">
+              {/* LastPartyHeader skeleton */}
+              <div className="rounded border border-border bg-bg-card p-4">
+                <div className="mb-1 h-2.5 w-20 animate-pulse rounded bg-border" />
+                <div className="mb-2 h-5 w-56 animate-pulse rounded bg-border" />
+                <div className="flex flex-wrap gap-4">
+                  <div className="flex items-center gap-1">
+                    <div className="h-3 w-14 animate-pulse rounded bg-border" />
+                    <div className="h-3 w-4 animate-pulse rounded bg-border" />
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="h-3 w-6 animate-pulse rounded bg-accent/30" />
+                    <div className="h-3 w-3 animate-pulse rounded bg-border" />
+                    <div className="h-3 w-6 animate-pulse rounded bg-error/30" />
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="h-3 w-10 animate-pulse rounded bg-border" />
+                    <div className="h-3 w-8 animate-pulse rounded bg-border" />
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="h-3 w-16 animate-pulse rounded bg-border" />
+                    <div className="h-3 w-6 animate-pulse rounded bg-border" />
+                  </div>
                 </div>
-              }
-              loading={true}
-              name="last-party-body"
-            >
-              {null}
-            </Skeleton>
+              </div>
+
+              {/* Session podium skeleton */}
+              <div data-testid="last-party-podium-skeleton">
+                <div className="mb-3 h-2.5 w-20 animate-pulse rounded bg-border" />
+                <div className="grid grid-cols-1 gap-2 lg:grid-cols-3">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div
+                      className={`rounded border bg-bg-card p-3 ${i === 0 ? "border-accent/30 bg-accent/5" : "border-border"}`}
+                      key={i}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <div className="h-8 w-8 animate-pulse rounded-full bg-border" />
+                          <div className="flex flex-col gap-1">
+                            <div className="h-2 w-12 animate-pulse rounded bg-border" />
+                            <div className="h-4 w-20 animate-pulse rounded bg-border" />
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-end gap-1">
+                          <div className="h-5 w-12 animate-pulse rounded bg-border" />
+                          <div className="h-2.5 w-8 animate-pulse rounded bg-border" />
+                        </div>
+                      </div>
+                      <div className="mt-3 h-6 w-full animate-pulse rounded border border-border bg-bg-elevated" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Rivalry cards skeleton */}
+              <div data-testid="last-party-rivalry-skeleton">
+                <div className="mb-3 h-2.5 w-24 animate-pulse rounded bg-border" />
+                <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                  {Array.from({ length: 2 }).map((_, i) => (
+                    <div
+                      className="rounded border border-border bg-bg-card p-3"
+                      key={i}
+                    >
+                      <div className="h-2.5 w-16 animate-pulse rounded bg-border" />
+                      <div className="mt-2 h-4 w-40 animate-pulse rounded bg-border" />
+                      <div className="mt-3 flex flex-wrap gap-1.5">
+                        <div className="h-4 w-20 animate-pulse rounded-full bg-border" />
+                        <div className="h-4 w-24 animate-pulse rounded-full bg-border" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Awards skeleton */}
+              <div>
+                <div className="mb-3 h-2.5 w-14 animate-pulse rounded bg-border" />
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div
+                      className={`rounded border bg-bg-card p-3 ${
+                        i === 0
+                          ? "border-accent/30 bg-accent/5"
+                          : i === 1
+                            ? "border-error/20 bg-error/5"
+                            : "border-border"
+                      }`}
+                      key={i}
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="h-5 w-5 animate-pulse rounded bg-border" />
+                        <div className="flex flex-col gap-1">
+                          <div className="h-2 w-20 animate-pulse rounded bg-border" />
+                          <div className="h-3.5 w-24 animate-pulse rounded bg-border" />
+                          <div className="h-2.5 w-14 animate-pulse rounded bg-border" />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Session Stats table skeleton */}
+              <div>
+                <div className="mb-3 h-2.5 w-24 animate-pulse rounded bg-border" />
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr>
+                        {Array.from({ length: 8 }).map((_, i) => (
+                          <th className="px-2 py-1" key={i}>
+                            <div className="mx-auto h-2 w-8 animate-pulse rounded bg-border" />
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <tr className="border-border border-t" key={i}>
+                          {Array.from({ length: 8 }).map((_, j) => (
+                            <td className="px-2 py-1.5" key={j}>
+                              <div
+                                className={`mx-auto h-3 animate-pulse rounded bg-border ${j === 0 ? "w-16" : "w-8"}`}
+                              />
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Map distribution skeleton */}
+              <div>
+                <div className="mb-3 h-2.5 w-10 animate-pulse rounded bg-border" />
+                <div className="flex flex-wrap gap-2">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div
+                      className="flex items-center gap-2 rounded border border-border bg-bg-card px-3 py-2"
+                      key={i}
+                    >
+                      <div className="h-3 w-3 animate-pulse rounded-sm bg-border" />
+                      <div className="h-3 w-14 animate-pulse rounded bg-border" />
+                      <div className="h-2.5 w-5 animate-pulse rounded bg-border" />
+                      <div className="h-2.5 w-5 animate-pulse rounded bg-accent/30" />
+                      <div className="h-2.5 w-4 animate-pulse rounded bg-error/30" />
+                      <div className="h-2.5 w-6 animate-pulse rounded bg-border" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Matches skeleton */}
+              <div>
+                <div className="mb-3 h-2.5 w-16 animate-pulse rounded bg-border" />
+                <div className="flex flex-col gap-1">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <div
+                      className="flex items-center gap-3 rounded border border-border bg-bg-card px-3 py-2"
+                      key={i}
+                    >
+                      <div
+                        className={`h-2 w-2 animate-pulse rounded-full ${i % 2 === 0 ? "bg-accent/40" : "bg-error/40"}`}
+                      />
+                      <div className="h-4 w-14 animate-pulse rounded bg-border" />
+                      <div className="h-3 w-12 animate-pulse rounded bg-border" />
+                      <div className="h-2.5 w-10 animate-pulse rounded bg-accent/20" />
+                      <div className="ml-auto h-2.5 w-3 animate-pulse rounded bg-border" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           )}
 
           {hasTrackedPlayerMiss && (
