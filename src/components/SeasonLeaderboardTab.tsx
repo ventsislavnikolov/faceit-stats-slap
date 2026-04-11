@@ -37,6 +37,24 @@ export function SeasonLeaderboardTab({
 
   return (
     <Skeleton
+      fallback={
+        <div className="flex flex-col gap-1">
+          <div
+            className="grid gap-2 px-3 pb-1"
+            style={{ gridTemplateColumns: "3rem 1fr 5rem 5rem 5rem" }}
+          >
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div className="h-2 animate-pulse rounded bg-border" key={i} />
+            ))}
+          </div>
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div
+              className="h-9 w-full animate-pulse rounded bg-bg-elevated"
+              key={i}
+            />
+          ))}
+        </div>
+      }
       loading={isLoading || (loading ?? false)}
       name="season-leaderboard"
     >

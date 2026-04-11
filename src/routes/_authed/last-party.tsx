@@ -177,6 +177,14 @@ export function LastPartyPage() {
           {(resolving || sessionLoading) && urlPlayer && (
             <Skeleton
               data-testid="last-party-loading-skeleton"
+              fallback={
+                <div className="flex flex-col gap-4">
+                  <div className="h-20 w-full animate-pulse rounded-lg bg-border" />
+                  <div className="h-40 w-full animate-pulse rounded-lg bg-border" />
+                  <div className="h-32 w-full animate-pulse rounded-lg bg-border" />
+                  <div className="h-24 w-full animate-pulse rounded-lg bg-border" />
+                </div>
+              }
               loading={true}
               name="last-party-body"
             >

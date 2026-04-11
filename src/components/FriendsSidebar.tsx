@@ -25,7 +25,23 @@ export function FriendsSidebar({
   const offline = friends.filter((f) => !f.isPlaying);
 
   return (
-    <Skeleton loading={loading ?? false} name="friends-sidebar">
+    <Skeleton
+      fallback={
+        <div className="h-full w-[260px] flex-shrink-0 border-border border-r bg-bg-card p-3">
+          <div className="mb-3 h-2.5 w-20 animate-pulse rounded bg-border" />
+          <div className="flex flex-col gap-2">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div
+                className="h-16 w-full animate-pulse rounded-lg bg-bg-elevated"
+                key={i}
+              />
+            ))}
+          </div>
+        </div>
+      }
+      loading={loading ?? false}
+      name="friends-sidebar"
+    >
       <aside className="h-full w-[260px] flex-shrink-0 overflow-y-auto border-border border-r bg-bg-card p-3">
         <div className="mb-3 flex items-center justify-between">
           <div className="flex items-center gap-1.5">
