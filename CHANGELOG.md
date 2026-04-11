@@ -1,3 +1,10 @@
+## [1.16.1](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.16.0...v1.16.1) (2026-04-11)
+
+
+### Bug Fixes
+
+* add fallback props to all Skeleton wrappers ([#29](https://github.com/ventsislavnikolov/faceit-stats-slap/issues/29)) ([71a3ee6](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/71a3ee603955b7acb8f895015e7b8cfb8673302c))
+
 # [1.16.0](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.15.0...v1.16.0) (2026-04-11)
 
 
