@@ -271,7 +271,15 @@ export function PlayerDashboard() {
             />
           </div>
           {/* Main content with boneyard skeleton */}
-          <Skeleton loading={searchLoading} name="friends-main">
+          <Skeleton
+            fallback={
+              <div className="flex-1 p-4">
+                <div className="h-48 w-full animate-pulse rounded-lg bg-border" />
+              </div>
+            }
+            loading={searchLoading}
+            name="friends-main"
+          >
             <main className="flex-1 overflow-y-auto p-4">
               {/* Mobile toggle button */}
               <button
@@ -293,7 +301,20 @@ export function PlayerDashboard() {
                 />
               ))}
               {selectedFriendId ? (
-                <Skeleton loading={statsLoading} name="friends-stats">
+                <Skeleton
+                  fallback={
+                    <div className="flex flex-col gap-1">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <div
+                          className="h-10 w-full animate-pulse rounded bg-bg-elevated"
+                          key={i}
+                        />
+                      ))}
+                    </div>
+                  }
+                  loading={statsLoading}
+                  name="friends-stats"
+                >
                   <RecentMatches matches={recentMatches} />
                 </Skeleton>
               ) : (

@@ -35,7 +35,25 @@ function MatchDetailPage() {
   if (isLoading) {
     return (
       <div className="mx-auto max-w-6xl p-4">
-        <Skeleton loading={true} name="match-detail">
+        <Skeleton
+          fallback={
+            <div className="flex flex-col gap-4">
+              <div className="h-24 w-full animate-pulse rounded-lg bg-border" />
+              <div className="flex gap-2">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div
+                    className="h-10 flex-1 animate-pulse rounded bg-bg-elevated"
+                    key={i}
+                  />
+                ))}
+              </div>
+              <div className="h-52 w-full animate-pulse rounded-lg bg-border" />
+              <div className="h-40 w-full animate-pulse rounded-lg bg-border" />
+            </div>
+          }
+          loading={true}
+          name="match-detail"
+        >
           {null}
         </Skeleton>
       </div>

@@ -188,7 +188,31 @@ function BetsPage() {
           style={{ scrollbarGutter: "stable" }}
         >
           <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6">
-            <Skeleton loading={true} name="bets-page">
+            <Skeleton
+              fallback={
+                <div className="flex flex-col gap-4">
+                  <div className="h-10 w-full animate-pulse rounded-lg bg-border" />
+                  <div className="flex gap-2">
+                    {Array.from({ length: 4 }).map((_, i) => (
+                      <div
+                        className="h-8 w-24 animate-pulse rounded bg-bg-elevated"
+                        key={i}
+                      />
+                    ))}
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <div
+                        className="h-9 w-full animate-pulse rounded bg-bg-elevated"
+                        key={i}
+                      />
+                    ))}
+                  </div>
+                </div>
+              }
+              loading={true}
+              name="bets-page"
+            >
               {null}
             </Skeleton>
           </div>
