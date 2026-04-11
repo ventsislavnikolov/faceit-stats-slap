@@ -1,3 +1,10 @@
+## [1.17.1](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.17.0...v1.17.1) (2026-04-11)
+
+
+### Bug Fixes
+
+* show skeleton during target resolution to prevent empty state flash ([61cb9ea](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/61cb9ea6da96873fbf4b7c71f9aacbc5de86d1b1))
+
 # [1.17.0](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.16.2...v1.17.0) (2026-04-11)
 
 
