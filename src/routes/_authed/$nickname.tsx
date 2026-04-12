@@ -437,15 +437,17 @@ export function PlayerDashboard() {
                   <div className="mb-1 h-3 w-28 animate-pulse rounded bg-border" />
                   {Array.from({ length: 5 }).map((_, i) => (
                     <div
-                      className={`flex items-center gap-2 overflow-hidden rounded border-l-[3px] bg-bg-card px-2.5 py-2 ${i % 2 === 0 ? "border-accent/40" : "border-error/40"}`}
+                      className={`flex items-center overflow-hidden rounded border-l-[3px] bg-bg-card px-2.5 py-2 ${i % 2 === 0 ? "border-accent/40" : "border-error/40"}`}
                       key={i}
                     >
-                      <div
-                        className={`h-3 w-4 flex-shrink-0 animate-pulse rounded ${i % 2 === 0 ? "bg-accent/30" : "bg-error/30"}`}
-                      />
-                      <div className="h-3 w-16 flex-shrink-0 animate-pulse rounded bg-border sm:w-20" />
-                      <div className="h-4 w-12 flex-shrink-0 animate-pulse rounded bg-border sm:w-16" />
-                      <div className="h-3 w-10 flex-shrink-0 animate-pulse rounded bg-border sm:w-14" />
+                      <div className="w-5 flex-shrink-0">
+                        <div
+                          className={`h-3 w-3 animate-pulse rounded ${i % 2 === 0 ? "bg-accent/30" : "bg-error/30"}`}
+                        />
+                      </div>
+                      <div className="h-3 w-20 flex-shrink-0 animate-pulse rounded bg-border" />
+                      <div className="h-4 w-20 flex-shrink-0 animate-pulse rounded bg-border" />
+                      <div className="h-3 w-14 flex-shrink-0 animate-pulse rounded bg-border" />
                       <div className="h-3 min-w-0 flex-1 animate-pulse rounded bg-border" />
                     </div>
                   ))}
