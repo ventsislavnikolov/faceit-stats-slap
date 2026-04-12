@@ -10,6 +10,16 @@
   input[type="datetime-local"]::-webkit-calendar-picker-indicator {
     filter: invert(1);
   }
+
+  /* Prevent iOS Safari from auto-zooming when focusing inputs with
+     font-size < 16px. Enforce a 16px minimum on small screens. */
+  @media (max-width: 640px) {
+    input,
+    select,
+    textarea {
+      font-size: 16px;
+    }
+  }
 }
 
 @theme {
