@@ -26,13 +26,13 @@ function HomePage() {
   }
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-6">
+    <div className="flex flex-1 flex-col items-center justify-center gap-6 px-4">
       <div className="text-center">
         <p className="text-sm text-text-muted">
           Enter a FACEIT nickname, profile link, or match ID to open the live
           dashboard
         </p>
-        <p className="mt-1 text-text-dim text-xs">
+        <p className="mt-1 break-all text-text-dim text-xs">
           e.g. get the nickname from{" "}
           <span className="text-accent">faceit.com/en/players/soavarice</span>
         </p>
