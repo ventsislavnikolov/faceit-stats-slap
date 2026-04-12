@@ -1,3 +1,10 @@
+## [1.17.3](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.17.2...v1.17.3) (2026-04-12)
+
+
+### Bug Fixes
+
+* prevent iOS input zoom and fix mobile skeleton overflow ([#32](https://github.com/ventsislavnikolov/faceit-stats-slap/issues/32)) ([710da29](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/710da29abec2335668fde79a7adefb557c4683d2))
+
 ## [1.17.2](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.17.1...v1.17.2) (2026-04-11)
 
 
