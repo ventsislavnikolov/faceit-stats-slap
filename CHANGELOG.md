@@ -1,3 +1,10 @@
+## [1.17.4](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.17.3...v1.17.4) (2026-04-13)
+
+
+### Bug Fixes
+
+* wrap party member names on narrow viewports ([#34](https://github.com/ventsislavnikolov/faceit-stats-slap/issues/34)) ([d24b85e](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/d24b85e8a9d8402338b13444746132614873a1de))
+
 ## [1.17.3](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.17.2...v1.17.3) (2026-04-12)
 
 
