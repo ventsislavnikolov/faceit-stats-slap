@@ -14,6 +14,6 @@ export function useMatchStats(matchId: string, options: UseMatchStatsOptions) {
     queryFn: () => getMatchDetails({ data: matchId }),
     enabled,
     staleTime: live ? 0 : Number.POSITIVE_INFINITY,
-    refetchInterval: live ? 10_000 : false,
+    refetchInterval: live ? 5_000 : false,
   });
 }

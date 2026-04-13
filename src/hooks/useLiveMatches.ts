@@ -12,9 +12,9 @@ export function useLiveMatches(playerIds: string[]) {
         ["ONGOING", "READY", "VOTING", "CONFIGURING"].includes(match.status)
       );
 
-      return hasActiveMatch ? 10_000 : 30_000;
+      return hasActiveMatch ? 5_000 : 15_000;
     },
-    staleTime: 20_000,
+    staleTime: 10_000,
     enabled: playerIds.length > 0,
   });
 }
