@@ -1,6 +1,20 @@
 export const MY_FACEIT_ID = "15844c99-d26e-419e-bd14-30908f502c03";
 export const MY_NICKNAME = "soavarice";
 
+export const ADMIN_NICKNAMES = ["soavarice", "n_gyulev"] as const;
+
+export function isAdminNickname(nickname: string | null | undefined): boolean {
+  return (
+    !!nickname && (ADMIN_NICKNAMES as readonly string[]).includes(nickname)
+  );
+}
+
+export const BET_BLACKLIST = ["soavarice"] as const;
+
+export function isBetBlacklisted(nickname: string | null | undefined): boolean {
+  return !!nickname && (BET_BLACKLIST as readonly string[]).includes(nickname);
+}
+
 export const TWITCH_MAP: Record<string, string | undefined> = {
   "8e42d5f3-b4e9-4a67-b402-be0ac3c0260b": "bachiyski", // TibaBG
   "65c93ab1-d2b2-416c-a5d1-d45452c9517d": "kasheto88", // F1aw1esss

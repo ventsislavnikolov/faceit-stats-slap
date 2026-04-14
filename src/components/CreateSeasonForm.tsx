@@ -154,7 +154,7 @@ export function CreateSeasonForm({ userId }: CreateSeasonFormProps) {
           className="rounded border border-border bg-bg px-3 py-1.5 text-sm text-text"
           id="season-name"
           onChange={(e) => setName(e.target.value)}
-          placeholder="Season 2"
+          placeholder="Season 1"
           type="text"
           value={name}
         />

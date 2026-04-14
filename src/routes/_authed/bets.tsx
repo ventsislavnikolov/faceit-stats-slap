@@ -12,7 +12,7 @@ import { useActiveSeason } from "~/hooks/useActiveSeason";
 import { useLiveMatches } from "~/hooks/useLiveMatches";
 import { useSeasonCoinBalance } from "~/hooks/useSeasonCoinBalance";
 import { useTrackedPlayers } from "~/hooks/useTrackedPlayers";
-import { MY_NICKNAME } from "~/lib/constants";
+import { isAdminNickname } from "~/lib/constants";
 import type { Season } from "~/lib/types";
 
 type BetsTab = "leaderboard" | "live" | "my-bets" | "history";
@@ -153,7 +153,7 @@ function BetsPage() {
 
       if (session?.user.id) {
         const nickname = await getProfileNickname(session.user.id);
-        setIsAdmin(nickname === MY_NICKNAME);
+        setIsAdmin(isAdminNickname(nickname));
       }
     });
   }, []);
@@ -253,7 +253,12 @@ function BetsPage() {
           style={{ scrollbarGutter: "stable" }}
         >
           <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6">
-            <SeasonHeader season={season} userCoins={null} />
+            <SeasonHeader
+              adminUserId={userId}
+              isAdmin={isAdmin}
+              season={season}
+              userCoins={null}
+            />
             <UpcomingSeasonCountdown season={season} />
             <SeasonHistoryTab userId={userId} />
           </div>
@@ -269,7 +274,12 @@ function BetsPage() {
         style={{ scrollbarGutter: "stable" }}
       >
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6">
-          <SeasonHeader season={season} userCoins={userCoins} />
+          <SeasonHeader
+            adminUserId={userId}
+            isAdmin={isAdmin}
+            season={season}
+            userCoins={userCoins}
+          />
 
           <PageSectionTabs
             activeKey={tab}

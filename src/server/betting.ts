@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { isBetBlacklisted } from "~/lib/constants";
 import { createServerSupabase } from "~/lib/supabase.server";
 import type {
   Bet,
@@ -148,6 +149,20 @@ export const placeBet = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }): Promise<{ success: boolean; error?: string }> => {
     const supabase = createServerSupabase();
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("nickname")
+      .eq("id", data.userId)
+      .single();
+
+    if (isBetBlacklisted((profile as any)?.nickname)) {
+      return {
+        success: false,
+        error: "You are not allowed to place bets.",
+      };
+    }
+
     const { data: result, error } = await supabase.rpc("place_bet", {
       p_user_id: data.userId,
       p_season_id: data.seasonId,

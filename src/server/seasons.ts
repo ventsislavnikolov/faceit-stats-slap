@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { isAdminNickname, isBetBlacklisted } from "~/lib/constants";
 import { createServerSupabase } from "~/lib/supabase.server";
 import type { Season, SeasonLeaderboardEntry } from "~/lib/types";
 
@@ -170,18 +171,21 @@ export const getSeasonLeaderboard = createServerFn({ method: "GET" })
       }
     }
 
-    return participants.map((p: any) => {
-      const betsPlaced = betCountMap.get(p.user_id) ?? 0;
-      const betsWon = betWonMap.get(p.user_id) ?? 0;
-      return {
-        userId: p.user_id,
-        nickname: nicknameMap.get(p.user_id) ?? "Unknown",
-        coins: p.coins,
-        betsPlaced,
-        betsWon,
-        winRate: betsPlaced > 0 ? Math.round((betsWon / betsPlaced) * 100) : 0,
-      };
-    });
+    return participants
+      .filter((p: any) => !isBetBlacklisted(nicknameMap.get(p.user_id)))
+      .map((p: any) => {
+        const betsPlaced = betCountMap.get(p.user_id) ?? 0;
+        const betsWon = betWonMap.get(p.user_id) ?? 0;
+        return {
+          userId: p.user_id,
+          nickname: nicknameMap.get(p.user_id) ?? "Unknown",
+          coins: p.coins,
+          betsPlaced,
+          betsWon,
+          winRate:
+            betsPlaced > 0 ? Math.round((betsWon / betsPlaced) * 100) : 0,
+        };
+      });
   });
 
 // ── createSeason ────────────────────────────────────────────
@@ -209,7 +213,7 @@ export const createSeason = createServerFn({ method: "POST" })
         .eq("id", data.userId)
         .single();
 
-      if ((profile as any)?.nickname !== "soavarice") {
+      if (!isAdminNickname((profile as any)?.nickname)) {
         return { success: false, error: "Unauthorized: admin only" };
       }
 
@@ -270,6 +274,131 @@ export const completeSeason = createServerFn({ method: "POST" })
       return { success: true };
     }
   );
+
+// ── cancelSeason ────────────────────────────────────────────
+
+export const cancelSeason = createServerFn({ method: "POST" })
+  .inputValidator((input: { seasonId: string; userId: string }) => input)
+  .handler(async ({ data }): Promise<{ success: boolean; error?: string }> => {
+    const supabase = createServerSupabase();
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("nickname")
+      .eq("id", data.userId)
+      .single();
+
+    if (!isAdminNickname((profile as any)?.nickname)) {
+      return { success: false, error: "Unauthorized: admin only" };
+    }
+
+    const { data: season } = await supabase
+      .from("seasons")
+      .select("status")
+      .eq("id", data.seasonId)
+      .single();
+
+    if (!season) {
+      return { success: false, error: "Season not found" };
+    }
+
+    if ((season as any).status === "completed") {
+      return { success: false, error: "Season is already completed" };
+    }
+
+    const { error } = await supabase
+      .from("seasons")
+      .update({ status: "completed" })
+      .eq("id", data.seasonId);
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  });
+
+// ── deleteSeason ────────────────────────────────────────────
+
+export const deleteSeason = createServerFn({ method: "POST" })
+  .inputValidator((input: { seasonId: string; userId: string }) => input)
+  .handler(async ({ data }): Promise<{ success: boolean; error?: string }> => {
+    const supabase = createServerSupabase();
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("nickname")
+      .eq("id", data.userId)
+      .single();
+
+    if (!isAdminNickname((profile as any)?.nickname)) {
+      return { success: false, error: "Unauthorized: admin only" };
+    }
+
+    const { data: season } = await supabase
+      .from("seasons")
+      .select("status")
+      .eq("id", data.seasonId)
+      .single();
+
+    if (!season) {
+      return { success: false, error: "Season not found" };
+    }
+
+    if ((season as any).status !== "upcoming") {
+      return {
+        success: false,
+        error:
+          "Only upcoming seasons can be deleted. Cancel active seasons instead.",
+      };
+    }
+
+    const { data: matchPools } = await supabase
+      .from("betting_pools")
+      .select("id")
+      .eq("season_id", data.seasonId)
+      .limit(1);
+
+    if (matchPools && matchPools.length > 0) {
+      return {
+        success: false,
+        error: "Season has betting pools. Cancel it instead.",
+      };
+    }
+
+    const { data: propPools } = await supabase
+      .from("prop_pools")
+      .select("id")
+      .eq("season_id", data.seasonId)
+      .limit(1);
+
+    if (propPools && propPools.length > 0) {
+      return {
+        success: false,
+        error: "Season has prop pools. Cancel it instead.",
+      };
+    }
+
+    const { error: participantsError } = await supabase
+      .from("season_participants")
+      .delete()
+      .eq("season_id", data.seasonId);
+
+    if (participantsError) {
+      return { success: false, error: participantsError.message };
+    }
+
+    const { error } = await supabase
+      .from("seasons")
+      .delete()
+      .eq("id", data.seasonId);
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  });
 
 // ── getSeasonHistory ────────────────────────────────────────
 
