@@ -179,17 +179,29 @@ export function computeAwards(params: {
   const pickWorst = (fn: (e: AggregatePlayerStats) => number) =>
     entries.reduce((worst, e) => (fn(e) < fn(worst) ? e : worst), entries[0]);
 
-  const mvpMetric = allHaveDemo
-    ? (e: AggregatePlayerStats) => e.avgRating ?? 0
-    : (e: AggregatePlayerStats) => e.avgKd;
+  const hasSessionScores = entries.some((e) => (e.sessionScore ?? 0) > 0);
+  const mvpMetric: (e: AggregatePlayerStats) => number = hasSessionScores
+    ? (e) => e.sessionScore ?? 0
+    : allHaveDemo
+      ? (e) => e.avgRating ?? 0
+      : (e) => e.avgKd;
+
+  const formatMvpValue = (e: AggregatePlayerStats) => {
+    if (hasSessionScores) {
+      return `${(e.sessionScore ?? 0).toFixed(1)} Score`;
+    }
+    if (allHaveDemo) {
+      return `${(e.avgRating ?? 0).toFixed(2)} Rating`;
+    }
+    return `${e.avgKd.toFixed(2)} K/D`;
+  };
+
   const mvp = pickBest(mvpMetric);
   awards.push({
     id: "party-mvp",
     title: "Party MVP",
     recipient: mvp.nickname,
-    value: allHaveDemo
-      ? `${(mvp.avgRating ?? 0).toFixed(2)} Rating`
-      : `${mvp.avgKd.toFixed(2)} K/D`,
+    value: formatMvpValue(mvp),
     banter: getSessionBanterLine("carry", mvp.nickname, playerId, date),
     requiresDemo: false,
   });
@@ -200,9 +212,7 @@ export function computeAwards(params: {
       id: "party-anchor",
       title: "Party Anchor",
       recipient: anchor.nickname,
-      value: allHaveDemo
-        ? `${(anchor.avgRating ?? 0).toFixed(2)} Rating`
-        : `${anchor.avgKd.toFixed(2)} K/D`,
+      value: formatMvpValue(anchor),
       banter: getSessionBanterLine("roast", anchor.nickname, playerId, date),
       requiresDemo: false,
     });
@@ -388,7 +398,7 @@ const SAFE_CATEGORIES: SessionCategoryDefinition[] = [
   {
     key: "avgImpact",
     label: "Impact",
-    weight: 4,
+    weight: 10,
     read: (stats) => stats.avgImpact,
   },
   {
@@ -559,16 +569,7 @@ function buildScoreBreakdowns(
       };
     });
 
-    const weightedTotal = categoriesWithScores.reduce(
-      (sum, category) => sum + category.score * (category.weight ?? 1),
-      0
-    );
-    const weightTotal = categoriesWithScores.reduce(
-      (sum, category) => sum + (category.weight ?? 1),
-      0
-    );
-    const sessionScore =
-      weightTotal > 0 ? Math.round((weightedTotal / weightTotal) * 10) / 10 : 0;
+    const sessionScore = Math.round(entry.avgImpact * 10) / 10;
 
     const sortedCategories = [...categoriesWithScores].sort(
       (a, b) =>

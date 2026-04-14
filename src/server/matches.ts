@@ -1650,13 +1650,6 @@ export const getPartySessionStats = createServerFn({ method: "GET" })
       eloMap,
     });
     const mapDistribution = computeMapDistribution(partyMatches);
-    const awards = computeAwards({
-      aggregateStats,
-      allHaveDemo,
-      mapDistribution,
-      playerId,
-      date,
-    });
     const rivalries = buildSessionRivalries({
       aggregateStats,
       allHaveDemo,
@@ -1672,6 +1665,14 @@ export const getPartySessionStats = createServerFn({ method: "GET" })
         aggregateStats[faceitId].scoreBreakdown = breakdown;
       }
     }
+
+    const awards = computeAwards({
+      aggregateStats,
+      allHaveDemo,
+      mapDistribution,
+      playerId,
+      date,
+    });
 
     // 8. Compute totals
     const winCount = partyMatches.filter((m) => m.result).length;
