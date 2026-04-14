@@ -1,3 +1,31 @@
+## [1.17.5](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.17.4...v1.17.5) (2026-04-14)
+
+
+### Bug Fixes
+
+* force 16px input font-size on mobile to actually stop iOS zoom ([#33](https://github.com/ventsislavnikolov/faceit-stats-slap/issues/33)) ([6c2cf5e](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/6c2cf5ea7797ae3ed03c55bfe3b208fec5cb3709))
+
+## [1.17.4](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.17.3...v1.17.4) (2026-04-13)
+
+
+### Bug Fixes
+
+* wrap party member names on narrow viewports ([#34](https://github.com/ventsislavnikolov/faceit-stats-slap/issues/34)) ([d24b85e](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/d24b85e8a9d8402338b13444746132614873a1de))
+
+## [1.17.3](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.17.2...v1.17.3) (2026-04-12)
+
+
+### Bug Fixes
+
+* prevent iOS input zoom and fix mobile skeleton overflow ([#32](https://github.com/ventsislavnikolov/faceit-stats-slap/issues/32)) ([710da29](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/710da29abec2335668fde79a7adefb557c4683d2))
+
+## [1.17.2](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.17.1...v1.17.2) (2026-04-11)
+
+
+### Bug Fixes
+
+* remove 500-coin cap from bet_audit_events amount constraint ([52620cd](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/52620cde0a7b5643e7b44f706690fad16557d403))
+
 ## [1.17.1](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.17.0...v1.17.1) (2026-04-11)
 
 

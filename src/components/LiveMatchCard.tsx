@@ -139,13 +139,13 @@ export function LiveMatchCard({
             </div>
           </div>
 
-          <div className="flex justify-center gap-1.5">
+          <div className="flex flex-wrap justify-center gap-1.5">
             {match.friendIds.map((id) => {
               const roster = [...f1.roster, ...f2.roster];
               const player = roster.find((p) => p.playerId === id);
               return (
                 <span
-                  className="rounded bg-accent/15 px-2 py-0.5 text-accent text-xs"
+                  className="max-w-full truncate rounded bg-accent/15 px-2 py-0.5 text-accent text-xs"
                   key={id}
                 >
                   {player?.nickname || id.slice(0, 8)}
