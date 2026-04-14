@@ -1,3 +1,10 @@
+## [1.17.5](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.17.4...v1.17.5) (2026-04-14)
+
+
+### Bug Fixes
+
+* force 16px input font-size on mobile to actually stop iOS zoom ([#33](https://github.com/ventsislavnikolov/faceit-stats-slap/issues/33)) ([6c2cf5e](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/6c2cf5ea7797ae3ed03c55bfe3b208fec5cb3709))
+
 ## [1.17.4](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.17.3...v1.17.4) (2026-04-13)
 
 
