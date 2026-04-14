@@ -1,3 +1,11 @@
+# [1.18.0](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.17.5...v1.18.0) (2026-04-14)
+
+
+### Features
+
+* **bets:** admin season controls and bet blacklist ([753d4e9](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/753d4e93e94a59350df05b18199185b135ebdf25))
+* **last-party:** base Session Score on avg Impact and simplify table ([cb7aa7b](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/cb7aa7b9d3e5613c7ca169a32abdcc5c61e3ce6b))
+
 ## [1.17.5](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.17.4...v1.17.5) (2026-04-14)
 
 
