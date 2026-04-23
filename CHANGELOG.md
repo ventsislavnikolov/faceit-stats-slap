@@ -1,3 +1,10 @@
+## [1.18.1](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.18.0...v1.18.1) (2026-04-23)
+
+
+### Bug Fixes
+
+* **deps:** update demoparser2 to 0.41.2 and fix time-dependent tests ([4ba0903](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/4ba09032ef430a63e53331a23346e04ea973b39f))
+
 # [1.18.0](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.17.5...v1.18.0) (2026-04-14)
 
 
