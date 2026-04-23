@@ -32,144 +32,7 @@ function MatchDetailPage() {
   const { data, isLoading, isError, error } = useMatchDetail(matchId);
 
   if (isLoading) {
-    return (
-      <div className="mx-auto max-w-6xl p-4">
-        {/* Match header skeleton */}
-        <div className="mb-4 rounded-lg border border-border p-4">
-          <div className="mb-2 flex items-center justify-between">
-            <div className="h-2.5 w-36 animate-pulse rounded bg-border" />
-            <div className="h-2.5 w-16 animate-pulse rounded bg-border" />
-          </div>
-          <div className="flex items-center justify-center gap-6">
-            <div className="text-right">
-              <div className="mb-1 ml-auto h-3.5 w-24 animate-pulse rounded bg-border" />
-              <div className="ml-auto h-7 w-8 animate-pulse rounded bg-border" />
-            </div>
-            <div className="flex flex-col items-center gap-1">
-              <div className="h-2.5 w-14 animate-pulse rounded bg-border" />
-              <div className="h-3 w-12 animate-pulse rounded bg-border" />
-            </div>
-            <div className="text-left">
-              <div className="mb-1 h-3.5 w-24 animate-pulse rounded bg-border" />
-              <div className="h-7 w-8 animate-pulse rounded bg-border" />
-            </div>
-          </div>
-        </div>
-
-        {/* Tab bar skeleton */}
-        <div className="mb-4 flex items-center justify-center rounded-lg border border-border bg-bg-card">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div className="flex-1 px-4 py-3 text-center" key={i}>
-              <div className="mx-auto h-3 w-20 animate-pulse rounded bg-border" />
-            </div>
-          ))}
-        </div>
-
-        {/* Score Progression chart skeleton */}
-        <div className="mb-4 rounded-lg border border-border p-4">
-          <div className="mb-4 h-2.5 w-32 animate-pulse rounded bg-border" />
-          <div className="flex h-48 items-end gap-1 px-4">
-            {Array.from({ length: 24 }).map((_, i) => (
-              <div className="flex flex-1 flex-col items-center gap-1" key={i}>
-                <div
-                  className="w-full animate-pulse rounded-t bg-border"
-                  style={{
-                    height: `${Math.min(20 + i * 6, 140)}px`,
-                    opacity: 0.3 + (i / 24) * 0.4,
-                  }}
-                />
-              </div>
-            ))}
-          </div>
-          <div className="mt-3 flex items-center justify-center gap-6">
-            <div className="flex items-center gap-1.5">
-              <div className="h-2 w-2 rounded-full bg-accent/40" />
-              <div className="h-2.5 w-12 animate-pulse rounded bg-border" />
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="h-2 w-2 rounded-full bg-error/40" />
-              <div className="h-2.5 w-12 animate-pulse rounded bg-border" />
-            </div>
-          </div>
-        </div>
-
-        {/* Scoreboard skeleton */}
-        <div className="mb-4 rounded-lg border border-border p-4">
-          <div className="mb-4 h-2.5 w-64 animate-pulse rounded bg-border" />
-          {/* Column headers */}
-          <div className="mb-2 grid grid-cols-[1fr_4rem_3rem_3rem_3rem_4rem_4rem_4rem_3rem] gap-2 px-2">
-            {[
-              "w-12",
-              "w-6",
-              "w-4",
-              "w-4",
-              "w-4",
-              "w-6",
-              "w-6",
-              "w-6",
-              "w-8",
-            ].map((w, i) => (
-              <div
-                className={`h-2 ${w} animate-pulse rounded bg-border ${i > 0 ? "mx-auto" : ""}`}
-                key={i}
-              />
-            ))}
-          </div>
-          {/* Team 1 rows */}
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div
-              className="grid grid-cols-[1fr_4rem_3rem_3rem_3rem_4rem_4rem_4rem_3rem] items-center gap-2 border-border border-t px-2 py-2.5"
-              key={`t1-${i}`}
-            >
-              <div className="h-3.5 w-20 animate-pulse rounded bg-accent/20" />
-              <div className="mx-auto h-3.5 w-8 animate-pulse rounded bg-border" />
-              <div className="mx-auto h-3 w-6 animate-pulse rounded bg-border" />
-              <div className="mx-auto h-3 w-6 animate-pulse rounded bg-border" />
-              <div className="mx-auto h-3 w-5 animate-pulse rounded bg-border" />
-              <div className="mx-auto h-3.5 w-8 animate-pulse rounded bg-border" />
-              <div className="mx-auto h-3 w-7 animate-pulse rounded bg-border" />
-              <div className="mx-auto h-3 w-8 animate-pulse rounded bg-border" />
-              <div className="mx-auto h-6 w-6 animate-pulse rounded-full bg-accent/15" />
-            </div>
-          ))}
-          {/* Team separator */}
-          <div className="my-1 border-border border-t" />
-          {/* Team 2 rows */}
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div
-              className="grid grid-cols-[1fr_4rem_3rem_3rem_3rem_4rem_4rem_4rem_3rem] items-center gap-2 border-border border-t px-2 py-2.5"
-              key={`t2-${i}`}
-            >
-              <div className="h-3.5 w-20 animate-pulse rounded bg-error/20" />
-              <div className="mx-auto h-3.5 w-8 animate-pulse rounded bg-border" />
-              <div className="mx-auto h-3 w-6 animate-pulse rounded bg-border" />
-              <div className="mx-auto h-3 w-6 animate-pulse rounded bg-border" />
-              <div className="mx-auto h-3 w-5 animate-pulse rounded bg-border" />
-              <div className="mx-auto h-3.5 w-8 animate-pulse rounded bg-border" />
-              <div className="mx-auto h-3 w-7 animate-pulse rounded bg-border" />
-              <div className="mx-auto h-3 w-8 animate-pulse rounded bg-border" />
-              <div className="mx-auto h-6 w-6 animate-pulse rounded-full bg-error/15" />
-            </div>
-          ))}
-        </div>
-
-        {/* Utility Thrown chart skeleton */}
-        <div className="rounded-lg border border-border p-4">
-          <div className="mb-4 h-2.5 w-28 animate-pulse rounded bg-border" />
-          <div className="flex h-36 items-end justify-around gap-3 px-4">
-            {Array.from({ length: 10 }).map((_, i) => (
-              <div className="flex flex-1 flex-col items-center gap-1" key={i}>
-                <div
-                  className="w-full animate-pulse rounded-t bg-border"
-                  style={{ height: `${40 + Math.random() * 80}px` }}
-                />
-                <div className="h-2 w-10 animate-pulse rounded bg-border" />
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
+    return <MatchDetailSkeleton />;
   }
 
   if (isError || !data) {
@@ -279,6 +142,122 @@ function MatchHeader({
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Loading skeleton — mirrors the real scoreboard structure so it stays stable
+// on narrow viewports (no overflow, no squished columns).
+// ---------------------------------------------------------------------------
+
+const SCOREBOARD_SKELETON_COLS = "minmax(0,1fr) 40px 40px 40px 48px 40px 44px";
+
+function MatchDetailSkeleton() {
+  return (
+    <div className="flex-1 overflow-y-auto">
+      <div className="mx-auto max-w-6xl p-4">
+        {/* Match header skeleton */}
+        <div className="mb-4 rounded-lg border border-border p-4">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <div className="h-2.5 w-36 max-w-[60%] animate-pulse rounded bg-border" />
+            <div className="h-2.5 w-16 animate-pulse rounded bg-border" />
+          </div>
+          <div className="flex items-center justify-center gap-4 sm:gap-6">
+            <div className="min-w-0 text-right">
+              <div className="mb-1 ml-auto h-3.5 w-20 animate-pulse rounded bg-border sm:w-24" />
+              <div className="ml-auto h-7 w-8 animate-pulse rounded bg-border" />
+            </div>
+            <div className="flex shrink-0 flex-col items-center gap-1">
+              <div className="h-2.5 w-14 animate-pulse rounded bg-border" />
+              <div className="h-3 w-12 animate-pulse rounded bg-border" />
+            </div>
+            <div className="min-w-0 text-left">
+              <div className="mb-1 h-3.5 w-20 animate-pulse rounded bg-border sm:w-24" />
+              <div className="h-7 w-8 animate-pulse rounded bg-border" />
+            </div>
+          </div>
+        </div>
+
+        {/* Score Progression chart skeleton */}
+        <div className="mb-4 rounded-lg border border-border p-4">
+          <div className="mb-4 h-2.5 w-32 animate-pulse rounded bg-border" />
+          <div className="flex h-40 items-end gap-1 sm:h-48">
+            {Array.from({ length: 24 }).map((_, i) => (
+              <div className="flex flex-1 flex-col items-center gap-1" key={i}>
+                <div
+                  className="w-full animate-pulse rounded-t bg-border"
+                  style={{
+                    height: `${Math.min(20 + i * 5, 140)}px`,
+                    opacity: 0.55 + (i / 24) * 0.35,
+                  }}
+                />
+              </div>
+            ))}
+          </div>
+          <div className="mt-3 flex items-center justify-center gap-6">
+            <div className="flex items-center gap-1.5">
+              <div className="h-2 w-2 rounded-full bg-accent/40" />
+              <div className="h-2.5 w-12 animate-pulse rounded bg-border" />
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="h-2 w-2 rounded-full bg-error/40" />
+              <div className="h-2.5 w-12 animate-pulse rounded bg-border" />
+            </div>
+          </div>
+        </div>
+
+        {/* Scoreboard skeleton — two separate team tables, matching the real
+            MatchAnalyticsScoreboard layout (7 cols, ~252px fixed). */}
+        <div className="mb-4 space-y-3">
+          <TeamTableSkeleton accent="accent" />
+          <TeamTableSkeleton accent="error" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TeamTableSkeleton({ accent }: { accent: "accent" | "error" }) {
+  const nameBg = accent === "accent" ? "bg-accent/20" : "bg-error/20";
+
+  return (
+    <div className="overflow-hidden rounded-lg border border-border">
+      {/* Team name bar */}
+      <div className="bg-surface-elevated px-3 py-2">
+        <div className="h-3 w-24 animate-pulse rounded bg-border" />
+      </div>
+
+      {/* Column headers */}
+      <div
+        className="grid gap-1 border-border border-b px-3 py-1.5"
+        style={{ gridTemplateColumns: SCOREBOARD_SKELETON_COLS }}
+      >
+        <div className="h-2 w-12 animate-pulse rounded bg-border" />
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div
+            className="mx-auto h-2 w-4 animate-pulse rounded bg-border"
+            key={i}
+          />
+        ))}
+      </div>
+
+      {/* Player rows */}
+      {Array.from({ length: 5 }).map((_, i) => (
+        <div
+          className="grid items-center gap-1 border-border border-t px-3 py-2"
+          key={i}
+          style={{ gridTemplateColumns: SCOREBOARD_SKELETON_COLS }}
+        >
+          <div className={`h-3.5 min-w-0 animate-pulse rounded ${nameBg}`} />
+          {Array.from({ length: 6 }).map((__, j) => (
+            <div
+              className="mx-auto h-3 w-5 animate-pulse rounded bg-border"
+              key={j}
+            />
+          ))}
+        </div>
+      ))}
     </div>
   );
 }
