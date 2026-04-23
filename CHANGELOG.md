@@ -1,3 +1,10 @@
+## [1.18.2](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.18.1...v1.18.2) (2026-04-23)
+
+
+### Bug Fixes
+
+* **match:** align match detail loading skeleton with real scoreboard ([#35](https://github.com/ventsislavnikolov/faceit-stats-slap/issues/35)) ([99ddd13](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/99ddd1311ed802ceb630ae21c25d43c997a7efda))
+
 ## [1.18.1](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.18.0...v1.18.1) (2026-04-23)
 
 
