@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { MY_FACEIT_ID } from "~/lib/constants";
 import { fetchMatchStats } from "~/lib/faceit";
 import {
@@ -329,6 +329,15 @@ function makeRow(
 }
 
 describe("buildPersonalFormLeaderboard", () => {
+  beforeAll(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-03-22T12:00:00.000Z"));
+  });
+
+  afterAll(() => {
+    vi.useRealTimers();
+  });
+
   it("includes the searched player with their own recent form sample", () => {
     const result = buildPersonalFormLeaderboard({
       rows: [

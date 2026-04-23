@@ -21,7 +21,7 @@
     "test:e2e:coverage": "playwright test --project=chromium && node scripts/e2e-coverage-report.mjs"
   },
   "dependencies": {
-    "@laihoe/demoparser2": "^0.41.1",
+    "@laihoe/demoparser2": "^0.41.2",
     "@supabase/supabase-js": "^2.101.1",
     "@tanstack/react-query": "^5.96.1",
     "@tanstack/react-router": "^1.168.10",
