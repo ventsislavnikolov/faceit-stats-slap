@@ -14,3 +14,8 @@ src/routeTree.gen.ts
 .vercel
 .playwright-cli/
 playwright-report
+
+.env*
+.flaskenv*
+!.env.project
+!.env.vault
