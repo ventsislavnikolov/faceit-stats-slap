@@ -1,3 +1,10 @@
+## [1.18.3](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.18.2...v1.18.3) (2026-04-28)
+
+
+### Bug Fixes
+
+* **deps:** pin tanstack/react-start to 1.167.20 ([c713835](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/c7138359dcfd497cb8a056b752d73ad998073fa8))
+
 ## [1.18.2](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.18.1...v1.18.2) (2026-04-23)
 
 
