@@ -1600,11 +1600,14 @@ export const getPartySessionStats = createServerFn({ method: "GET" })
       const partyMemberIdSet = new Set<string>();
       for (const m of partyMatches) {
         partyMemberIdSet.add(playerId);
-        const memberIds = includeAllTeammates
-          ? m.allTeammateIds
-          : m.knownQueuedFriendIds;
-        for (const fid of memberIds) {
-          partyMemberIdSet.add(fid);
+        if (includeAllTeammates) {
+          for (const p of allMatchStats[m.matchId] ?? []) {
+            partyMemberIdSet.add(p.playerId);
+          }
+        } else {
+          for (const fid of m.knownQueuedFriendIds) {
+            partyMemberIdSet.add(fid);
+          }
         }
       }
       const partyMemberIds = [...partyMemberIdSet];
