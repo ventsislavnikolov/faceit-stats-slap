@@ -1,3 +1,10 @@
+# [1.19.0](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.18.3...v1.19.0) (2026-04-29)
+
+
+### Features
+
+* **last-party:** add All teammates toggle to include non-friend players ([b68491e](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/b68491e13e38d14504d45a7334016b56d2ba1423))
+
 ## [1.18.3](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.18.2...v1.18.3) (2026-04-28)
 
 
