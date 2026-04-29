@@ -25,6 +25,7 @@ describe("classifyKnownFriendQueue", () => {
       queueBucket: "party",
       knownQueuedFriendCount: PARTY_FRIEND_THRESHOLD,
       knownQueuedFriendIds: ["friend-1", "friend-2"],
+      allTeammateIds: ["friend-1", "friend-2", "random"],
       partySize: 3,
     });
   });
@@ -48,6 +49,7 @@ describe("classifyKnownFriendQueue", () => {
       queueBucket: "solo",
       knownQueuedFriendCount: 1,
       knownQueuedFriendIds: ["friend-1"],
+      allTeammateIds: ["friend-1", "enemy-1"],
       partySize: 2,
     });
   });
@@ -67,6 +69,7 @@ describe("classifyKnownFriendQueue", () => {
       queueBucket: "unknown",
       knownQueuedFriendCount: 0,
       knownQueuedFriendIds: [],
+      allTeammateIds: [],
       partySize: null,
     });
   });
@@ -86,6 +89,7 @@ describe("classifyKnownFriendQueue", () => {
       queueBucket: "unknown",
       knownQueuedFriendCount: 0,
       knownQueuedFriendIds: [],
+      allTeammateIds: [],
       partySize: null,
     });
   });

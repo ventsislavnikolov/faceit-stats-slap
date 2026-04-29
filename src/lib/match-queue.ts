@@ -19,6 +19,7 @@ export function classifyKnownFriendQueue(params: {
   queueBucket: MatchQueueBucket;
   knownQueuedFriendCount: number;
   knownQueuedFriendIds: string[];
+  allTeammateIds: string[];
   partySize: number | null;
 } {
   const { targetPlayerId, targetFriendIds, teams } = params;
@@ -28,6 +29,7 @@ export function classifyKnownFriendQueue(params: {
       queueBucket: "unknown",
       knownQueuedFriendCount: 0,
       knownQueuedFriendIds: [],
+      allTeammateIds: [],
       partySize: null,
     };
   }
@@ -52,11 +54,16 @@ export function classifyKnownFriendQueue(params: {
     ];
     const knownQueuedFriendCount = knownQueuedFriendIds.length;
 
+    const allTeammateIds = [
+      ...new Set(playerIds.filter((playerId) => playerId !== targetPlayerId)),
+    ];
+
     return {
       queueBucket:
         knownQueuedFriendCount >= PARTY_FRIEND_THRESHOLD ? "party" : "solo",
       knownQueuedFriendCount,
       knownQueuedFriendIds,
+      allTeammateIds,
       partySize: knownQueuedFriendCount + 1,
     };
   }
@@ -65,6 +72,7 @@ export function classifyKnownFriendQueue(params: {
     queueBucket: "unknown",
     knownQueuedFriendCount: 0,
     knownQueuedFriendIds: [],
+    allTeammateIds: [],
     partySize: null,
   };
 }

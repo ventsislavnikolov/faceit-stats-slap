@@ -45,6 +45,7 @@ export function LastPartyPage() {
   const [dateInput, setDateInput] = useState(
     urlDate ?? getYesterdayDateString()
   );
+  const [includeAllTeammates, setIncludeAllTeammates] = useState(false);
 
   const {
     data: player,
@@ -62,7 +63,8 @@ export function LastPartyPage() {
 
   const { data: session, isLoading: sessionLoading } = usePartySession(
     player?.faceitId ?? null,
-    effectiveDate
+    effectiveDate,
+    includeAllTeammates
   );
 
   useEffect(() => {
@@ -171,6 +173,15 @@ export function LastPartyPage() {
               type="date"
               value={dateInput}
             />
+            <label className="ml-4 flex cursor-pointer select-none items-center gap-1.5 text-text-dim">
+              <input
+                checked={includeAllTeammates}
+                className="accent-accent"
+                onChange={(e) => setIncludeAllTeammates(e.target.checked)}
+                type="checkbox"
+              />
+              All teammates
+            </label>
           </div>
 
           {(resolving || sessionLoading) && urlPlayer && (

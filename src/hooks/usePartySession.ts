@@ -4,12 +4,15 @@ import { getPartySessionStats } from "~/server/matches";
 
 export function usePartySession(
   playerId: string | null,
-  date: string | undefined
+  date: string | undefined,
+  includeAllTeammates = false
 ) {
   return useQuery<PartySessionData>({
-    queryKey: ["party-session", playerId, date],
+    queryKey: ["party-session", playerId, date, includeAllTeammates],
     queryFn: () =>
-      getPartySessionStats({ data: { playerId: playerId!, date: date! } }),
+      getPartySessionStats({
+        data: { playerId: playerId!, date: date!, includeAllTeammates },
+      }),
     enabled: !!playerId && !!date,
     staleTime: 5 * 60 * 1000,
   });

@@ -113,6 +113,7 @@ export interface MatchPlayerStats {
 }
 
 export interface PlayerHistoryMatch extends MatchPlayerStats {
+  allTeammateIds: string[];
   finishedAt: number | null;
   hasDemoAnalytics?: boolean;
   knownQueuedFriendCount: number;
