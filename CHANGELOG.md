@@ -1,3 +1,10 @@
+## [1.19.1](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.19.0...v1.19.1) (2026-04-29)
+
+
+### Bug Fixes
+
+* **last-party:** include both teams when All teammates is toggled ([d5ca5e1](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/d5ca5e10f9da83e384545782309f08cdeef3f89e))
+
 # [1.19.0](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.18.3...v1.19.0) (2026-04-29)
 
 
