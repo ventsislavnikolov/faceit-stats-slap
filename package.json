@@ -22,8 +22,8 @@
   },
   "dependencies": {
     "@laihoe/demoparser2": "^0.41.2",
-    "@supabase/supabase-js": "^2.101.1",
-    "@tanstack/react-query": "^5.96.1",
+    "@supabase/supabase-js": "^2.105.1",
+    "@tanstack/react-query": "^5.100.7",
     "@tanstack/react-router": "1.168.13",
     "@tanstack/react-start": "1.167.20",
     "fzstd": "^0.1.1",
@@ -33,8 +33,8 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.10",
-    "@commitlint/cli": "^20.5.0",
-    "@commitlint/config-conventional": "^20.5.0",
+    "@commitlint/cli": "^20.5.3",
+    "@commitlint/config-conventional": "^20.5.3",
     "@commitlint/types": "^20.5.0",
     "@playwright/test": "^1.59.0",
     "@semantic-release/changelog": "^6.0.3",
@@ -61,7 +61,7 @@
     "tailwindcss": "^4.2.2",
     "tsx": "^4.21.0",
     "typescript": "^6.0.2",
-    "ultracite": "7.4.2",
+    "ultracite": "7.6.2",
     "v8-to-istanbul": "^9.3.0",
     "vite": "^8.0.3",
     "vitest": "^4.1.2"
