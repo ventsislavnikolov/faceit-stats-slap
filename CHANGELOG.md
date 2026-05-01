@@ -1,3 +1,10 @@
+## [1.19.2](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.19.1...v1.19.2) (2026-05-01)
+
+
+### Performance Improvements
+
+* halve live match polling intervals for faster updates ([4e8b306](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/4e8b306abfae01c195041eefc2c7f28763841878))
+
 ## [1.19.1](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.19.0...v1.19.1) (2026-04-29)
 
 
