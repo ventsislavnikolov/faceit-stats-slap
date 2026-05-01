@@ -56,7 +56,7 @@
     "istanbul-lib-coverage": "^3.2.2",
     "istanbul-lib-report": "^3.0.1",
     "istanbul-reports": "^3.2.0",
-    "nitro": "3.0.260311-beta",
+    "nitro": "3.0.260429-beta",
     "semantic-release": "^25.0.3",
     "tailwindcss": "^4.2.2",
     "tsx": "^4.21.0",
