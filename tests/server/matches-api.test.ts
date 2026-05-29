@@ -995,6 +995,8 @@ describe("getPlayerStats", () => {
 
 describe("tracked alias selectors", () => {
   it("keeps leaderboard freshness tied to the target player's qualifying row", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-04-20T12:00:00.000Z"));
     supabaseState.setTrackedFriendsRows([
       {
         faceit_id: "target",
@@ -1105,6 +1107,8 @@ describe("tracked alias selectors", () => {
   });
 
   it("keeps party classification when a shared teammate row falls outside recent-n support sampling", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-04-20T12:00:00.000Z"));
     const newerFriendRows = Array.from({ length: 1000 }, (_, index) => ({
       match_id: `friend-1-newer-${index}`,
       faceit_player_id: "friend-1",
@@ -1219,6 +1223,8 @@ describe("tracked alias selectors", () => {
   });
 
   it("ignores non-tracked match participants when classifying solo leaderboard matches", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-04-20T12:00:00.000Z"));
     supabaseState.setTrackedFriendsRows([
       {
         faceit_id: "target",
