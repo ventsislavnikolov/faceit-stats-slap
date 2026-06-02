@@ -27,7 +27,7 @@
     "@tanstack/react-router": "1.168.13",
     "@tanstack/react-start": "1.167.20",
     "fzstd": "^0.1.1",
-    "react": "^19.2.4",
+    "react": "^19.2.7",
     "react-dom": "^19.2.4",
     "recharts": "^3.8.1"
   },
@@ -48,7 +48,7 @@
     "@types/istanbul-lib-report": "^3.0.3",
     "@types/istanbul-reports": "^3.0.4",
     "@types/node": "^25.5.0",
-    "@types/react": "^19.2.14",
+    "@types/react": "^19.2.16",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
     "@vitest/coverage-v8": "^4.1.2",
