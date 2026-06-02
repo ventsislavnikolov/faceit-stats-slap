@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@laihoe/demoparser2':
-        specifier: ^0.41.2
-        version: 0.41.2
+        specifier: ^0.41.3
+        version: 0.41.3
       '@supabase/supabase-js':
         specifier: ^2.105.1
         version: 2.105.1
@@ -566,68 +566,68 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@laihoe/demoparser2-android-arm-eabi@0.41.2':
-    resolution: {integrity: sha512-r3gXUQizLpcAuGqwQdUlhPFrTZIb2l4n+IPm01gd0KbGgLteQQyvDTg7LbJhToOCe4Gpywwy+AU6F/PiVwye4Q==}
+  '@laihoe/demoparser2-android-arm-eabi@0.41.3':
+    resolution: {integrity: sha512-pSF1BrhJdkZ7IqP/rA0L3DdafqRIxKKxAwlTzWriztxqtvNl6QL/2Zxpb4eLAZFiS0hOQ0NL9/qEB4BzteFvEQ==}
     engines: {node: '>= 10'}
     cpu: [arm]
     os: [android]
 
-  '@laihoe/demoparser2-android-arm64@0.41.2':
-    resolution: {integrity: sha512-WulUUMuxsEQLnMqxkfNwbcXmBlLByrerd7ZIhDoNS7kK0M0ea010HIrFeVj/30fzyYMT25aH1pnA97JCNCrjHw==}
+  '@laihoe/demoparser2-android-arm64@0.41.3':
+    resolution: {integrity: sha512-6qcazTd9yxe9RmsX0hqEVgkDRoeNh58rJcSmTtwOL52dmluw9L9MHbf2KeEZ+XN8u6TMF6uIemYvUwrF9EJjHg==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [android]
 
-  '@laihoe/demoparser2-darwin-arm64@0.41.2':
-    resolution: {integrity: sha512-YhUPLYjAkWaZEXnOGQe4bYnncqQgv/a9KrBZo1qm/cHsEeHBm05DO/GIpup3SnJ4tT3qNyWwtXeJ3+ZwSpH8qw==}
+  '@laihoe/demoparser2-darwin-arm64@0.41.3':
+    resolution: {integrity: sha512-nOUCqfPwUvmZxwF2TYJmUMsXUSnSU/I6zfNK6nEwzT+yUPXTvQIKZoa+vrTgOApDYfuEJbVc2T1Eg4mr6orC0A==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [darwin]
 
-  '@laihoe/demoparser2-linux-arm-gnueabihf@0.41.2':
-    resolution: {integrity: sha512-kcQlAELd5v6AgsFo+eIOg3c8XJ1Qn4qnzISweuu0IrMqPgjmNCXmyc2nhgAxzYgjkMoUAhtxV0fK6e5ajQuh2g==}
+  '@laihoe/demoparser2-linux-arm-gnueabihf@0.41.3':
+    resolution: {integrity: sha512-cinTOS1l7B6WUJSZ4JtoB9TPVJ4ys1RVacYehCxvn8nttRHCGqAc1jpxHP1Po25i1y/9fS+XeeDOpKMaBHmfSQ==}
     engines: {node: '>= 10'}
     cpu: [arm]
     os: [linux]
 
-  '@laihoe/demoparser2-linux-arm64-gnu@0.41.2':
-    resolution: {integrity: sha512-ZzPJNy5ViCLUXiepuQdnAmNYACGAjyRD4GUWJIe4Dppt9+B+sQWBh+mHyIECXllxW8MmR2SaHca4BZUJw87/TA==}
+  '@laihoe/demoparser2-linux-arm64-gnu@0.41.3':
+    resolution: {integrity: sha512-wfrOosaZZ3kHTiE9RRQPKpgEWCXsVxpiiwkrtzKugteYrZqOgf6PimSZDHpBnU2Rem85uB6cb64Bfwn2TW/POg==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [linux]
 
-  '@laihoe/demoparser2-linux-arm64-musl@0.41.2':
-    resolution: {integrity: sha512-1j//RlUL1Oqd/5wl+tedehg9sng4cFsQd62efwc2uU0BC3TCLbStI1Lk+XE34/gIzvN3PClKsDdDm9SjgCHoCw==}
+  '@laihoe/demoparser2-linux-arm64-musl@0.41.3':
+    resolution: {integrity: sha512-8OfGSSikqt5eRJEpDN60En5+d1BKT+8XHZFAO1jtOK44smpadPZI/9UK/DPDrEFPV3St70vuOyhGnojht+zSAw==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [linux]
 
-  '@laihoe/demoparser2-linux-x64-gnu@0.41.2':
-    resolution: {integrity: sha512-MNcGKpRNAcPye0sHozd0kz1WAxTcM+kjTXvmg0i1RMbZ7b1+aS1EFJRDYThQnnWICgyV1AlnTFJcjy/Dx3YBNA==}
+  '@laihoe/demoparser2-linux-x64-gnu@0.41.3':
+    resolution: {integrity: sha512-1H//sLH5xZx6cXM7irS2PCTd+h+wbf3xDBOs9naBWFyT0yHE5OtRGBS3fckQ62EowiM0qJDeoueHk+0MCacARg==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [linux]
 
-  '@laihoe/demoparser2-linux-x64-musl@0.41.2':
-    resolution: {integrity: sha512-ycQvjTnYnP89WKMjBMFH3nCyenvg16qH47ug4ZXZbNRDCgqVHB6IEwR8yU7yMNdxKHbbfFwlJmRZOMaaqJsTmg==}
+  '@laihoe/demoparser2-linux-x64-musl@0.41.3':
+    resolution: {integrity: sha512-WYyJG8r25xD4YxP9PVhlC51LqSDYHMDmwBfF4YDlBEft0ifQSDjNLN0fJDeIdyyaKiKqfd2oOqTdJwWHV4JRqg==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [linux]
 
-  '@laihoe/demoparser2-win32-arm64-msvc@0.41.2':
-    resolution: {integrity: sha512-nq23QZGH6QCrPmeTfhmOFHrP1QoVsvblrUtQFc+yFPWmJHyg/Z6dX3RlN11MkQwi8D2ZS8LMYjl8V70pLgJiXw==}
+  '@laihoe/demoparser2-win32-arm64-msvc@0.41.3':
+    resolution: {integrity: sha512-zbuezU2UUEjvMkmnrS3cLd6ZODmixpG3i+QD1Wtk2jhyt0iv2G2+gkvn8wHg9yTASWFGe0Uu/EbpNZdSHWwIoQ==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [win32]
 
-  '@laihoe/demoparser2-win32-x64-msvc@0.41.2':
-    resolution: {integrity: sha512-DFRYIvLCHv7RQcBC9zRRQDibl9lZw9j/Rje/hJccEg85aD8NBok1YV+orRpDyH8M5aCL0KUOIgGnnPLlX4sV0w==}
+  '@laihoe/demoparser2-win32-x64-msvc@0.41.3':
+    resolution: {integrity: sha512-9HFpNy3rX0xDn+BXtThu5m/VRguI7gDf6twI1PONTEmJDKnYJdFaWBBAYdzSgHXrV2hnc8bw1yRh+YeTYXMTDg==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [win32]
 
-  '@laihoe/demoparser2@0.41.2':
-    resolution: {integrity: sha512-vXPCsS4sosOaW6pf7QabxDA2K/P8hrfdtCVIQymQB+kn+r5ywWdZg0OpWUuNvcmYwHqj1uV7NWjpb/EjHwKARA==}
+  '@laihoe/demoparser2@0.41.3':
+    resolution: {integrity: sha512-xra7p7p4Kdgn2FIOfA70cO/idXtQxLY6Uz/AQbCgi1y6js5bDAtuvegju2d6wZIXJoX3xOyte/3Sv0VX/Pb1Nw==}
     engines: {node: '>= 10'}
 
   '@napi-rs/wasm-runtime@1.1.4':
@@ -2885,6 +2885,11 @@ packages:
     engines: {node: '>=20.16.0'}
     hasBin: true
 
+  srvx@0.11.16:
+    resolution: {integrity: sha512-bp07zRuycfTY43IjAvvTFnmnJi8ikW0VFiHwOhhYcVW/L4xQ1XY4PAd4Nuum1rsA17C39zL7x+CDhrn5AL32Rw==}
+    engines: {node: '>=20.16.0'}
+    hasBin: true
+
   stackback@0.0.2:
     resolution: {integrity: sha512-1XMJE5fQo1jGH6Y/7ebnwPOBEkIEnT4QF32d5R1+VXdXveM0IBMJt8zfaxX1P3QhVwrYe+576+jkANtSS2mBbw==}
 
@@ -3822,48 +3827,48 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@laihoe/demoparser2-android-arm-eabi@0.41.2':
+  '@laihoe/demoparser2-android-arm-eabi@0.41.3':
     optional: true
 
-  '@laihoe/demoparser2-android-arm64@0.41.2':
+  '@laihoe/demoparser2-android-arm64@0.41.3':
     optional: true
 
-  '@laihoe/demoparser2-darwin-arm64@0.41.2':
+  '@laihoe/demoparser2-darwin-arm64@0.41.3':
     optional: true
 
-  '@laihoe/demoparser2-linux-arm-gnueabihf@0.41.2':
+  '@laihoe/demoparser2-linux-arm-gnueabihf@0.41.3':
     optional: true
 
-  '@laihoe/demoparser2-linux-arm64-gnu@0.41.2':
+  '@laihoe/demoparser2-linux-arm64-gnu@0.41.3':
     optional: true
 
-  '@laihoe/demoparser2-linux-arm64-musl@0.41.2':
+  '@laihoe/demoparser2-linux-arm64-musl@0.41.3':
     optional: true
 
-  '@laihoe/demoparser2-linux-x64-gnu@0.41.2':
+  '@laihoe/demoparser2-linux-x64-gnu@0.41.3':
     optional: true
 
-  '@laihoe/demoparser2-linux-x64-musl@0.41.2':
+  '@laihoe/demoparser2-linux-x64-musl@0.41.3':
     optional: true
 
-  '@laihoe/demoparser2-win32-arm64-msvc@0.41.2':
+  '@laihoe/demoparser2-win32-arm64-msvc@0.41.3':
     optional: true
 
-  '@laihoe/demoparser2-win32-x64-msvc@0.41.2':
+  '@laihoe/demoparser2-win32-x64-msvc@0.41.3':
     optional: true
 
-  '@laihoe/demoparser2@0.41.2':
+  '@laihoe/demoparser2@0.41.3':
     optionalDependencies:
-      '@laihoe/demoparser2-android-arm-eabi': 0.41.2
-      '@laihoe/demoparser2-android-arm64': 0.41.2
-      '@laihoe/demoparser2-darwin-arm64': 0.41.2
-      '@laihoe/demoparser2-linux-arm-gnueabihf': 0.41.2
-      '@laihoe/demoparser2-linux-arm64-gnu': 0.41.2
-      '@laihoe/demoparser2-linux-arm64-musl': 0.41.2
-      '@laihoe/demoparser2-linux-x64-gnu': 0.41.2
-      '@laihoe/demoparser2-linux-x64-musl': 0.41.2
-      '@laihoe/demoparser2-win32-arm64-msvc': 0.41.2
-      '@laihoe/demoparser2-win32-x64-msvc': 0.41.2
+      '@laihoe/demoparser2-android-arm-eabi': 0.41.3
+      '@laihoe/demoparser2-android-arm64': 0.41.3
+      '@laihoe/demoparser2-darwin-arm64': 0.41.3
+      '@laihoe/demoparser2-linux-arm-gnueabihf': 0.41.3
+      '@laihoe/demoparser2-linux-arm64-gnu': 0.41.3
+      '@laihoe/demoparser2-linux-arm64-musl': 0.41.3
+      '@laihoe/demoparser2-linux-x64-gnu': 0.41.3
+      '@laihoe/demoparser2-linux-x64-musl': 0.41.3
+      '@laihoe/demoparser2-win32-arm64-msvc': 0.41.3
+      '@laihoe/demoparser2-win32-x64-msvc': 0.41.3
 
   '@napi-rs/wasm-runtime@1.1.4(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)':
     dependencies:
@@ -5220,7 +5225,7 @@ snapshots:
   h3@2.0.1-rc.16(crossws@0.4.5(srvx@0.11.15)):
     dependencies:
       rou3: 0.8.1
-      srvx: 0.11.15
+      srvx: 0.11.16
     optionalDependencies:
       crossws: 0.4.5(srvx@0.11.15)
 
@@ -6068,6 +6073,8 @@ snapshots:
       through2: 2.0.5
 
   srvx@0.11.15: {}
+
+  srvx@0.11.16: {}
 
   stackback@0.0.2: {}
 
