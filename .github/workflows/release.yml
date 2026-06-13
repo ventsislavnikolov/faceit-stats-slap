@@ -23,9 +23,13 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Node.js
+        # Release tooling only. Pinned to Node 22 because semantic-release's
+        # @octokit/plugin-retry crashes on Node 26's stricter undici when a
+        # GitHub API call needs a retry ("invalid onRequestStart method").
+        # The app, dev, sandbox, and all other CI run on Node 26.3.0.
         uses: actions/setup-node@v6
         with:
-          node-version: "26.3.0"
+          node-version: "22"
 
       - name: Install PNPM
         run: npm install -g pnpm@11.5.2
