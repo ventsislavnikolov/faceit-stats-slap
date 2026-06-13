@@ -1,3 +1,10 @@
+## [1.19.4](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.19.3...v1.19.4) (2026-06-13)
+
+
+### Bug Fixes
+
+* **deploy:** set engines.node >=24 for Vercel (max 24.x) ([2f4a1fe](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/2f4a1feac0e810c209ff37bf371956fd805fc4e6))
+
 ## [1.19.3](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.19.2...v1.19.3) (2026-06-13)
 
 
