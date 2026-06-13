@@ -1,3 +1,10 @@
+## [1.19.3](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.19.2...v1.19.3) (2026-06-13)
+
+
+### Bug Fixes
+
+* **ci:** pin Release job to Node 22 to dodge octokit/undici crash ([239b745](https://github.com/ventsislavnikolov/faceit-stats-slap/commit/239b745b8ee6d34f6e872a13903c340e7007cfc6))
+
 ## [1.19.2](https://github.com/ventsislavnikolov/faceit-stats-slap/compare/v1.19.1...v1.19.2) (2026-05-01)
 
 
