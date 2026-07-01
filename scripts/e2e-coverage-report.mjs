@@ -112,7 +112,7 @@ async function generateCoverageReport() {
         }
 
         coverageMap.merge(normalizedCoverage);
-      } catch (_error) {
+      } catch {
         console.warn(`  [warn] Could not process: ${entry.url}`);
       }
     }

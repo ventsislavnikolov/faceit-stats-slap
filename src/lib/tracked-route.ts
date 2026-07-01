@@ -26,7 +26,7 @@ export function getTrackedLockSearch(params: {
 }): TrackedResolutionSearch | undefined {
   const { player, resolvedPlayerId } = params;
   if (!(isTrackedPlayerAlias(player) && resolvedPlayerId)) {
-    return undefined;
+    return;
   }
 
   return { resolvedPlayerId };

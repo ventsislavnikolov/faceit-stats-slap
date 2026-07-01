@@ -14,7 +14,7 @@ export function normalizeTrackedResolvedPlayerId(
   input: unknown
 ): string | undefined {
   if (typeof input !== "string") {
-    return undefined;
+    return;
   }
 
   const trimmed = input.trim();

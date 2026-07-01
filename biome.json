@@ -18,11 +18,6 @@
         "useExhaustiveDependencies": "off",
         "noNestedComponentDefinitions": "off"
       },
-      "nursery": {
-        "noShadow": "off",
-        "noLeakedRender": "off",
-        "noUnnecessaryConditions": "off"
-      },
       "performance": {
         "noBarrelFile": "off",
         "useTopLevelRegex": "off",
@@ -31,6 +26,7 @@
       },
       "suspicious": {
         "useAwait": "off",
+        "noAlert": "off",
         "noExplicitAny": "off",
         "noEvolvingTypes": "off",
         "noArrayIndexKey": "off",
@@ -38,8 +34,12 @@
         "noUnknownAtRules": "off",
         "noAssignInExpressions": "off",
         "noEmptyBlockStatements": "off",
+        "noEmptySource": "off",
         "noTemplateCurlyInString": "off",
-        "noBitwiseOperators": "off"
+        "noBitwiseOperators": "off",
+        "noShadow": "off",
+        "noLeakedRender": "off",
+        "noUnnecessaryConditions": "off"
       },
       "a11y": {
         "noNoninteractiveElementInteractions": "off",

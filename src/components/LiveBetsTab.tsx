@@ -1,5 +1,4 @@
 import { BetCard } from "~/components/BetCard";
-import { PropBetCards } from "~/components/PropBetCards";
 import { useAllBetsForMatch } from "~/hooks/useAllBetsForMatch";
 import { useBettingPool } from "~/hooks/useBettingPool";
 import type { LiveMatch } from "~/lib/types";
