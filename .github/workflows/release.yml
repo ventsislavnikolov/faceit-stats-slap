@@ -27,7 +27,7 @@ jobs:
         # @octokit/plugin-retry crashes on Node 26's stricter undici when a
         # GitHub API call needs a retry ("invalid onRequestStart method").
         # The app, dev, sandbox, and all other CI run on Node 26.3.0.
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: "22"
 
